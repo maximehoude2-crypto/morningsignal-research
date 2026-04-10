@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+  <rect width="40" height="40" rx="8" fill="#0f2040"/>
+  <!-- Signal bars -->
+  <rect x="6"  y="28" width="5" height="6" rx="1" fill="#1e3357"/>
+  <rect x="13" y="22" width="5" height="12" rx="1" fill="#3b82f6"/>
+  <rect x="20" y="16" width="5" height="18" rx="1" fill="#00c48c"/>
+  <rect x="27" y="10" width="5" height="24" rx="1" fill="#00c48c"/>
+  <!-- Dot -->
+  <circle cx="8.5" cy="24" r="2.5" fill="#00c48c"/>
+</svg>

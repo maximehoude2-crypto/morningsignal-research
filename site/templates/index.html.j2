@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal Research — Daily Market Intelligence</title>
+  <meta name="description" content="Automated daily breakout scanner and market brief powered by institutional-grade technical analysis.">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="index.html" class="active">Home</a>
+      <a href="daily/{{ today }}.html">Today</a>
+      <a href="archive.html">Archive</a>
+    </nav>
+    <div class="header-date">{{ generated_at }}</div>
+  </div>
+</header>
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="flex-between">
+      <div>
+        <div class="hero-title">Daily Market Intelligence</div>
+        <div class="hero-subtitle">Breakout scanner · Market brief · {{ today }}</div>
+      </div>
+      <a href="daily/{{ today }}.html" class="badge badge-green" style="font-size:0.82rem;padding:8px 16px;">
+        Full Report →
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  <!-- ── Market Overview ── -->
+  <div class="section">
+    <div class="section-title">Market Overview</div>
+    <div class="card-grid card-grid-4">
+      {% for sym, idx in brief.indices.items() %}
+      <div class="stat-card">
+        <div class="stat-label">{{ idx.name }}</div>
+        <div class="stat-value">${{ "%.2f"|format(idx.price) }}</div>
+        <div class="stat-meta">
+          <span class="{{ 'pos' if idx.day_change >= 0 else 'neg' }}">
+            {{ "%+.2f"|format(idx.day_change) }}% today
+          </span>
+          <span class="{{ 'pos' if idx.ytd_change >= 0 else 'neg' }} neu" style="color:var(--text-dim)">
+            {{ "%+.2f"|format(idx.ytd_change) }}% YTD
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Macro Strip ── -->
+  <div class="section">
+    <div class="section-title">Macro</div>
+    <div class="macro-grid">
+      <div class="stat-card">
+        <div class="stat-label">VIX</div>
+        <div class="stat-value">{{ "%.2f"|format(brief.macro.vix.level) }}</div>
+        <div class="stat-meta">
+          <span class="{{ 'neg' if brief.macro.vix['5d_change'] > 0 else 'pos' }}">
+            {{ "%+.2f"|format(brief.macro.vix['5d_change']) }}% 5d
+          </span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">10Y Yield</div>
+        <div class="stat-value">{{ "%.2f"|format(brief.macro.tnx.level) }}%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">2Y Yield</div>
+        <div class="stat-value">{{ "%.2f"|format(brief.macro.irx.level) }}%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">2s/10s Spread</div>
+        {% set spread = brief.macro.spread_2s10s %}
+        <div class="stat-value {{ 'pos' if spread >= 0 else 'neg' }}">
+          {{ "%+.0f"|format(spread * 100) }}bps
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Top Breakouts (preview) ── -->
+  <div class="section">
+    <div class="flex-between mb-8">
+      <div class="section-title" style="flex:1">Top Breakout Setups</div>
+      <a href="daily/{{ today }}.html" style="font-size:0.82rem;color:var(--text-dim);margin-left:16px;">
+        View all 15 →
+      </a>
+    </div>
+    <div class="breakout-table-wrap">
+      <table class="breakout-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Ticker</th>
+            <th>Name</th>
+            <th>Sector</th>
+            <th>Score</th>
+            <th>RS</th>
+            <th>Base</th>
+            <th>Trend</th>
+            <th>Price</th>
+            <th>vs 52W Hi</th>
+            <th>Vol/Avg</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in breakouts[:5] %}
+          {% set sc = b.score %}
+          <tr>
+            <td class="rank-cell">{{ b.rank }}</td>
+            <td class="ticker-cell">
+              <a href="deep-dives/{{ b.ticker }}.html">{{ b.ticker }}</a>
+              {% if b.get('streak_days', 1) >= 3 %}
+              <span class="flag-badge" title="{{ b.streak_days }} consecutive days">★</span>
+              {% endif %}
+            </td>
+            <td class="name-cell">{{ b.name }}</td>
+            <td class="name-cell" style="font-size:0.78rem;color:var(--text-dim)">{{ b.sector }}</td>
+            <td>
+              <div class="score-bar">
+                <span class="score-cell {{ 's-high' if sc >= 80 else ('s-mid' if sc >= 60 else 's-low') }}">
+                  {{ "%.1f"|format(sc) }}
+                </span>
+                <div class="score-bar-bg">
+                  <div class="score-bar-fill {{ '' if sc >= 80 else ('mid' if sc >= 60 else 'low') }}"
+                       style="width:{{ sc }}%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="mono {{ 's-high' if b.rs >= 80 else ('s-mid' if b.rs >= 60 else 's-low') }}">
+              {{ "%.1f"|format(b.rs) }}</td>
+            <td class="mono">{{ "%.1f"|format(b.base) }}</td>
+            <td class="mono">{{ "%.1f"|format(b.trend) }}</td>
+            <td class="mono">${{ "%.2f"|format(b.price) }}</td>
+            <td class="mono {{ 'neg' if b.pct_from_high < -10 else 'pos' }}">
+              {{ "%+.1f"|format(b.pct_from_high) }}%</td>
+            <td class="mono {{ 'pos' if b.vol_ratio >= 1.4 else 'neu' }}">
+              {{ "%.2f"|format(b.vol_ratio) }}x</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="11" style="text-align:center;color:var(--text-dim);padding:20px">
+            No breakouts meeting criteria today.
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Sector Performance + Movers ── -->
+  <div class="two-col mt-24">
+
+    <!-- Sectors -->
+    <div class="card">
+      <div class="section-title">Sector Performance</div>
+      <div class="sector-list">
+        {% set max_abs = namespace(val=0.01) %}
+        {% for s in brief.sectors %}
+          {% if s.day_change|abs > max_abs.val %}{% set max_abs.val = s.day_change|abs %}{% endif %}
+        {% endfor %}
+        {% for s in brief.sectors %}
+        <div class="sector-row">
+          <div class="sector-name">{{ s.name }}</div>
+          <div class="sector-bar-wrap">
+            {% set pct = (s.day_change / max_abs.val * 50)|abs %}
+            {% if s.day_change >= 0 %}
+            <div class="sector-bar pos-bar" style="width:{{ pct }}%"></div>
+            {% else %}
+            <div class="sector-bar neg-bar" style="width:{{ pct }}%"></div>
+            {% endif %}
+          </div>
+          <div class="sector-chg {{ 'pos' if s.day_change >= 0 else 'neg' }}">
+            {{ "%+.2f"|format(s.day_change) }}%
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Movers -->
+    <div>
+      <div class="card mb-8" style="margin-bottom:16px">
+        <div class="section-title">Top Gainers</div>
+        <div class="mover-list">
+          {% for m in brief.top_gainers %}
+          <div class="mover-row">
+            <div>
+              <div class="mover-ticker">{{ m.ticker }}</div>
+              <div class="mover-name">{{ m.name }}</div>
+            </div>
+            <div class="mover-chg pos">{{ "%+.2f"|format(m.day_change) }}%</div>
+          </div>
+          {% else %}
+          <div style="color:var(--text-dim);font-size:0.82rem;padding:8px">No data</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Top Losers</div>
+        <div class="mover-list">
+          {% for m in brief.top_losers %}
+          <div class="mover-row">
+            <div>
+              <div class="mover-ticker">{{ m.ticker }}</div>
+              <div class="mover-name">{{ m.name }}</div>
+            </div>
+            <div class="mover-chg neg">{{ "%+.2f"|format(m.day_change) }}%</div>
+          </div>
+          {% else %}
+          <div style="color:var(--text-dim);font-size:0.82rem;padding:8px">No data</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.two-col -->
+
+</div><!-- /.page-wrapper -->
+
+<footer>
+  <div>MorningSignal Research · Generated {{ generated_at }} ·
+    <a href="archive.html">Archive</a> ·
+    Not financial advice. For research purposes only.
+  </div>
+</footer>
+
+</body>
+</html>
