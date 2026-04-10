@@ -143,7 +143,7 @@ def run_market_brief(dry_run: bool = False) -> dict:
     all_symbols = list(INDICES.keys()) + list(SECTORS.keys()) + list(MACRO.keys())
     print(f"Fetching data for {len(all_symbols)} symbols...")
 
-    end = datetime.now()
+    end = datetime.now() + timedelta(days=1)
     start = end - timedelta(days=380)
 
     data = yf.download(
