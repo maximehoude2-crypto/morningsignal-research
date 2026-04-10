@@ -6,8 +6,10 @@ Saves to state/market_brief_YYYY-MM-DD.json.
 import json
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from io import StringIO
 
 import pandas as pd
+import requests
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
@@ -211,7 +213,10 @@ def run_market_brief(dry_run: bool = False) -> dict:
 
     # Top gainers / losers from S&P 500
     try:
-        sp500_tickers = pd.read_html("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")[0]
+        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+        response = requests.get("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies", headers=headers, timeout=10)
+        response.raise_for_status()
+        sp500_tickers = pd.read_html(StringIO(response.text))[0]
         sp500_list = sp500_tickers["Symbol"].tolist()[:100]  # limit for speed
         sp500_data = yf.download(sp500_list, period="2d", auto_adjust=True, progress=False, threads=True)
         moves = []

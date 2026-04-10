@@ -9,9 +9,11 @@ import time
 import hashlib
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from io import StringIO
 
 import pandas as pd
 import numpy as np
+import requests
 
 from scanner.indicators import composite_score
 
@@ -34,7 +36,10 @@ BATCH_SLEEP = 0.1
 
 def _fetch_wikipedia_tickers(url: str, ticker_col: str) -> list[str]:
     try:
-        tables = pd.read_html(url)
+        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        tables = pd.read_html(StringIO(response.text))
         for tbl in tables:
             cols = [c for c in tbl.columns if ticker_col.lower() in str(c).lower()]
             if cols:
