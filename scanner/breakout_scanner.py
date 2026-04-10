@@ -247,14 +247,14 @@ def run_scanner(dry_run: bool = False) -> list[dict]:
         print("ERROR: Could not fetch ticker universe")
         return []
 
-    # Fetch benchmark
+    # Fetch benchmark using Ticker API (avoids MultiIndex issue with yf.download)
+    import yfinance as yf
     print(f"Fetching benchmark ({BENCHMARK})...")
-    bench_data = fetch_prices_batch([BENCHMARK])
-    bench_df = bench_data.get(BENCHMARK)
-    if bench_df is None or bench_df.empty:
+    bench_hist = yf.Ticker(BENCHMARK).history(period="1y")
+    if bench_hist is None or bench_hist.empty:
         print("ERROR: Could not fetch benchmark data")
         return []
-    bench_prices = bench_df["Close"].dropna()
+    bench_prices = bench_hist["Close"].dropna()
 
     # Fetch ticker info (sector/name) from yfinance
     import yfinance as yf

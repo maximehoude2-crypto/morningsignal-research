@@ -36,6 +36,13 @@ def deploy(dry_run: bool = False) -> bool:
         print("  (Skipping actual git operations in dry run mode)")
         return True
 
+    # Remove stale git lock files that can block commits
+    for lock_name in ["HEAD.lock", "index.lock"]:
+        lock_path = BASE_DIR / ".git" / lock_name
+        if lock_path.exists():
+            lock_path.unlink()
+            print(f"  Removed stale lock: {lock_name}")
+
     commands = [
         ["git", "add", "docs/"],
         ["git", "commit", "-m", f"Daily update {today}"],
