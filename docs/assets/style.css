@@ -519,3 +519,144 @@ footer a:hover { color: var(--text); }
   .page-wrapper { padding: 0 14px; }
   .card-grid-4 { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── Market Signal Indicator ── */
+.signal-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+}
+.signal-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.signal-badge {
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  padding: 6px 16px;
+  border-radius: 6px;
+  letter-spacing: 0.06em;
+}
+.signal-risk-on   { background: rgba(0,196,140,0.15); color: var(--green); border: 1px solid rgba(0,196,140,0.3); }
+.signal-risk-off  { background: rgba(255,77,90,0.15);  color: var(--red);   border: 1px solid rgba(255,77,90,0.3); }
+.signal-neutral   { background: rgba(245,166,35,0.15); color: var(--yellow); border: 1px solid rgba(245,166,35,0.3); }
+.signal-score {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.signal-meter { margin-bottom: 16px; }
+.signal-meter-track {
+  height: 8px;
+  background: linear-gradient(90deg, var(--red) 0%, var(--yellow) 50%, var(--green) 100%);
+  border-radius: 4px;
+  position: relative;
+}
+.signal-meter-marker {
+  position: absolute;
+  top: -4px;
+  width: 4px;
+  height: 16px;
+  background: var(--white);
+  border-radius: 2px;
+  transform: translateX(-2px);
+  box-shadow: 0 0 6px rgba(255,255,255,0.5);
+}
+.signal-meter-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+.signal-components {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+.signal-comp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.02);
+  border-radius: var(--radius);
+  font-size: 0.78rem;
+}
+.signal-comp-name {
+  font-weight: 600;
+  color: var(--text-dim);
+  min-width: 70px;
+}
+.signal-comp-detail {
+  flex: 1;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+}
+.signal-comp-score {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+/* ── RRG ── */
+.rrg-q-label {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-right: 6px;
+}
+.rrg-leading    { background: rgba(0,196,140,0.15); color: var(--green); }
+.rrg-weakening  { background: rgba(245,166,35,0.15); color: var(--yellow); }
+.rrg-lagging    { background: rgba(255,77,90,0.15); color: var(--red); }
+.rrg-improving  { background: rgba(59,130,246,0.15); color: var(--blue); }
+.rrg-ticker {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-right: 6px;
+}
+
+/* ── Heatmap ── */
+.heatmap-table {
+  border-collapse: collapse;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  width: 100%;
+}
+.heatmap-table th {
+  padding: 4px 6px;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-align: center;
+  font-weight: 500;
+}
+.heatmap-label {
+  text-align: left;
+  padding: 4px 8px;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.heatmap-cell {
+  text-align: center;
+  padding: 4px 4px;
+  color: var(--white);
+  font-weight: 600;
+  min-width: 36px;
+  border-radius: 2px;
+}
