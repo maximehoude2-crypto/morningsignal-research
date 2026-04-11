@@ -175,6 +175,18 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
   opacity: 0.7;
 }
 
+/* ── Overnight & Global ── */
+.overnight-card {
+  background: linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(138,155,191,0.04) 100%);
+  border: 1px solid rgba(59,130,246,0.15);
+  border-left: 3px solid var(--blue);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+
 /* ── Tape: Sector Bullet Cards ── */
 .tape-summary {
   font-size: 0.92rem;
@@ -225,6 +237,52 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
   font-size: 0.82rem;
   line-height: 1.5;
   color: var(--text-dim);
+}
+
+/* ── Cross-sector linkage ── */
+.tape-cross-sector {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(245,166,35,0.06);
+  border: 1px solid rgba(245,166,35,0.15);
+  border-left: 3px solid var(--yellow);
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+.tape-cross-label {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--yellow);
+  margin-right: 8px;
+}
+
+/* ── Sector annotations ── */
+.sector-row-annotated { margin-bottom: 2px; }
+.sector-annotation {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  padding-left: 152px;
+  margin-top: -2px;
+  margin-bottom: 4px;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* ── Interpretation blocks ── */
+.signal-interp, .factor-interp {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.02);
+  border-radius: var(--radius);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 /* ── Cards & Sections ── */
