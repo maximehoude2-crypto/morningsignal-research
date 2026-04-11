@@ -107,15 +107,72 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
   border-bottom: 1px solid var(--border);
   padding: 28px 24px;
 }
+.hero-strip-up   { border-bottom-color: rgba(0,196,140,0.35); }
+.hero-strip-down { border-bottom-color: rgba(255,77,90,0.35); }
+
 .hero-title {
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--white);
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .hero-subtitle {
   color: var(--text-dim);
   font-size: 0.9rem;
+  font-family: var(--font-mono);
+}
+
+/* Market direction badge in hero */
+.hero-market-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+.hero-badge-up   { background: rgba(0,196,140,0.15); color: var(--green); border: 1px solid rgba(0,196,140,0.3); }
+.hero-badge-down { background: rgba(255,77,90,0.15);  color: var(--red);   border: 1px solid rgba(255,77,90,0.3); }
+
+/* ── Today's Tape (AI narrative card) ── */
+.tape-card {
+  background: linear-gradient(135deg, rgba(59,130,246,0.07) 0%, rgba(0,196,140,0.05) 100%);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--radius-lg);
+  padding: 22px 28px 18px 28px;
+  position: relative;
+}
+.tape-quote-mark {
+  font-size: 4rem;
+  line-height: 1;
+  color: rgba(59,130,246,0.2);
+  font-family: Georgia, serif;
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  pointer-events: none;
+  user-select: none;
+}
+.tape-narrative {
+  font-size: 0.97rem;
+  line-height: 1.8;
+  color: var(--text);
+  font-style: italic;
+  padding-left: 12px;
+}
+.tape-meta {
+  margin-top: 12px;
+  padding-left: 12px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  opacity: 0.7;
 }
 
 /* ── Cards & Sections ── */
