@@ -1,25 +1,25 @@
 /* MorningSignal Research Platform — Stylesheet */
 
 :root {
-  --navy:     #0b111e;
-  --navy-mid: #101827;
-  --navy-light: #1a2332;
-  --card-bg:  #141c2b;
-  --border:   #232e42;
-  --text:     #e2e8f0;
-  --text-dim: #7e8da6;
-  --green:    #10b981;
-  --green-dim:#059669;
+  --navy:     #08090c;
+  --navy-mid: #0e1117;
+  --navy-light: #161a22;
+  --card-bg:  #12151c;
+  --border:   #1e2230;
+  --text:     #d1d5db;
+  --text-dim: #6b7280;
+  --green:    #22c55e;
+  --green-dim:#16a34a;
   --red:      #ef4444;
-  --red-dim:  #b91c1c;
-  --yellow:   #eab308;
-  --blue:     #6366f1;
-  --accent:   #8b5cf6;
-  --white:    #f8fafc;
+  --red-dim:  #dc2626;
+  --yellow:   #d4a017;
+  --blue:     #4f8ff7;
+  --accent:   #d4a017;
+  --white:    #f0f0f2;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Consolas', monospace;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --radius: 6px;
-  --radius-lg: 10px;
+  --radius: 4px;
+  --radius-lg: 6px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -104,12 +104,12 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
 
 /* ── Hero strip ── */
 .hero-strip {
-  background: linear-gradient(135deg, var(--navy-mid) 0%, var(--navy-light) 100%);
+  background: var(--navy-mid);
   border-bottom: 1px solid var(--border);
-  padding: 28px 24px;
+  padding: 24px 24px;
 }
-.hero-strip-up   { border-bottom-color: rgba(16,185,129,0.35); }
-.hero-strip-down { border-bottom-color: rgba(239,68,68,0.35); }
+.hero-strip-up   { border-bottom-color: rgba(34,197,94,0.25); }
+.hero-strip-down { border-bottom-color: rgba(239,68,68,0.25); }
 
 .hero-title {
   font-size: 1.75rem;
@@ -136,14 +136,14 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
   border-radius: 6px;
   letter-spacing: 0.02em;
 }
-.hero-badge-up   { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
-.hero-badge-down { background: rgba(239,68,68,0.15);  color: var(--red);   border: 1px solid rgba(239,68,68,0.3); }
+.hero-badge-up   { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.hero-badge-down { background: rgba(239,68,68,0.1);  color: var(--red);   border: 1px solid rgba(239,68,68,0.2); }
 
 /* ── Today's Tape (AI narrative card) ── */
 .tape-card {
-  background: linear-gradient(135deg, rgba(99,102,241,0.07) 0%, rgba(16,185,129,0.05) 100%);
-  border: 1px solid rgba(99,102,241,0.2);
-  border-left: 4px solid var(--blue);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
   border-radius: var(--radius-lg);
   padding: 22px 28px 18px 28px;
   position: relative;
@@ -151,7 +151,7 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
 .tape-quote-mark {
   font-size: 4rem;
   line-height: 1;
-  color: rgba(99,102,241,0.2);
+  color: rgba(212,160,23,0.15);
   font-family: Georgia, serif;
   position: absolute;
   top: 8px;
@@ -178,13 +178,13 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
 
 /* ── Overnight & Global ── */
 .overnight-card {
-  background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(126,141,166,0.04) 100%);
-  border: 1px solid rgba(99,102,241,0.15);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
   border-left: 3px solid var(--blue);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   padding: 16px 20px;
-  font-size: 0.85rem;
-  line-height: 1.7;
+  font-size: 0.84rem;
+  line-height: 1.75;
   color: var(--text);
 }
 
@@ -209,11 +209,11 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
   border-left: 3px solid;
 }
 .tape-bullet-up {
-  background: rgba(16,185,129,0.06);
+  background: rgba(34,197,94,0.04);
   border-left-color: var(--green);
 }
 .tape-bullet-down {
-  background: rgba(239,68,68,0.06);
+  background: rgba(239,68,68,0.04);
   border-left-color: var(--red);
 }
 .tape-bullet-header {
@@ -244,9 +244,9 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
 .tape-cross-sector {
   margin-top: 12px;
   padding: 12px 16px;
-  background: rgba(234,179,8,0.06);
-  border: 1px solid rgba(234,179,8,0.15);
-  border-left: 3px solid var(--yellow);
+  background: rgba(212,160,23,0.04);
+  border: 1px solid rgba(212,160,23,0.12);
+  border-left: 3px solid var(--accent);
   border-radius: var(--radius);
   font-size: 0.82rem;
   line-height: 1.6;
@@ -364,10 +364,10 @@ nav a:hover, nav a.active { color: var(--text); text-decoration: none; }
   font-weight: 600;
   font-family: var(--font-mono);
 }
-.badge-green  { background: rgba(16,185,129,0.15); color: var(--green); }
-.badge-yellow { background: rgba(234,179,8,0.15); color: var(--yellow); }
-.badge-gray   { background: rgba(126,141,166,0.12); color: var(--text-dim); }
-.badge-red    { background: rgba(239,68,68,0.15); color: var(--red); }
+.badge-green  { background: rgba(34,197,94,0.08); color: var(--green); }
+.badge-yellow { background: rgba(212,160,23,0.08); color: var(--accent); }
+.badge-gray   { background: rgba(107,114,128,0.08); color: var(--text-dim); }
+.badge-red    { background: rgba(239,68,68,0.08); color: var(--red); }
 
 /* ── Breakout Table ── */
 .breakout-table-wrap {
@@ -603,9 +603,9 @@ footer a:hover { color: var(--text); }
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: rgba(234,179,8,0.12);
-  color: var(--yellow);
-  border: 1px solid rgba(234,179,8,0.3);
+  background: rgba(212,160,23,0.08);
+  color: var(--accent);
+  border: 1px solid rgba(212,160,23,0.15);
   border-radius: 4px;
   padding: 2px 8px;
   font-size: 0.7rem;
@@ -641,9 +641,9 @@ footer a:hover { color: var(--text); }
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-.flow-bullish  { background: rgba(16,185,129,0.12); color: var(--green); }
-.flow-bearish  { background: rgba(239,68,68,0.12); color: var(--red); }
-.flow-neutral  { background: rgba(126,141,166,0.12); color: var(--text-dim); }
+.flow-bullish  { background: rgba(34,197,94,0.08); color: var(--green); }
+.flow-bearish  { background: rgba(239,68,68,0.08); color: var(--red); }
+.flow-neutral  { background: rgba(107,114,128,0.08); color: var(--text-dim); }
 .flow-detail {
   font-size: 0.78rem;
   color: var(--text-dim);
@@ -689,9 +689,9 @@ footer a:hover { color: var(--text); }
   border-radius: 6px;
   letter-spacing: 0.06em;
 }
-.signal-risk-on   { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
-.signal-risk-off  { background: rgba(239,68,68,0.15);  color: var(--red);   border: 1px solid rgba(239,68,68,0.3); }
-.signal-neutral   { background: rgba(234,179,8,0.15); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+.signal-risk-on   { background: rgba(34,197,94,0.08); color: var(--green); border: 1px solid rgba(34,197,94,0.15); }
+.signal-risk-off  { background: rgba(239,68,68,0.08);  color: var(--red);   border: 1px solid rgba(239,68,68,0.15); }
+.signal-neutral   { background: rgba(212,160,23,0.08); color: var(--accent); border: 1px solid rgba(212,160,23,0.15); }
 .signal-score {
   font-family: var(--font-mono);
   font-size: 0.85rem;
@@ -699,10 +699,11 @@ footer a:hover { color: var(--text); }
 }
 .signal-meter { margin-bottom: 16px; }
 .signal-meter-track {
-  height: 8px;
-  background: linear-gradient(90deg, var(--red) 0%, var(--yellow) 50%, var(--green) 100%);
-  border-radius: 4px;
+  height: 6px;
+  background: linear-gradient(90deg, var(--red) 0%, var(--accent) 50%, var(--green) 100%);
+  border-radius: 3px;
   position: relative;
+  opacity: 0.7;
 }
 .signal-meter-marker {
   position: absolute;
@@ -764,10 +765,10 @@ footer a:hover { color: var(--text); }
   border-radius: 4px;
   margin-right: 6px;
 }
-.rrg-leading    { background: rgba(16,185,129,0.12); color: var(--green); }
-.rrg-weakening  { background: rgba(234,179,8,0.12); color: var(--yellow); }
-.rrg-lagging    { background: rgba(239,68,68,0.12); color: var(--red); }
-.rrg-improving  { background: rgba(99,102,241,0.12); color: var(--blue); }
+.rrg-leading    { background: rgba(34,197,94,0.08); color: var(--green); }
+.rrg-weakening  { background: rgba(212,160,23,0.08); color: var(--accent); }
+.rrg-lagging    { background: rgba(239,68,68,0.08); color: var(--red); }
+.rrg-improving  { background: rgba(79,143,247,0.08); color: var(--blue); }
 .rrg-ticker {
   display: inline-block;
   font-family: var(--font-mono);
