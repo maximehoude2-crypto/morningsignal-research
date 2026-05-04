@@ -1,0 +1,4330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — Industries 2026-05-03</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <style>
+    .ind-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.78rem; }
+    .ind-table th { text-align:left; padding:8px 10px; color:var(--text-dim); border-bottom:2px solid var(--border); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+    .ind-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .ind-table tr:hover td { background:rgba(157,106,46,0.05); }
+    .ind-table .ind-name { font-family:var(--font-sans); font-weight:600; color:var(--text); }
+    .ind-table .ind-sector { font-family:var(--font-sans); color:var(--text-muted); font-size:0.72rem; }
+    .pos { color:var(--green); font-weight:600; }
+    .neg { color:var(--red); font-weight:600; }
+    .quad-pill { display:inline-block; padding:2px 8px; border-radius:var(--radius-pill); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; }
+    .quad-leading   { background:var(--green-soft); color:var(--green); }
+    .quad-improving { background:var(--blue-soft);  color:var(--blue);  }
+    .quad-weakening { background:var(--yellow-soft); color:var(--yellow); }
+    .quad-lagging   { background:var(--red-soft);   color:var(--red);   }
+
+    .breadth-bar { display:inline-block; width:80px; height:6px; background:var(--border); border-radius:3px; vertical-align:middle; position:relative; overflow:hidden; }
+    .breadth-fill { display:block; height:100%; background:linear-gradient(90deg, var(--blue), var(--green)); }
+
+    .rrg-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; }
+    .rrg-quad-card { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); padding:18px; box-shadow:var(--shadow-sm); }
+    .rrg-quad-card h4 { font-family:var(--font-display); font-weight:700; font-size:1rem; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+    .rrg-quad-card .quad-list { display:flex; flex-direction:column; gap:4px; font-size:0.78rem; }
+    .rrg-quad-card .quad-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(215,208,195,0.4); }
+    .rrg-quad-card .quad-row:last-child { border-bottom:none; }
+    .rrg-quad-card .quad-row .ind-text { color:var(--text); }
+    .rrg-quad-card .quad-row .quad-coord { color:var(--text-muted); font-family:var(--font-mono); font-size:0.7rem; }
+
+    .event-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:14px; }
+    .event-card { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); padding:18px; box-shadow:var(--shadow-sm); }
+    .event-card h4 { font-family:var(--font-display); font-weight:700; font-size:1rem; margin-bottom:6px; }
+    .event-card .event-meta { color:var(--text-muted); font-size:0.72rem; margin-bottom:10px; }
+    .event-card.bull h4 { color:var(--green); }
+    .event-card.bear h4 { color:var(--red); }
+    .event-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(215,208,195,0.4); font-size:0.78rem; }
+    .event-row:last-child { border-bottom:none; }
+    .event-row .meta { color:var(--text-muted); font-size:0.72rem; font-family:var(--font-mono); }
+    .empty-state { color:var(--text-muted); font-style:italic; padding:8px 0; font-size:0.78rem; }
+
+    .rotation-banner { background:linear-gradient(135deg, var(--green-soft), var(--surface)); border-left:4px solid var(--green); border-radius:var(--radius); padding:18px 24px; margin-bottom:18px; box-shadow:var(--shadow-sm); }
+    .rotation-banner.bear { background:linear-gradient(135deg, var(--red-soft), var(--surface)); border-left-color:var(--red); }
+    .rotation-banner h3 { font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text); margin-bottom:6px; }
+    .rotation-banner p { color:var(--text-dim); font-size:0.84rem; }
+
+    .stock-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; }
+    .stock-tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; text-align:center; box-shadow:var(--shadow-sm); }
+    .stock-tile .label { font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; }
+    .stock-tile .count { font-family:var(--font-display); font-size:1.6rem; font-weight:700; }
+    .stock-tile.bull .count { color:var(--green); }
+    .stock-tile.bear .count { color:var(--red); }
+    .stock-tile .tickers { font-family:var(--font-mono); font-size:0.7rem; color:var(--text-muted); margin-top:6px; word-break:break-all; }
+
+    .quad-emoji-leading::before   { content:"●"; color:var(--green); margin-right:6px; }
+    .quad-emoji-improving::before { content:"●"; color:var(--blue); margin-right:6px; }
+    .quad-emoji-weakening::before { content:"●"; color:var(--yellow); margin-right:6px; }
+    .quad-emoji-lagging::before   { content:"●"; color:var(--red); margin-right:6px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="industries.html" class="active">Industries</a>
+      <a href="weekly.html">Weekly</a>
+      <a href="podcast.html">Podcast</a>
+      <a href="earnings.html">Earnings</a>
+      <a href="archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-05-03</div>
+  </div>
+</header>
+
+
+
+
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">Industries · GICS Sub-Industry</div>
+        <div class="hero-title">Industry Rotation &amp; Cross Events</div>
+        <div class="hero-summary">
+          98 industries built from 819 S&amp;P 1500 constituents.
+          Rotation breakouts and moving-average events are flagged for the most recent 5 trading days.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Above 50d: 60%</span>
+          <span class="pill">Above 200d: 58%</span>
+          <span class="pill">0 rotation breakouts</span>
+          <span class="pill">0 industry golden crosses</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+  
+
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Universe Pulse</div>
+        <div class="section-title">Stock-level cross events (last 5 sessions)</div>
+      </div>
+      <div class="section-note">Counts of S&amp;P 1500 constituents triggering each event.</div>
+    </div>
+    <div class="stock-grid">
+      
+      
+      
+      <div class="stock-tile bull">
+        <div class="label">Golden cross</div>
+        <div class="count">9</div>
+        
+        <div class="tickers">CARR · EXPE · SBAC · CHH · PVH · UNM · AOSL · RDN · RXO</div>
+        
+      </div>
+      
+      
+      <div class="stock-tile bear">
+        <div class="label">Death cross</div>
+        <div class="count">15</div>
+        
+        <div class="tickers">ABBV · AMCR · DLTR · F · LOW · MLM · NRG · PHM · WSM · KTOS · OPCH · AEO · EYE · GRBK · MLKN</div>
+        
+      </div>
+      
+      
+      <div class="stock-tile bull">
+        <div class="label">Reclaimed 50d</div>
+        <div class="count">147</div>
+        
+        <div class="tickers">ADBE · AIG · AMT · ACGL · ADM · ADSK · ADP · AZO · BAX · TECH · BIIB · BKNG · BMY · CPT · COF · CNP · CVX · CB · KO · COIN · STZ · CEG · CTVA · COST · CCI</div>
+        
+      </div>
+      
+      
+      <div class="stock-tile bear">
+        <div class="label">Lost 50d</div>
+        <div class="count">128</div>
+        
+        <div class="tickers">ALGN · ACGL · AZO · BAX · BKNG · BMY · COF · CNP · CRL · CVX · CB · CINF · COIN · STZ · CEG · COST · CCI · DVA · DECK · D · EW · EMR · EVRG · EXR · GRMN</div>
+        
+      </div>
+      
+      
+      <div class="stock-tile bull">
+        <div class="label">Reclaimed 200d</div>
+        <div class="count">53</div>
+        
+        <div class="tickers">AIG · APO · ACGL · AVB · CPT · CI · CRH · DDOG · DHI · EMR · FAST · GD · HUM · HBAN · INVH · KR · LII · LLY · MDLZ · NDAQ · NWS · ORLY · PM · PPG · PG</div>
+        
+      </div>
+      
+      
+      <div class="stock-tile bear">
+        <div class="label">Lost 200d</div>
+        <div class="count">53</div>
+        
+        <div class="tickers">ACGL · CPAY · CRH · DECK · DG · DHI · EMR · FAST · F · HSY · HUM · HBAN · ITW · IR · KR · NWS · NRG · ORLY · PM · PPG · PG · PEG · PHM · LUV · V</div>
+        
+      </div>
+      
+      
+      <div class="stock-tile bull">
+        <div class="label">EMA bull cross</div>
+        <div class="count">52</div>
+        
+        <div class="tickers">ADM · ADP · BMY · CNP · CHD · KO · COP · CEG · CTRA · DRI · DVN · D · EW · EOG · EVRG · FSLR · GPN · LYB · MPC · MDLZ · OXY · OKE · PKG · PEP · PSX</div>
+        
+      </div>
+      
+      
+      <div class="stock-tile bear">
+        <div class="label">EMA bear cross</div>
+        <div class="count">78</div>
+        
+        <div class="tickers">A · AIG · AON · ACGL · AJG · BALL · BAX · TECH · BKNG · BLDR · CCL · CRL · CHTR · CMG · CB · CMCSA · STZ · DECK · DD · F · FCX · GPC · HSIC · HWM · ITW</div>
+        
+      </div>
+      
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Relative Rotation Graph</div>
+        <div class="section-title">Industries by RRG quadrant</div>
+      </div>
+      <div class="section-note">Equal-weighted industry index vs SPY (10/10 smoothing).</div>
+    </div>
+    <div class="rrg-grid">
+      
+      
+      <div class="rrg-quad-card">
+        <h4 class="quad-emoji-leading">Leading <span style="color:var(--text-muted);font-weight:500;font-size:0.78rem;">(0)</span></h4>
+        <div class="quad-list">
+        
+          <div class="empty-state">No industries in this quadrant.</div>
+        
+        </div>
+      </div>
+      
+      
+      <div class="rrg-quad-card">
+        <h4 class="quad-emoji-improving">Improving <span style="color:var(--text-muted);font-weight:500;font-size:0.78rem;">(0)</span></h4>
+        <div class="quad-list">
+        
+          <div class="empty-state">No industries in this quadrant.</div>
+        
+        </div>
+      </div>
+      
+      
+      <div class="rrg-quad-card">
+        <h4 class="quad-emoji-weakening">Weakening <span style="color:var(--text-muted);font-weight:500;font-size:0.78rem;">(0)</span></h4>
+        <div class="quad-list">
+        
+          <div class="empty-state">No industries in this quadrant.</div>
+        
+        </div>
+      </div>
+      
+      
+      <div class="rrg-quad-card">
+        <h4 class="quad-emoji-lagging">Lagging <span style="color:var(--text-muted);font-weight:500;font-size:0.78rem;">(0)</span></h4>
+        <div class="quad-list">
+        
+          <div class="empty-state">No industries in this quadrant.</div>
+        
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Moving-Average Events</div>
+        <div class="section-title">Industry-level cross events</div>
+      </div>
+      <div class="section-note">Triggered within the last 5 trading days on the equal-weighted industry index.</div>
+    </div>
+    <div class="event-grid">
+      
+      
+      
+      <div class="event-card bull">
+        <h4>Golden crosses (50d ▲ 200d)</h4>
+        <div class="event-meta">0 industries</div>
+        
+          <div class="empty-state">No industries triggered this event.</div>
+        
+      </div>
+      
+      
+      <div class="event-card bear">
+        <h4>Death crosses (50d ▼ 200d)</h4>
+        <div class="event-meta">2 industries</div>
+        
+          
+          <div class="event-row">
+            <div>
+              <div>Passenger Airlines</div>
+              <div class="meta">Industrials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">4d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.70% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Construction Materials</div>
+              <div class="meta">Materials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">Noned ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+0.70% (5d)</div>
+            </div>
+          </div>
+          
+        
+      </div>
+      
+      
+      <div class="event-card bull">
+        <h4>Reclaimed 50d MA</h4>
+        <div class="event-meta">18 industries</div>
+        
+          
+          <div class="event-row">
+            <div>
+              <div>Building Products</div>
+              <div class="meta">Industrials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.90% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Independent Power Producers & Energy Traders</div>
+              <div class="meta">Utilities</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-0.53% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Hotels, Resorts & Cruise Lines</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-2.01% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Specialty Chemicals</div>
+              <div class="meta">Materials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+0.88% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Electric Utilities</div>
+              <div class="meta">Utilities</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+0.04% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Automotive Parts & Equipment</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.97% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Restaurants</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-2.19% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Homebuilding</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-5.39% (5d)</div>
+            </div>
+          </div>
+          
+        
+      </div>
+      
+      
+      <div class="event-card bear">
+        <h4>Lost 50d MA</h4>
+        <div class="event-meta">16 industries</div>
+        
+          
+          <div class="event-row">
+            <div>
+              <div>Building Products</div>
+              <div class="meta">Industrials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.90% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Independent Power Producers & Energy Traders</div>
+              <div class="meta">Utilities</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-0.53% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Hotels, Resorts & Cruise Lines</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-2.01% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Specialty Chemicals</div>
+              <div class="meta">Materials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+0.88% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Multi-Utilities</div>
+              <div class="meta">Utilities</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+1.51% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Automotive Parts & Equipment</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.97% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Homebuilding</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-5.39% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Electronic Equipment & Instruments</div>
+              <div class="meta">Information Technology</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-0.70% (5d)</div>
+            </div>
+          </div>
+          
+        
+      </div>
+      
+      
+      <div class="event-card bull">
+        <h4>Reclaimed 200d MA</h4>
+        <div class="event-meta">9 industries</div>
+        
+          
+          <div class="event-row">
+            <div>
+              <div>Independent Power Producers & Energy Traders</div>
+              <div class="meta">Utilities</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-0.53% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Movies & Entertainment</div>
+              <div class="meta">Communication Services</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-0.04% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Food Distributors</div>
+              <div class="meta">Consumer Staples</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.57% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Restaurants</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-2.19% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Telecom Tower REITs</div>
+              <div class="meta">Real Estate</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+1.54% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Multi-Family Residential REITs</div>
+              <div class="meta">Real Estate</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+3.82% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Single-Family Residential REITs</div>
+              <div class="meta">Real Estate</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+2.78% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Asset Management & Custody Banks</div>
+              <div class="meta">Financials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">4d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+2.25% (5d)</div>
+            </div>
+          </div>
+          
+        
+      </div>
+      
+      
+      <div class="event-card bear">
+        <h4>Lost 200d MA</h4>
+        <div class="event-meta">11 industries</div>
+        
+          
+          <div class="event-row">
+            <div>
+              <div>Health Care Facilities</div>
+              <div class="meta">Health Care</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-3.48% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Asset Management & Custody Banks</div>
+              <div class="meta">Financials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+2.25% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Building Products</div>
+              <div class="meta">Industrials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.90% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Independent Power Producers & Energy Traders</div>
+              <div class="meta">Utilities</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-0.53% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Hotels, Resorts & Cruise Lines</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-2.01% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Investment Banking & Brokerage</div>
+              <div class="meta">Financials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.52% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Restaurants</div>
+              <div class="meta">Consumer Discretionary</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-2.19% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Movies & Entertainment</div>
+              <div class="meta">Communication Services</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-0.04% (5d)</div>
+            </div>
+          </div>
+          
+        
+      </div>
+      
+      
+      <div class="event-card bull">
+        <h4>EMA(12/26) bull cross</h4>
+        <div class="event-meta">6 industries</div>
+        
+          
+          <div class="event-row">
+            <div>
+              <div>Multi-Utilities</div>
+              <div class="meta">Utilities</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+1.51% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Oil & Gas Refining & Marketing</div>
+              <div class="meta">Energy</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">1d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+6.76% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Oil & Gas Storage & Transportation</div>
+              <div class="meta">Energy</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+4.07% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Oil & Gas Exploration & Production</div>
+              <div class="meta">Energy</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">4d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+4.57% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Electric Utilities</div>
+              <div class="meta">Utilities</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">0d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+0.04% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Soft Drinks & Non-alcoholic Beverages</div>
+              <div class="meta">Consumer Staples</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">0d ago</div>
+              <div class="pos" style="font-family:var(--font-mono);font-size:0.75rem;">+0.83% (5d)</div>
+            </div>
+          </div>
+          
+        
+      </div>
+      
+      
+      <div class="event-card bear">
+        <h4>EMA(12/26) bear cross</h4>
+        <div class="event-meta">6 industries</div>
+        
+          
+          <div class="event-row">
+            <div>
+              <div>Real Estate Services</div>
+              <div class="meta">Real Estate</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">2d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-3.15% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Passenger Airlines</div>
+              <div class="meta">Industrials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">3d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.70% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Life Sciences Tools & Services</div>
+              <div class="meta">Health Care</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">4d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-0.66% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Consumer Staples Merchandise Retail</div>
+              <div class="meta">Consumer Staples</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">4d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-2.34% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Research & Consulting Services</div>
+              <div class="meta">Industrials</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">4d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.66% (5d)</div>
+            </div>
+          </div>
+          
+          <div class="event-row">
+            <div>
+              <div>Food Distributors</div>
+              <div class="meta">Consumer Staples</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">4d ago</div>
+              <div class="neg" style="font-family:var(--font-mono);font-size:0.75rem;">-1.57% (5d)</div>
+            </div>
+          </div>
+          
+        
+      </div>
+      
+    </div>
+  </div>
+
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Leaderboard</div>
+        <div class="section-title">All industries (98)</div>
+      </div>
+      <div class="section-note">Sorted by 1-day return. Breadth columns show % of constituents above the 50d / 200d MA.</div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="ind-table">
+        <thead>
+          <tr>
+            <th>Industry</th>
+            <th>Sector</th>
+            <th>n</th>
+            <th>1d</th>
+            <th>5d</th>
+            <th>MTD</th>
+            <th>YTD</th>
+            <th>Quadrant</th>
+            <th>Rotation</th>
+            <th>%&gt;50d</th>
+            <th>%&gt;200d</th>
+            <th>Events</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Technology Hardware, Storage & Peripherals</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>11</td>
+            <td class="pos">+5.36</td>
+            <td class="pos">+14.53</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+154.28</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:90.9%"></span></span>
+              <span style="margin-left:6px">91%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:72.7%"></span></span>
+              <span style="margin-left:6px">73%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Systems Software</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>11</td>
+            <td class="pos">+5.26</td>
+            <td class="pos">+4.94</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-4.11</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:63.6%"></span></span>
+              <span style="margin-left:6px">64%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:27.3%"></span></span>
+              <span style="margin-left:6px">27%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Internet Services & Infrastructure</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>4</td>
+            <td class="pos">+4.04</td>
+            <td class="pos">+6.49</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+47.64</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Communications Equipment</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>7</td>
+            <td class="pos">+2.96</td>
+            <td class="pos">+3.55</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+90.85</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:71.4%"></span></span>
+              <span style="margin-left:6px">71%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:85.7%"></span></span>
+              <span style="margin-left:6px">86%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Application Software</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>29</td>
+            <td class="pos">+2.61</td>
+            <td class="pos">+1.62</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-19.02</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:51.7%"></span></span>
+              <span style="margin-left:6px">52%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:10.3%"></span></span>
+              <span style="margin-left:6px">10%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Construction & Engineering</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>7</td>
+            <td class="pos">+2.09</td>
+            <td class="pos">+6.58</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+49.38</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:85.7%"></span></span>
+              <span style="margin-left:6px">86%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:85.7%"></span></span>
+              <span style="margin-left:6px">86%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Human Resource & Employment Services</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>3</td>
+            <td class="pos">+1.67</td>
+            <td class="pos">+6.63</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-17.53</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Paper & Plastic Packaging Products & Materials</span></td>
+            <td><span class="ind-sector">Materials</span></td>
+            <td>7</td>
+            <td class="pos">+1.60</td>
+            <td class="neg">-0.67</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-8.56</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:14.3%"></span></span>
+              <span style="margin-left:6px">14%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:14.3%"></span></span>
+              <span style="margin-left:6px">14%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Health Care Technology</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>3</td>
+            <td class="pos">+1.56</td>
+            <td class="pos">+6.16</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-17.48</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Passenger Airlines</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>5</td>
+            <td class="pos">+1.46</td>
+            <td class="neg">-1.70</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-13.65</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:40.0%"></span></span>
+              <span style="margin-left:6px">40%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:40.0%"></span></span>
+              <span style="margin-left:6px">40%</span>
+            </td>
+            <td>
+              
+              <span class="quad-pill quad-lagging">DC</span>
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-lagging">EMA↓</span>
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Semiconductors</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>22</td>
+            <td class="pos">+1.22</td>
+            <td class="pos">+1.70</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+53.53</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:95.5%"></span></span>
+              <span style="margin-left:6px">96%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Electronic Manufacturing Services</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>6</td>
+            <td class="pos">+1.18</td>
+            <td class="pos">+1.79</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+62.06</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:83.3%"></span></span>
+              <span style="margin-left:6px">83%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:83.3%"></span></span>
+              <span style="margin-left:6px">83%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Office REITs</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>5</td>
+            <td class="pos">+1.17</td>
+            <td class="pos">+0.48</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-6.33</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:20.0%"></span></span>
+              <span style="margin-left:6px">20%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Specialized Consumer Services</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>3</td>
+            <td class="pos">+1.16</td>
+            <td class="pos">+6.32</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-4.26</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Interactive Media & Services</span></td>
+            <td><span class="ind-sector">Communication Services</span></td>
+            <td>5</td>
+            <td class="pos">+1.04</td>
+            <td class="pos">+5.76</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+6.95</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:40.0%"></span></span>
+              <span style="margin-left:6px">40%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Broadline Retail</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>5</td>
+            <td class="pos">+1.02</td>
+            <td class="pos">+0.98</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-6.24</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">IT Consulting & Other Services</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>9</td>
+            <td class="pos">+0.95</td>
+            <td class="neg">-0.01</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-35.47</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:22.2%"></span></span>
+              <span style="margin-left:6px">22%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Health Care Supplies</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>8</td>
+            <td class="pos">+0.93</td>
+            <td class="neg">-1.88</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+10.74</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:25.0%"></span></span>
+              <span style="margin-left:6px">25%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:62.5%"></span></span>
+              <span style="margin-left:6px">62%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Financial Exchanges & Data</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>10</td>
+            <td class="pos">+0.89</td>
+            <td class="pos">+0.22</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-3.87</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:60.0%"></span></span>
+              <span style="margin-left:6px">60%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:40.0%"></span></span>
+              <span style="margin-left:6px">40%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Electrical Components & Equipment</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>12</td>
+            <td class="pos">+0.84</td>
+            <td class="pos">+2.02</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+43.62</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:83.3%"></span></span>
+              <span style="margin-left:6px">83%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:91.7%"></span></span>
+              <span style="margin-left:6px">92%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Real Estate Services</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>3</td>
+            <td class="pos">+0.81</td>
+            <td class="neg">-3.15</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-26.18</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-lagging">EMA↓</span>
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Education Services</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>4</td>
+            <td class="pos">+0.73</td>
+            <td class="pos">+2.54</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-7.48</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:25.0%"></span></span>
+              <span style="margin-left:6px">25%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:25.0%"></span></span>
+              <span style="margin-left:6px">25%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Health Care Facilities</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>6</td>
+            <td class="pos">+0.64</td>
+            <td class="neg">-3.48</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-3.01</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              
+              
+              
+              <span class="quad-pill quad-lagging">▼200</span>
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Transaction & Payment Processing Services</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>13</td>
+            <td class="pos">+0.62</td>
+            <td class="pos">+1.32</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-7.19</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:61.5%"></span></span>
+              <span style="margin-left:6px">62%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:15.4%"></span></span>
+              <span style="margin-left:6px">15%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Steel</span></td>
+            <td><span class="ind-sector">Materials</span></td>
+            <td>5</td>
+            <td class="pos">+0.62</td>
+            <td class="pos">+3.05</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+7.14</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Integrated Telecommunication Services</span></td>
+            <td><span class="ind-sector">Communication Services</span></td>
+            <td>3</td>
+            <td class="pos">+0.39</td>
+            <td class="pos">+1.36</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+13.91</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Multi-line Insurance</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>3</td>
+            <td class="pos">+0.38</td>
+            <td class="pos">+1.95</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-0.22</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Data Processing & Outsourced Services</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>4</td>
+            <td class="pos">+0.34</td>
+            <td class="neg">-0.17</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-28.84</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:25.0%"></span></span>
+              <span style="margin-left:6px">25%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Food Retail</span></td>
+            <td><span class="ind-sector">Consumer Staples</span></td>
+            <td>4</td>
+            <td class="pos">+0.29</td>
+            <td class="pos">+2.00</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+16.10</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:50.0%"></span></span>
+              <span style="margin-left:6px">50%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Biotechnology</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>17</td>
+            <td class="pos">+0.27</td>
+            <td class="pos">+1.14</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+2.43</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:41.2%"></span></span>
+              <span style="margin-left:6px">41%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:70.6%"></span></span>
+              <span style="margin-left:6px">71%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Automotive Parts & Equipment</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>6</td>
+            <td class="pos">+0.15</td>
+            <td class="neg">-1.97</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+12.54</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:83.3%"></span></span>
+              <span style="margin-left:6px">83%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:50.0%"></span></span>
+              <span style="margin-left:6px">50%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Retail REITs</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>8</td>
+            <td class="pos">+0.06</td>
+            <td class="pos">+0.51</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+13.75</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:87.5%"></span></span>
+              <span style="margin-left:6px">88%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Specialty Chemicals</span></td>
+            <td><span class="ind-sector">Materials</span></td>
+            <td>10</td>
+            <td class="pos">+0.04</td>
+            <td class="pos">+0.88</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+19.30</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:40.0%"></span></span>
+              <span style="margin-left:6px">40%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:70.0%"></span></span>
+              <span style="margin-left:6px">70%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Investment Banking & Brokerage</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>8</td>
+            <td class="pos">+0.03</td>
+            <td class="neg">-1.52</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-7.55</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:37.5%"></span></span>
+              <span style="margin-left:6px">38%</span>
+            </td>
+            <td>
+              
+              
+              <span class="quad-pill quad-improving">▲200</span>
+              <span class="quad-pill quad-lagging">▼200</span>
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Apparel, Accessories & Luxury Goods</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>7</td>
+            <td class="neg">-0.01</td>
+            <td class="neg">-2.16</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+1.38</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:57.1%"></span></span>
+              <span style="margin-left:6px">57%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:71.4%"></span></span>
+              <span style="margin-left:6px">71%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Pharmaceuticals</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>12</td>
+            <td class="neg">-0.04</td>
+            <td class="pos">+1.41</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+8.03</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:41.7%"></span></span>
+              <span style="margin-left:6px">42%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Mortgage REITs</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>3</td>
+            <td class="neg">-0.11</td>
+            <td class="neg">-1.35</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+1.94</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Hotels, Resorts & Cruise Lines</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>12</td>
+            <td class="neg">-0.14</td>
+            <td class="neg">-2.01</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-3.78</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:50.0%"></span></span>
+              <span style="margin-left:6px">50%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:50.0%"></span></span>
+              <span style="margin-left:6px">50%</span>
+            </td>
+            <td>
+              
+              
+              
+              <span class="quad-pill quad-lagging">▼200</span>
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Automobile Manufacturers</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>3</td>
+            <td class="neg">-0.15</td>
+            <td class="neg">-0.91</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-8.95</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Regional Banks</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>22</td>
+            <td class="neg">-0.16</td>
+            <td class="pos">+1.72</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+7.71</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:95.5%"></span></span>
+              <span style="margin-left:6px">96%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Health Care Equipment</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>21</td>
+            <td class="neg">-0.17</td>
+            <td class="neg">-3.28</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-13.88</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:9.5%"></span></span>
+              <span style="margin-left:6px">10%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:19.0%"></span></span>
+              <span style="margin-left:6px">19%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Health Care Distributors</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>4</td>
+            <td class="neg">-0.17</td>
+            <td class="neg">-2.52</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-4.95</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              
+              
+              
+              <span class="quad-pill quad-lagging">▼200</span>
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Multi-Family Residential REITs</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>7</td>
+            <td class="neg">-0.18</td>
+            <td class="pos">+3.82</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-0.30</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:71.4%"></span></span>
+              <span style="margin-left:6px">71%</span>
+            </td>
+            <td>
+              
+              
+              <span class="quad-pill quad-improving">▲200</span>
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Publishing</span></td>
+            <td><span class="ind-sector">Communication Services</span></td>
+            <td>3</td>
+            <td class="neg">-0.18</td>
+            <td class="pos">+0.13</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+11.61</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Semiconductor Materials & Equipment</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>10</td>
+            <td class="neg">-0.20</td>
+            <td class="neg">-6.76</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+53.33</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:90.0%"></span></span>
+              <span style="margin-left:6px">90%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:90.0%"></span></span>
+              <span style="margin-left:6px">90%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Health Care REITs</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>5</td>
+            <td class="neg">-0.25</td>
+            <td class="pos">+2.51</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+10.26</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Apparel Retail</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>6</td>
+            <td class="neg">-0.25</td>
+            <td class="neg">-1.89</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-8.88</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Home Improvement Retail</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>3</td>
+            <td class="neg">-0.30</td>
+            <td class="neg">-3.30</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-9.49</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Movies & Entertainment</span></td>
+            <td><span class="ind-sector">Communication Services</span></td>
+            <td>8</td>
+            <td class="neg">-0.30</td>
+            <td class="neg">-0.04</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+1.92</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:62.5%"></span></span>
+              <span style="margin-left:6px">62%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:37.5%"></span></span>
+              <span style="margin-left:6px">38%</span>
+            </td>
+            <td>
+              
+              
+              <span class="quad-pill quad-improving">▲200</span>
+              <span class="quad-pill quad-lagging">▼200</span>
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Life & Health Insurance</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>7</td>
+            <td class="neg">-0.31</td>
+            <td class="pos">+1.79</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+4.40</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:85.7%"></span></span>
+              <span style="margin-left:6px">86%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Electronic Components</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>3</td>
+            <td class="neg">-0.32</td>
+            <td class="neg">-5.18</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+52.83</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Trading Companies & Distributors</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>6</td>
+            <td class="neg">-0.32</td>
+            <td class="pos">+3.74</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+15.32</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Soft Drinks & Non-alcoholic Beverages</span></td>
+            <td><span class="ind-sector">Consumer Staples</span></td>
+            <td>6</td>
+            <td class="neg">-0.33</td>
+            <td class="pos">+0.83</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+5.18</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:83.3%"></span></span>
+              <span style="margin-left:6px">83%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-leading">EMA↑</span>
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Electronic Equipment & Instruments</span></td>
+            <td><span class="ind-sector">Information Technology</span></td>
+            <td>7</td>
+            <td class="neg">-0.33</td>
+            <td class="neg">-0.70</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+10.20</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:57.1%"></span></span>
+              <span style="margin-left:6px">57%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:42.9%"></span></span>
+              <span style="margin-left:6px">43%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Diversified Support Services</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>5</td>
+            <td class="neg">-0.37</td>
+            <td class="neg">-0.72</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+0.45</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:40.0%"></span></span>
+              <span style="margin-left:6px">40%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:20.0%"></span></span>
+              <span style="margin-left:6px">20%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Personal Care Products</span></td>
+            <td><span class="ind-sector">Consumer Staples</span></td>
+            <td>5</td>
+            <td class="neg">-0.37</td>
+            <td class="neg">-1.59</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-15.68</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:20.0%"></span></span>
+              <span style="margin-left:6px">20%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Independent Power Producers & Energy Traders</span></td>
+            <td><span class="ind-sector">Utilities</span></td>
+            <td>3</td>
+            <td class="neg">-0.38</td>
+            <td class="neg">-0.53</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-5.08</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              
+              
+              <span class="quad-pill quad-improving">▲200</span>
+              <span class="quad-pill quad-lagging">▼200</span>
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Consumer Finance</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>5</td>
+            <td class="neg">-0.38</td>
+            <td class="pos">+0.09</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-3.41</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:60.0%"></span></span>
+              <span style="margin-left:6px">60%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Asset Management & Custody Banks</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>17</td>
+            <td class="neg">-0.41</td>
+            <td class="pos">+2.25</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-2.90</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:94.1%"></span></span>
+              <span style="margin-left:6px">94%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:47.1%"></span></span>
+              <span style="margin-left:6px">47%</span>
+            </td>
+            <td>
+              
+              
+              <span class="quad-pill quad-improving">▲200</span>
+              <span class="quad-pill quad-lagging">▼200</span>
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Single-Family Residential REITs</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>3</td>
+            <td class="neg">-0.42</td>
+            <td class="pos">+2.78</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+3.84</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              <span class="quad-pill quad-improving">▲200</span>
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Telecom Tower REITs</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>3</td>
+            <td class="neg">-0.44</td>
+            <td class="pos">+1.54</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+7.02</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              
+              
+              <span class="quad-pill quad-improving">▲200</span>
+              <span class="quad-pill quad-lagging">▼200</span>
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Self-Storage REITs</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>3</td>
+            <td class="neg">-0.44</td>
+            <td class="neg">-1.44</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+26.27</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Hotel & Resort REITs</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>4</td>
+            <td class="neg">-0.44</td>
+            <td class="pos">+1.16</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+15.22</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Life Sciences Tools & Services</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>12</td>
+            <td class="neg">-0.56</td>
+            <td class="neg">-0.66</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-17.72</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:16.7%"></span></span>
+              <span style="margin-left:6px">17%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:8.3%"></span></span>
+              <span style="margin-left:6px">8%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-lagging">EMA↓</span>
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Industrial REITs</span></td>
+            <td><span class="ind-sector">Real Estate</span></td>
+            <td>4</td>
+            <td class="neg">-0.56</td>
+            <td class="pos">+0.03</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+5.30</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Rail Transportation</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>3</td>
+            <td class="neg">-0.61</td>
+            <td class="neg">-0.92</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+16.89</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Electric Utilities</span></td>
+            <td><span class="ind-sector">Utilities</span></td>
+            <td>16</td>
+            <td class="neg">-0.63</td>
+            <td class="pos">+0.04</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+6.90</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:50.0%"></span></span>
+              <span style="margin-left:6px">50%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:81.2%"></span></span>
+              <span style="margin-left:6px">81%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              <span class="quad-pill quad-leading">EMA↑</span>
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Health Care Services</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>10</td>
+            <td class="neg">-0.65</td>
+            <td class="neg">-0.55</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-4.53</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:40.0%"></span></span>
+              <span style="margin-left:6px">40%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Fertilizers & Agricultural Chemicals</span></td>
+            <td><span class="ind-sector">Materials</span></td>
+            <td>3</td>
+            <td class="neg">-0.70</td>
+            <td class="pos">+0.25</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+23.54</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Multi-Utilities</span></td>
+            <td><span class="ind-sector">Utilities</span></td>
+            <td>12</td>
+            <td class="neg">-0.73</td>
+            <td class="pos">+1.51</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+12.07</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              <span class="quad-pill quad-leading">EMA↑</span>
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Broadcasting</span></td>
+            <td><span class="ind-sector">Communication Services</span></td>
+            <td>4</td>
+            <td class="neg">-0.74</td>
+            <td class="pos">+0.07</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-7.90</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:50.0%"></span></span>
+              <span style="margin-left:6px">50%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Diversified Banks</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>7</td>
+            <td class="neg">-0.77</td>
+            <td class="pos">+0.90</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+0.34</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:85.7%"></span></span>
+              <span style="margin-left:6px">86%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:85.7%"></span></span>
+              <span style="margin-left:6px">86%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Managed Health Care</span></td>
+            <td><span class="ind-sector">Health Care</span></td>
+            <td>4</td>
+            <td class="neg">-0.83</td>
+            <td class="pos">+11.34</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+6.11</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Consumer Staples Merchandise Retail</span></td>
+            <td><span class="ind-sector">Consumer Staples</span></td>
+            <td>6</td>
+            <td class="neg">-0.89</td>
+            <td class="neg">-2.34</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+1.09</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:50.0%"></span></span>
+              <span style="margin-left:6px">50%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:50.0%"></span></span>
+              <span style="margin-left:6px">50%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-lagging">EMA↓</span>
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Property & Casualty Insurance</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>15</td>
+            <td class="neg">-0.98</td>
+            <td class="neg">-0.98</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-1.49</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:40.0%"></span></span>
+              <span style="margin-left:6px">40%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:60.0%"></span></span>
+              <span style="margin-left:6px">60%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Casinos & Gaming</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>5</td>
+            <td class="neg">-0.99</td>
+            <td class="pos">+1.95</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-1.93</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:60.0%"></span></span>
+              <span style="margin-left:6px">60%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Packaged Foods & Meats</span></td>
+            <td><span class="ind-sector">Consumer Staples</span></td>
+            <td>13</td>
+            <td class="neg">-1.05</td>
+            <td class="pos">+0.26</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-2.98</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:30.8%"></span></span>
+              <span style="margin-left:6px">31%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:30.8%"></span></span>
+              <span style="margin-left:6px">31%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Aerospace & Defense</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>18</td>
+            <td class="neg">-1.06</td>
+            <td class="pos">+0.09</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-1.94</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:27.8%"></span></span>
+              <span style="margin-left:6px">28%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:44.4%"></span></span>
+              <span style="margin-left:6px">44%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Oil & Gas Storage & Transportation</span></td>
+            <td><span class="ind-sector">Energy</span></td>
+            <td>6</td>
+            <td class="neg">-1.06</td>
+            <td class="pos">+4.07</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+26.46</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:66.7%"></span></span>
+              <span style="margin-left:6px">67%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              
+              <span class="quad-pill quad-leading">EMA↑</span>
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Automotive Retail</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>7</td>
+            <td class="neg">-1.08</td>
+            <td class="pos">+0.62</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+9.81</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:57.1%"></span></span>
+              <span style="margin-left:6px">57%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Oil & Gas Equipment & Services</span></td>
+            <td><span class="ind-sector">Energy</span></td>
+            <td>7</td>
+            <td class="neg">-1.08</td>
+            <td class="neg">-1.26</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+34.30</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:85.7%"></span></span>
+              <span style="margin-left:6px">86%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:85.7%"></span></span>
+              <span style="margin-left:6px">86%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Food Distributors</span></td>
+            <td><span class="ind-sector">Consumer Staples</span></td>
+            <td>3</td>
+            <td class="neg">-1.10</td>
+            <td class="neg">-1.57</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+9.85</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              
+              
+              <span class="quad-pill quad-improving">▲200</span>
+              <span class="quad-pill quad-lagging">▼200</span>
+              
+              
+              
+              <span class="quad-pill quad-lagging">EMA↓</span>
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Building Products</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>15</td>
+            <td class="neg">-1.16</td>
+            <td class="neg">-1.90</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+2.28</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:53.3%"></span></span>
+              <span style="margin-left:6px">53%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:60.0%"></span></span>
+              <span style="margin-left:6px">60%</span>
+            </td>
+            <td>
+              
+              
+              
+              <span class="quad-pill quad-lagging">▼200</span>
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Construction Materials</span></td>
+            <td><span class="ind-sector">Materials</span></td>
+            <td>4</td>
+            <td class="neg">-1.16</td>
+            <td class="pos">+0.70</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+1.89</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:75.0%"></span></span>
+              <span style="margin-left:6px">75%</span>
+            </td>
+            <td>
+              
+              <span class="quad-pill quad-lagging">DC</span>
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Oil & Gas Exploration & Production</span></td>
+            <td><span class="ind-sector">Energy</span></td>
+            <td>18</td>
+            <td class="neg">-1.18</td>
+            <td class="pos">+4.57</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+35.69</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:72.2%"></span></span>
+              <span style="margin-left:6px">72%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:94.4%"></span></span>
+              <span style="margin-left:6px">94%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-leading">EMA↑</span>
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Other Specialty Retail</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>4</td>
+            <td class="neg">-1.26</td>
+            <td class="neg">-4.72</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-19.38</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Construction Machinery & Heavy Transportation Equipment</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>5</td>
+            <td class="neg">-1.32</td>
+            <td class="pos">+0.16</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+29.55</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:80.0%"></span></span>
+              <span style="margin-left:6px">80%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Environmental & Facilities Services</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>4</td>
+            <td class="neg">-1.32</td>
+            <td class="neg">-1.56</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-3.95</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:25.0%"></span></span>
+              <span style="margin-left:6px">25%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Research & Consulting Services</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>6</td>
+            <td class="neg">-1.33</td>
+            <td class="neg">-1.66</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-10.53</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:16.7%"></span></span>
+              <span style="margin-left:6px">17%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:16.7%"></span></span>
+              <span style="margin-left:6px">17%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-lagging">EMA↓</span>
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Industrial Machinery & Supplies & Components</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>23</td>
+            <td class="neg">-1.38</td>
+            <td class="neg">-3.34</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+4.86</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:47.8%"></span></span>
+              <span style="margin-left:6px">48%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:65.2%"></span></span>
+              <span style="margin-left:6px">65%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Oil & Gas Refining & Marketing</span></td>
+            <td><span class="ind-sector">Energy</span></td>
+            <td>4</td>
+            <td class="neg">-1.38</td>
+            <td class="pos">+6.76</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+47.49</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              
+              <span class="quad-pill quad-leading">EMA↑</span>
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Restaurants</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>9</td>
+            <td class="neg">-1.63</td>
+            <td class="neg">-2.19</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+2.95</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:44.4%"></span></span>
+              <span style="margin-left:6px">44%</span>
+            </td>
+            <td>
+              
+              
+              <span class="quad-pill quad-improving">▲200</span>
+              <span class="quad-pill quad-lagging">▼200</span>
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Air Freight & Logistics</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>4</td>
+            <td class="neg">-1.78</td>
+            <td class="neg">-0.51</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+12.08</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Homebuilding</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>7</td>
+            <td class="neg">-1.79</td>
+            <td class="neg">-5.39</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-1.78</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:28.6%"></span></span>
+              <span style="margin-left:6px">29%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:14.3%"></span></span>
+              <span style="margin-left:6px">14%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              <span class="quad-pill quad-improving">▲50</span>
+              <span class="quad-pill quad-weakening">▼50</span>
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Cargo Ground Transportation</span></td>
+            <td><span class="ind-sector">Industrials</span></td>
+            <td>5</td>
+            <td class="neg">-1.79</td>
+            <td class="neg">-1.29</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+32.78</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:100.0%"></span></span>
+              <span style="margin-left:6px">100%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Distributors</span></td>
+            <td><span class="ind-sector">Consumer Discretionary</span></td>
+            <td>3</td>
+            <td class="neg">-1.96</td>
+            <td class="neg">-4.90</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+1.23</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:33.3%"></span></span>
+              <span style="margin-left:6px">33%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Household Products</span></td>
+            <td><span class="ind-sector">Consumer Staples</span></td>
+            <td>4</td>
+            <td class="neg">-1.98</td>
+            <td class="neg">-1.54</td>
+            <td class="pos">+0.00</td>
+            <td class="pos">+4.55</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:50.0%"></span></span>
+              <span style="margin-left:6px">50%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+          
+          
+          
+          <tr>
+            <td><span class="ind-name">Insurance Brokers</span></td>
+            <td><span class="ind-sector">Financials</span></td>
+            <td>8</td>
+            <td class="neg">-1.99</td>
+            <td class="neg">-7.13</td>
+            <td class="pos">+0.00</td>
+            <td class="neg">-21.72</td>
+            <td>—</td>
+            <td>
+              —
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:0.0%"></span></span>
+              <span style="margin-left:6px">0%</span>
+            </td>
+            <td>
+              
+              
+              
+              
+              
+              
+              
+              
+            </td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-05-03 20:24 · Not financial advice.</div>
+</footer>
+</body>
+</html>
