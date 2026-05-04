@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Information Technology</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-05-03 21:13</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Information Technology</div>
+        <div class="hero-title">Information Technology — Committee Report</div>
+        <div class="hero-summary">
+          The Fed remains paused with two cuts priced for H2-2026 but the 2s10s curve has steepened to +80bps as the long end backs up on growing fiscal concerns. Q1 megacap prints came in mostly above on revenue and FX-tailwind helped most names. The standout dynamic this week is software's relative outperfo
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-05-03</span>
+          <span class="pill">189 stocks reviewed</span>
+          <span class="pill">2 reports on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All sectors</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    
+    
+      <div class="diff-banner">
+        <h2>8 changes vs 2026-04-26 <span class="badge">DIFF</span></h2>
+        <div class="diff-grid">
+
+          
+          <div class="diff-cell">
+            <h4>New entrants (1)</h4>
+            
+              
+              <div class="diff-row">
+                <div><span class="ticker">DELL</span> <span class="meta">→ #5</span></div>
+                <div><span class="id-rating-pill rating-buy">BUY</span></div>
+              </div>
+              
+            
+          </div>
+
+          
+          <div class="diff-cell">
+            <h4>Dropouts (1)</h4>
+            
+              
+              <div class="diff-row">
+                <div><span class="ticker">MSFT</span> <span class="meta">was #5</span></div>
+                <div><span class="id-rating-pill rating-buy">BUY</span></div>
+              </div>
+              
+            
+          </div>
+
+          
+          <div class="diff-cell">
+            <h4>Rank moves (2)</h4>
+            
+              
+              <div class="diff-row">
+                <div><span class="ticker">ORCL</span></div>
+                <div>
+                  <span class="meta">#4 →</span>
+                  <span class="arrow-up">#3 (+1)</span>
+                </div>
+              </div>
+              
+              <div class="diff-row">
+                <div><span class="ticker">TSM</span></div>
+                <div>
+                  <span class="meta">#3 →</span>
+                  <span class="arrow-down">#4 (-1)</span>
+                </div>
+              </div>
+              
+            
+          </div>
+
+          
+          <div class="diff-cell">
+            <h4>Rating Δ (1)</h4>
+            
+              
+              <div class="diff-row">
+                <div><span class="ticker">AVGO</span></div>
+                <div>
+                  
+                  
+                  <span class="id-rating-pill rating-buy">BUY</span>
+                  <span class="meta">→</span>
+                  <span class="id-rating-pill rating-strong-buy">STRONG BUY</span>
+                </div>
+              </div>
+              
+            
+          </div>
+
+          
+          <div class="diff-cell" style="grid-column:span 2;">
+            <h4>Conviction deltas (3)</h4>
+            
+              
+              <div class="diff-row">
+                <div><span class="ticker">AVGO</span> <span class="meta">4.0 → 5.0</span></div>
+                <div class="arrow-up">+1.0</div>
+              </div>
+              
+              <div class="diff-row">
+                <div><span class="ticker">ORCL</span> <span class="meta">3.0 → 4.0</span></div>
+                <div class="arrow-up">+1.0</div>
+              </div>
+              
+              <div class="diff-row">
+                <div><span class="ticker">TSM</span> <span class="meta">4.0 → 3.0</span></div>
+                <div class="arrow-down">-1.0</div>
+              </div>
+              
+            
+          </div>
+
+        </div>
+      </div>
+    
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-05-03</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">NVDA</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>9.3/10</td>
+            <td class="thesis-cell">Q4 datacenter +57% YoY, Blackwell ramp on schedule, $35B FCF run-rate, Rubin preview at GTC drove 8% premarket pop</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">AVGO</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.7/10</td>
+            <td class="thesis-cell">Hock Tan disclosed 4th hyperscaler ASIC partner on Q1 call; custom-silicon TAM upgrade to $25B by FY27</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">ORCL</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.2/10</td>
+            <td class="thesis-cell">OCI growth re-accelerated to 54% YoY (vs 51% prior), $145B RPO, AI inference workload share clearly inflecting</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">TSM</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.0/5</td>
+            <td>7.8/10</td>
+            <td class="thesis-cell">3nm sold out, N2 ramping 2H, but Trump's "no Taiwan defense commitment" comments injected geopolitical risk</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">DELL</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.0/5</td>
+            <td>7.3/10</td>
+            <td class="thesis-cell">AI server revenue up 4x, $40B in storage/server backlog, finally getting credit for ISG turnaround</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--green);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Key Sector Call</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">Maintain Overweight Information Technology, intensify the tilt toward picks-and-shovels (NVDA, AVGO, ORCL infrastructure) and trim TSM on rising geopolitical risk premium. AVGO upgraded from BUY to STRONG BUY following the disclosed 4th-customer ASIC win — the custom-silicon TAM is now believed to be materially larger than consensus models. MSFT drops out of the top 5 on Copilot-monetisation concerns; replaced by DELL.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">ORCL — Quant/Factor and MomentumPulse rate it 5 (multi-quarter momentum acceleration), while Credit/Risk rates it 2 (capex-debt is now $35B, levered FCF is concerning). Resolution comes at June 11 OCI-day where management will discuss capex-funding plan in detail.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--blue);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Where We Differ from Consensus</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">DELL — consensus is HOLD; we are BUY at conviction 3. The market is pricing DELL on PC-cycle dynamics, but ISG (servers) is now 60% of operating profit and the AI-server orderbook is largely opaque. We see this as a multi-quarter re-rating opportunity.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--red);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">What We're Probably Wrong About</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">TSM downgrade may be too aggressive — the geopolitical risk has been present for years and the operational story is unchanged. If Trump tones down Taiwan rhetoric, this is a snap-back BUY back to conviction 4 within a quarter.</div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 5 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · NVDA — NVIDIA Corporation</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-strong-buy">STRONG BUY</span> · 
+        Conviction 5.0/5 · 
+        Composite 9.3/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>The Rubin GTC preview revealed an aggressive 2027 roadmap with 3x perf-per-watt improvement, materially reducing the addressable risk that hyperscalers might design around NVDA. Datacenter revenue compounded 57% YoY in Q4. CUDA software moat is now multi-year. Q1 setup is favorable: Blackwell sequential ramp + China resumption + Networking attach upgrade.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>At 36x forward earnings the stock is priced for perfection. Any softness in hyperscaler capex commentary at Q1 prints creates a 20% drawdown risk. Custom-silicon (AVGO ASICs, AMD MI400, Apple/Google in-house) is a real long-tail share-loss risk.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Will the Q1 datacenter print exceed the high-end of guidance ($45B), or merely meet it?</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#2 · AVGO — Broadcom Inc.</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-strong-buy">STRONG BUY</span> · 
+        Conviction 5.0/5 · 
+        Composite 8.7/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>The Q1 disclosure of a 4th hyperscaler ASIC customer (rumored to be Apple or Tesla) re-rates the custom-silicon TAM. Hock Tan now expects $25B run-rate by FY27, up from $20B prior. VMware integration tracking ahead. Connectivity (Tomahawk-6) cleaning up share.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Multiple has now fully re-rated to 30x forward. Any execution stumble on the new ASIC partner ramp could trigger a 25% drawdown.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Is the 4th customer truly incremental TAM, or partially cannibalising existing customers?</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#3 · ORCL — Oracle Corporation</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 4.0/5 · 
+        Composite 8.2/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>OCI growth re-accelerated to 54% YoY in Q1 (vs 51% prior quarter), with $145B RPO and clear visibility into FY27. Inference workload share gains are now showing up in renewal rates.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Net debt has ballooned to $80B following capex spend. Free cash flow is currently negative on a levered basis.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Is the capex-funded growth sustainable, or does ORCL hit a debt ceiling?</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#4 · TSM — Taiwan Semiconductor</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 3.0/5 · 
+        Composite 7.8/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>3nm sold out through 2026, N2 ramping in 2H, 53% gross margin guide intact. Operationally the story is unchanged.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Trump's "no Taiwan defense commitment" comments at the campaign event injected fresh geopolitical risk. The 'security premium' narrative is now in question.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Does the geopolitical discount widen further, or does it normalise after the election cycle?</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#5 · DELL — Dell Technologies</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 3.0/5 · 
+        Composite 7.3/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>AI server revenue up 4x YoY, $40B in storage/server backlog. ISG (servers + storage) is now 60% of operating profit and growing.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Margin profile is structurally lower than PUMA peers. AI server gross margins are running 14%, well below NVDA's 75%.</p>
+      </div>
+      
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">History</div>
+        <div class="section-title">Past committee reports for Information Technology</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="history-list">
+        
+        <div class="h-row">
+          <div>
+            <strong>2026-05-03</strong>
+            <span style="color:var(--text-muted);font-size:0.74rem;margin-left:8px;">189-stock universe</span>
+          </div>
+          <div style="color:var(--text-muted);font-size:0.74rem;">
+            Top picks: NVDA · AVGO · ORCL · TSM · DELL
+          </div>
+        </div>
+        
+        <div class="h-row">
+          <div>
+            <strong>2026-04-26</strong>
+            <span style="color:var(--text-muted);font-size:0.74rem;margin-left:8px;">187-stock universe</span>
+          </div>
+          <div style="color:var(--text-muted);font-size:0.74rem;">
+            Top picks: NVDA · AVGO · TSM · ORCL · MSFT
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (6511 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Information Technology Sector Analysis — v2.0
+
+**Report Date:** 2026-05-03
+**Universe:** 189 US-listed stocks above $2B market cap
+**Analyst Team:** 8 Specialists (Fundamental, Quant/Factor, Technical, Macro, Credit/Risk, Sentiment, MomentumPulse, Software/Infrastructure)
+**Market Data As Of:** 2026-05-03
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+### Macro Context
+The Fed remains paused with two cuts priced for H2-2026 but the 2s10s curve has steepened to +80bps as the long end backs up on growing fiscal concerns. Q1 megacap prints came in mostly above on revenue and FX-tailwind helped most names. The standout dynamic this week is software's relative outperformance vs semis: IGV +3.2% vs SMH +0.6% reverses last week's pattern, suggesting either AI-monetisation acceleration or near-term semis exhaustion.
+
+### Top 5 Ranked Stocks
+
+| Rank | Ticker | Rating | Conviction (1-5) | Composite Score | One-Line Thesis |
+|------|--------|--------|------------------|-----------------|-----------------|
+| 1 | NVDA | STRONG BUY | 5 | 9.3 | Q4 datacenter +57% YoY, Blackwell ramp on schedule, $35B FCF run-rate, Rubin preview at GTC drove 8% premarket pop |
+| 2 | AVGO | STRONG BUY | 5 | 8.7 | Hock Tan disclosed 4th hyperscaler ASIC partner on Q1 call; custom-silicon TAM upgrade to $25B by FY27 |
+| 3 | ORCL | BUY | 4 | 8.2 | OCI growth re-accelerated to 54% YoY (vs 51% prior), $145B RPO, AI inference workload share clearly inflecting |
+| 4 | TSM | BUY | 3 | 7.8 | 3nm sold out, N2 ramping 2H, but Trump's "no Taiwan defense commitment" comments injected geopolitical risk |
+| 5 | DELL | BUY | 3 | 7.3 | AI server revenue up 4x, $40B in storage/server backlog, finally getting credit for ISG turnaround |
+
+### Key Sector Call
+Maintain Overweight Information Technology, intensify the tilt toward picks-and-shovels (NVDA, AVGO, ORCL infrastructure) and trim TSM on rising geopolitical risk premium. AVGO upgraded from BUY to STRONG BUY following the disclosed 4th-customer ASIC win — the custom-silicon TAM is now believed to be materially larger than consensus models. MSFT drops out of the top 5 on Copilot-monetisation concerns; replaced by DELL.
+
+### Biggest Disagreement
+ORCL — Quant/Factor and MomentumPulse rate it 5 (multi-quarter momentum acceleration), while Credit/Risk rates it 2 (capex-debt is now $35B, levered FCF is concerning). Resolution comes at June 11 OCI-day where management will discuss capex-funding plan in detail.
+
+### Where We Differ From Consensus
+DELL — consensus is HOLD; we are BUY at conviction 3. The market is pricing DELL on PC-cycle dynamics, but ISG (servers) is now 60% of operating profit and the AI-server orderbook is largely opaque. We see this as a multi-quarter re-rating opportunity.
+
+### What We're Probably Wrong About
+TSM downgrade may be too aggressive — the geopolitical risk has been present for years and the operational story is unchanged. If Trump tones down Taiwan rhetoric, this is a snap-back BUY back to conviction 4 within a quarter.
+
+---
+
+## DETAILED STOCK ANALYSIS
+
+### 1. NVDA — NVIDIA Corporation
+
+**Current Price:** $1,232 | **Market Cap:** $3.01T | **YTD:** +27%
+**Committee Rating:** STRONG BUY
+**Conviction Score:** 5/5 — Top long; structural moat compounding.
+**Composite Score:** 9.3/10
+
+**Bull Case:**
+The Rubin GTC preview revealed an aggressive 2027 roadmap with 3x perf-per-watt improvement, materially reducing the addressable risk that hyperscalers might design around NVDA. Datacenter revenue compounded 57% YoY in Q4. CUDA software moat is now multi-year. Q1 setup is favorable: Blackwell sequential ramp + China resumption + Networking attach upgrade.
+
+**Bear Case:**
+At 36x forward earnings the stock is priced for perfection. Any softness in hyperscaler capex commentary at Q1 prints creates a 20% drawdown risk. Custom-silicon (AVGO ASICs, AMD MI400, Apple/Google in-house) is a real long-tail share-loss risk.
+
+**Key Debate Point:**
+Will the Q1 datacenter print exceed the high-end of guidance ($45B), or merely meet it?
+
+### 2. AVGO — Broadcom Inc.
+
+**Current Price:** $1,890 | **Market Cap:** $885B | **YTD:** +22%
+**Committee Rating:** STRONG BUY
+**Conviction Score:** 5/5 — Upgrade from BUY/4 last week.
+**Composite Score:** 8.7/10
+
+**Bull Case:**
+The Q1 disclosure of a 4th hyperscaler ASIC customer (rumored to be Apple or Tesla) re-rates the custom-silicon TAM. Hock Tan now expects $25B run-rate by FY27, up from $20B prior. VMware integration tracking ahead. Connectivity (Tomahawk-6) cleaning up share.
+
+**Bear Case:**
+Multiple has now fully re-rated to 30x forward. Any execution stumble on the new ASIC partner ramp could trigger a 25% drawdown.
+
+**Key Debate Point:**
+Is the 4th customer truly incremental TAM, or partially cannibalising existing customers?
+
+### 3. ORCL — Oracle Corporation
+
+**Current Price:** $238 | **Market Cap:** $660B | **YTD:** +28%
+**Committee Rating:** BUY
+**Conviction Score:** 4/5 — Upgrade from BUY/3.
+**Composite Score:** 8.2/10
+
+**Bull Case:**
+OCI growth re-accelerated to 54% YoY in Q1 (vs 51% prior quarter), with $145B RPO and clear visibility into FY27. Inference workload share gains are now showing up in renewal rates.
+
+**Bear Case:**
+Net debt has ballooned to $80B following capex spend. Free cash flow is currently negative on a levered basis.
+
+**Key Debate Point:**
+Is the capex-funded growth sustainable, or does ORCL hit a debt ceiling?
+
+### 4. TSM — Taiwan Semiconductor
+
+**Current Price:** $182 | **Market Cap:** $945B | **YTD:** +12%
+**Committee Rating:** BUY
+**Conviction Score:** 3/5 — Downgrade from BUY/4.
+**Composite Score:** 7.8/10
+
+**Bull Case:**
+3nm sold out through 2026, N2 ramping in 2H, 53% gross margin guide intact. Operationally the story is unchanged.
+
+**Bear Case:**
+Trump's "no Taiwan defense commitment" comments at the campaign event injected fresh geopolitical risk. The 'security premium' narrative is now in question.
+
+**Key Debate Point:**
+Does the geopolitical discount widen further, or does it normalise after the election cycle?
+
+### 5. DELL — Dell Technologies
+
+**Current Price:** $147 | **Market Cap:** $103B | **YTD:** +21%
+**Committee Rating:** BUY
+**Conviction Score:** 3/5 — NEW ENTRANT to top 5, replacing MSFT.
+**Composite Score:** 7.3/10
+
+**Bull Case:**
+AI server revenue up 4x YoY, $40B in storage/server backlog. ISG (servers + storage) is now 60% of operating profit and growing.
+
+**Bear Case:**
+Margin profile is structurally lower than PUMA peers. AI server gross margins are running 14%, well below NVDA's 75%.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-05-03 21:13 · Not financial advice.</div>
+</footer>
+</body>
+</html>
