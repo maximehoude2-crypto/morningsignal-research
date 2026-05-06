@@ -1191,11 +1191,8 @@ def run_market_brief(
         print("[DRY RUN] Generating mock market brief...")
         brief = mock_market_brief()
         brief["date"] = today
-        print("  Generating AI market narrative...")
-        brief["narrative"] = _generate_narrative(brief)
-        if not narrative_has_content(brief["narrative"]):
-            print("  Narrative generation returned empty output, using fallback summary")
-            brief["narrative"] = fallback_narrative(brief)
+        print("  Building fallback market narrative (no external API calls)")
+        brief["narrative"] = fallback_narrative(brief)
         out_path = STATE_DIR / "dry_run" / f"market_brief_{today}.json"
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(brief, indent=2))

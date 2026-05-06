@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — Industries {{ report_date }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ prefix|default('') }}assets/style.css">
+  <link rel="icon" href="{{ prefix|default('') }}assets/logo.svg" type="image/svg+xml">
+  <style>
+    .ind-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.78rem; }
+    .ind-table th { text-align:left; padding:8px 10px; color:var(--text-dim); border-bottom:2px solid var(--border); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+    .ind-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .ind-table tr:hover td { background:rgba(157,106,46,0.05); }
+    .ind-table .ind-name { font-family:var(--font-sans); font-weight:600; color:var(--text); }
+    .ind-table .ind-sector { font-family:var(--font-sans); color:var(--text-muted); font-size:0.72rem; }
+    .pos { color:var(--green); font-weight:600; }
+    .neg { color:var(--red); font-weight:600; }
+    .quad-pill { display:inline-block; padding:2px 8px; border-radius:var(--radius-pill); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; }
+    .quad-leading   { background:var(--green-soft); color:var(--green); }
+    .quad-improving { background:var(--blue-soft);  color:var(--blue);  }
+    .quad-weakening { background:var(--yellow-soft); color:var(--yellow); }
+    .quad-lagging   { background:var(--red-soft);   color:var(--red);   }
+
+    .breadth-bar { display:inline-block; width:80px; height:6px; background:var(--border); border-radius:3px; vertical-align:middle; position:relative; overflow:hidden; }
+    .breadth-fill { display:block; height:100%; background:linear-gradient(90deg, var(--blue), var(--green)); }
+
+    .rrg-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; }
+    .rrg-quad-card { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); padding:18px; box-shadow:var(--shadow-sm); }
+    .rrg-quad-card h4 { font-family:var(--font-display); font-weight:700; font-size:1rem; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+    .rrg-quad-card .quad-list { display:flex; flex-direction:column; gap:4px; font-size:0.78rem; }
+    .rrg-quad-card .quad-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(215,208,195,0.4); }
+    .rrg-quad-card .quad-row:last-child { border-bottom:none; }
+    .rrg-quad-card .quad-row .ind-text { color:var(--text); }
+    .rrg-quad-card .quad-row .quad-coord { color:var(--text-muted); font-family:var(--font-mono); font-size:0.7rem; }
+
+    .event-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:14px; }
+    .event-card { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); padding:18px; box-shadow:var(--shadow-sm); }
+    .event-card h4 { font-family:var(--font-display); font-weight:700; font-size:1rem; margin-bottom:6px; }
+    .event-card .event-meta { color:var(--text-muted); font-size:0.72rem; margin-bottom:10px; }
+    .event-card.bull h4 { color:var(--green); }
+    .event-card.bear h4 { color:var(--red); }
+    .event-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(215,208,195,0.4); font-size:0.78rem; }
+    .event-row:last-child { border-bottom:none; }
+    .event-row .meta { color:var(--text-muted); font-size:0.72rem; font-family:var(--font-mono); }
+    .empty-state { color:var(--text-muted); font-style:italic; padding:8px 0; font-size:0.78rem; }
+
+    .rotation-banner { background:linear-gradient(135deg, var(--green-soft), var(--surface)); border-left:4px solid var(--green); border-radius:var(--radius); padding:18px 24px; margin-bottom:18px; box-shadow:var(--shadow-sm); }
+    .rotation-banner.bear { background:linear-gradient(135deg, var(--red-soft), var(--surface)); border-left-color:var(--red); }
+    .rotation-banner h3 { font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text); margin-bottom:6px; }
+    .rotation-banner p { color:var(--text-dim); font-size:0.84rem; }
+
+    .stock-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; }
+    .stock-tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; text-align:center; box-shadow:var(--shadow-sm); }
+    .stock-tile .label { font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; }
+    .stock-tile .count { font-family:var(--font-display); font-size:1.6rem; font-weight:700; }
+    .stock-tile.bull .count { color:var(--green); }
+    .stock-tile.bear .count { color:var(--red); }
+    .stock-tile .tickers { font-family:var(--font-mono); font-size:0.7rem; color:var(--text-muted); margin-top:6px; word-break:break-all; }
+
+    .quad-emoji-leading::before   { content:"●"; color:var(--green); margin-right:6px; }
+    .quad-emoji-improving::before { content:"●"; color:var(--blue); margin-right:6px; }
+    .quad-emoji-weakening::before { content:"●"; color:var(--yellow); margin-right:6px; }
+    .quad-emoji-lagging::before   { content:"●"; color:var(--red); margin-right:6px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="{{ prefix|default('') }}index.html" class="logo">
+      <img src="{{ prefix|default('') }}assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="{{ prefix|default('') }}index.html">Home</a>
+      <a href="{{ prefix|default('') }}dashboard.html">Dashboard</a>
+      <a href="{{ prefix|default('') }}industries.html" class="active">Industries</a>
+      <a href="{{ prefix|default('') }}investordebate.html">Debate</a>
+      <a href="{{ prefix|default('') }}weekly.html">Weekly</a>
+      <a href="{{ prefix|default('') }}podcast.html">Podcast</a>
+      <a href="{{ prefix|default('') }}earnings.html">Earnings</a>
+      <a href="{{ prefix|default('') }}archive.html">Archive</a>
+    </nav>
+    <div class="header-date">{{ report_date }}</div>
+  </div>
+</header>
+
+{% set summary = data.get('summary', {}) %}
+{% set rotation_breakouts = summary.get('rotation_breakouts') or [] %}
+{% set rotation = data.get('rotation', {}) %}
+{% set events = data.get('industry_events', {}) %}
+{% set stock_events = data.get('stock_events', {}) %}
+{% set stock_breadth = data.get('stock_breadth', {}) %}
+{% set industries = data.get('industries', []) %}
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">Industries · GICS Sub-Industry</div>
+        <div class="hero-title">Industry Rotation &amp; Cross Events</div>
+        <div class="hero-summary">
+          {{ summary.get('n_industries', 0) }} industries built from {{ summary.get('n_constituents', 0) }} S&amp;P 1500 constituents.
+          Rotation breakouts and moving-average events are flagged for the most recent 5 trading days.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Above 50d: {{ "%.0f"|format(stock_breadth.get('pct_above_50d', 0)) }}%</span>
+          <span class="pill">Above 200d: {{ "%.0f"|format(stock_breadth.get('pct_above_200d', 0)) }}%</span>
+          <span class="pill">{{ rotation_breakouts|length }} rotation breakouts</span>
+          <span class="pill">{{ events.get('golden_cross', [])|length }} industry golden crosses</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  {# ── Rotation banners (top hits) ─────────────────────────────────────── #}
+  {% if rotation.get('rotation_breakout') %}
+  <div class="rotation-banner">
+    <h3>Rotation breakouts ({{ rotation['rotation_breakout']|length }})</h3>
+    <p>Industries that just crossed into the <strong>Leading</strong> RRG quadrant in the last 5 sessions: {{ rotation['rotation_breakout']|join(' · ') }}.</p>
+  </div>
+  {% endif %}
+  {% if rotation.get('rotation_breakdown') %}
+  <div class="rotation-banner bear">
+    <h3>Rotation breakdowns ({{ rotation['rotation_breakdown']|length }})</h3>
+    <p>Industries that just dropped into the <strong>Lagging</strong> quadrant: {{ rotation['rotation_breakdown']|join(' · ') }}.</p>
+  </div>
+  {% endif %}
+
+  {# ── Universe-level stock event tiles ────────────────────────────────── #}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Universe Pulse</div>
+        <div class="section-title">Stock-level cross events (last 5 sessions)</div>
+      </div>
+      <div class="section-note">Counts of S&amp;P 1500 constituents triggering each event.</div>
+    </div>
+    <div class="stock-grid">
+      {% set tile_specs = [
+        ('Golden cross', 'golden_cross', 'bull'),
+        ('Death cross',  'death_cross',  'bear'),
+        ('Reclaimed 50d', 'reclaim_50d', 'bull'),
+        ('Lost 50d',      'lost_50d',    'bear'),
+        ('Reclaimed 200d','reclaim_200d','bull'),
+        ('Lost 200d',     'lost_200d',   'bear'),
+        ('EMA bull cross','ema_bull_cross','bull'),
+        ('EMA bear cross','ema_bear_cross','bear'),
+      ] %}
+      {% for label, key, klass in tile_specs %}
+      {% set bucket = stock_events.get(key, {'count': 0, 'tickers': []}) %}
+      <div class="stock-tile {{ klass }}">
+        <div class="label">{{ label }}</div>
+        <div class="count">{{ bucket.count }}</div>
+        {% if bucket.tickers %}
+        <div class="tickers">{{ bucket.tickers|join(' · ') }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── RRG quadrants ──────────────────────────────────────────────────── #}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Relative Rotation Graph</div>
+        <div class="section-title">Industries by RRG quadrant</div>
+      </div>
+      <div class="section-note">Equal-weighted industry index vs SPY (10/10 smoothing).</div>
+    </div>
+    <div class="rrg-grid">
+      {% for quad_name, quad_class in [('Leading','leading'),('Improving','improving'),('Weakening','weakening'),('Lagging','lagging')] %}
+      {% set members = industries|selectattr('rrg')|selectattr('rrg.quadrant','equalto', quad_name)|list %}
+      <div class="rrg-quad-card">
+        <h4 class="quad-emoji-{{ quad_class }}">{{ quad_name }} <span style="color:var(--text-muted);font-weight:500;font-size:0.78rem;">({{ members|length }})</span></h4>
+        <div class="quad-list">
+        {% for m in members|sort(attribute='rrg.rs_ratio', reverse=true) %}
+          <div class="quad-row">
+            <div>
+              <div class="ind-text">{{ m.industry }}</div>
+              <div style="color:var(--text-muted);font-size:0.7rem;">{{ m.sector }}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="quad-coord">R {{ "%.1f"|format(m.rrg.rs_ratio) }} · M {{ "%.1f"|format(m.rrg.rs_momentum) }}</div>
+              <div class="{{ 'pos' if m.performance['1d'] >= 0 else 'neg' }}" style="font-family:var(--font-mono);font-size:0.7rem;">{{ "%+.2f"|format(m.performance['1d']) }}%</div>
+            </div>
+          </div>
+        {% else %}
+          <div class="empty-state">No industries in this quadrant.</div>
+        {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── Industry MA Cross Events ───────────────────────────────────────── #}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Moving-Average Events</div>
+        <div class="section-title">Industry-level cross events</div>
+      </div>
+      <div class="section-note">Triggered within the last 5 trading days on the equal-weighted industry index.</div>
+    </div>
+    <div class="event-grid">
+      {% set event_specs = [
+        ('Golden crosses (50d ▲ 200d)', 'golden_cross', 'bull'),
+        ('Death crosses (50d ▼ 200d)',  'death_cross',  'bear'),
+        ('Reclaimed 50d MA',  'reclaim_50d', 'bull'),
+        ('Lost 50d MA',       'lost_50d',    'bear'),
+        ('Reclaimed 200d MA', 'reclaim_200d','bull'),
+        ('Lost 200d MA',      'lost_200d',   'bear'),
+        ('EMA(12/26) bull cross', 'ema_bull_cross', 'bull'),
+        ('EMA(12/26) bear cross', 'ema_bear_cross', 'bear'),
+      ] %}
+      {% for label, key, klass in event_specs %}
+      {% set rows = events.get(key, []) %}
+      <div class="event-card {{ klass }}">
+        <h4>{{ label }}</h4>
+        <div class="event-meta">{{ rows|length }} industr{{ 'y' if rows|length == 1 else 'ies' }}</div>
+        {% if rows %}
+          {% for r in rows[:8] %}
+          <div class="event-row">
+            <div>
+              <div>{{ r.industry }}</div>
+              <div class="meta">{{ r.sector }}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="meta">{{ r.age }}d ago</div>
+              <div class="{{ 'pos' if r.perf_5d >= 0 else 'neg' }}" style="font-family:var(--font-mono);font-size:0.75rem;">{{ "%+.2f"|format(r.perf_5d) }}% (5d)</div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">No industries triggered this event.</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── Full leaderboard ──────────────────────────────────────────────── #}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Leaderboard</div>
+        <div class="section-title">All industries ({{ industries|length }})</div>
+      </div>
+      <div class="section-note">Sorted by 1-day return. Breadth columns show % of constituents above the 50d / 200d MA.</div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="ind-table">
+        <thead>
+          <tr>
+            <th>Industry</th>
+            <th>Sector</th>
+            <th>n</th>
+            <th>1d</th>
+            <th>5d</th>
+            <th>MTD</th>
+            <th>YTD</th>
+            <th>Quadrant</th>
+            <th>Rotation</th>
+            <th>%&gt;50d</th>
+            <th>%&gt;200d</th>
+            <th>Events</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ind in industries %}
+          {% set ma = ind.ma %}
+          {% set q = ind.rrg.quadrant if ind.rrg else 'N/A' %}
+          {% set qclass = 'quad-leading' if q == 'Leading' else 'quad-improving' if q == 'Improving' else 'quad-weakening' if q == 'Weakening' else 'quad-lagging' if q == 'Lagging' else '' %}
+          <tr>
+            <td><span class="ind-name">{{ ind.industry }}</span></td>
+            <td><span class="ind-sector">{{ ind.sector }}</span></td>
+            <td>{{ ind.n_constituents }}</td>
+            <td class="{{ 'pos' if ind.performance['1d'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['1d']) }}</td>
+            <td class="{{ 'pos' if ind.performance['5d'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['5d']) }}</td>
+            <td class="{{ 'pos' if ind.performance['mtd'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['mtd']) }}</td>
+            <td class="{{ 'pos' if ind.performance['ytd'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['ytd']) }}</td>
+            <td>{% if ind.rrg %}<span class="quad-pill {{ qclass }}">{{ q }}</span>{% else %}—{% endif %}</td>
+            <td>
+              {% if ind.rotation == 'rotation_breakout' %}<span class="quad-pill quad-leading">↑ Breakout</span>
+              {% elif ind.rotation == 'rotation_recovery' %}<span class="quad-pill quad-improving">↑ Recovery</span>
+              {% elif ind.rotation == 'rotation_topping' %}<span class="quad-pill quad-weakening">↓ Topping</span>
+              {% elif ind.rotation == 'rotation_breakdown' %}<span class="quad-pill quad-lagging">↓ Breakdown</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:{{ ind.breadth.pct_above_50d }}%"></span></span>
+              <span style="margin-left:6px">{{ "%.0f"|format(ind.breadth.pct_above_50d) }}%</span>
+            </td>
+            <td>
+              <span class="breadth-bar"><span class="breadth-fill" style="width:{{ ind.breadth.pct_above_200d }}%"></span></span>
+              <span style="margin-left:6px">{{ "%.0f"|format(ind.breadth.pct_above_200d) }}%</span>
+            </td>
+            <td>
+              {% if ma.golden_cross %}<span class="quad-pill quad-leading">GC</span>{% endif %}
+              {% if ma.death_cross %}<span class="quad-pill quad-lagging">DC</span>{% endif %}
+              {% if ma.reclaim_200d %}<span class="quad-pill quad-improving">▲200</span>{% endif %}
+              {% if ma.lost_200d %}<span class="quad-pill quad-lagging">▼200</span>{% endif %}
+              {% if ma.reclaim_50d %}<span class="quad-pill quad-improving">▲50</span>{% endif %}
+              {% if ma.lost_50d %}<span class="quad-pill quad-weakening">▼50</span>{% endif %}
+              {% if ma.ema_bull_cross %}<span class="quad-pill quad-leading">EMA↑</span>{% endif %}
+              {% if ma.ema_bear_cross %}<span class="quad-pill quad-lagging">EMA↓</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated {{ generated_at }} · Not financial advice.</div>
+</footer>
+</body>
+</html>

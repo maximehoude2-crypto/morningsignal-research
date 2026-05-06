@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — Market Dashboard {{ report_date }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Layout primitives ────────────────────────────────────────────── */
+    .dash-grid { display:grid; gap:18px; }
+    .dash-grid.cols-2 { grid-template-columns:repeat(2, 1fr); }
+    .dash-grid.cols-3 { grid-template-columns:repeat(3, 1fr); }
+    .dash-grid.cols-4 { grid-template-columns:repeat(4, 1fr); }
+    .dash-grid.cols-6 { grid-template-columns:repeat(6, 1fr); }
+    @media (max-width: 1100px) {
+      .dash-grid.cols-3, .dash-grid.cols-4, .dash-grid.cols-6 { grid-template-columns:repeat(2, 1fr); }
+    }
+    @media (max-width: 720px) {
+      .dash-grid.cols-2, .dash-grid.cols-3, .dash-grid.cols-4, .dash-grid.cols-6 { grid-template-columns:1fr; }
+    }
+
+    .dash-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:18px; box-shadow:var(--shadow-sm);
+    }
+    .dash-card.dense { padding:14px; }
+    .dash-card .label {
+      font-size:0.7rem; color:var(--text-muted);
+      text-transform:uppercase; letter-spacing:0.06em;
+      font-weight:600; margin-bottom:6px;
+    }
+    .dash-card .value {
+      font-family:var(--font-display); font-weight:700; font-size:1.6rem;
+      line-height:1.1; color:var(--text);
+    }
+    .dash-card .meta {
+      font-family:var(--font-mono); font-size:0.74rem;
+      color:var(--text-muted); margin-top:4px;
+    }
+
+    /* ── Strategist Letter ────────────────────────────────────────────── */
+    .letter {
+      background:linear-gradient(135deg, var(--surface-strong), var(--surface));
+      border:1px solid var(--border-strong); border-radius:var(--radius-lg);
+      padding:30px 36px; box-shadow:var(--shadow-md); margin-bottom:24px;
+    }
+    .letter .eyebrow { color:var(--accent); }
+    .letter h1 {
+      font-family:var(--font-display); font-size:1.8rem; font-weight:700;
+      color:var(--text); margin:8px 0 16px;
+    }
+    .letter .body {
+      font-size:0.96rem; line-height:1.75; color:var(--text);
+      max-width:780px;
+    }
+    .letter .body p { margin-bottom:12px; }
+
+    /* ── Regime gauge ─────────────────────────────────────────────────── */
+    .regime-card .pill-strip {
+      display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;
+    }
+    .regime-pill {
+      font-family:var(--font-mono); font-size:0.72rem;
+      padding:4px 9px; border-radius:var(--radius-pill);
+      background:rgba(157,106,46,0.08); color:var(--text-dim);
+    }
+    .regime-pill.pos { background:var(--green-soft); color:var(--green); }
+    .regime-pill.neg { background:var(--red-soft); color:var(--red); }
+
+    .regime-bar {
+      width:100%; height:8px; background:linear-gradient(90deg, var(--red), var(--yellow), var(--green));
+      border-radius:4px; position:relative; margin:14px 0 6px;
+    }
+    .regime-bar .marker {
+      position:absolute; top:-3px; width:4px; height:14px;
+      background:var(--text); border-radius:2px;
+    }
+
+    /* ── Cross-asset grid ─────────────────────────────────────────────── */
+    .ca-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.78rem; }
+    .ca-table th { text-align:left; padding:6px 8px; color:var(--text-muted); border-bottom:1px solid var(--border); font-weight:600; }
+    .ca-table td { padding:6px 8px; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .ca-table .ca-symbol { font-weight:700; color:var(--text); }
+    .ca-table .ca-label  { font-family:var(--font-sans); color:var(--text-muted); font-size:0.74rem; }
+    .ca-table .pos { color:var(--green); font-weight:600; }
+    .ca-table .neg { color:var(--red); font-weight:600; }
+    .ca-group-header {
+      font-family:var(--font-display); font-weight:700; font-size:0.95rem; color:var(--text);
+      margin:10px 0 6px;
+    }
+
+    /* ── Sector heatmap ───────────────────────────────────────────────── */
+    .heatmap { display:grid; grid-template-columns:repeat(11, 1fr); gap:4px; }
+    .heat-cell {
+      padding:14px 10px; border-radius:8px;
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
+      text-align:center; min-height:90px; color:var(--text);
+    }
+    .heat-cell .h-name { font-family:var(--font-sans); font-weight:600; font-size:0.78rem; }
+    .heat-cell .h-pct  { font-family:var(--font-mono); font-weight:700; font-size:1.1rem; margin-top:4px; }
+    .heat-cell .h-meta { font-family:var(--font-mono); font-size:0.68rem; color:rgba(0,0,0,0.5); margin-top:2px; }
+    @media (max-width: 980px) { .heatmap { grid-template-columns:repeat(4, 1fr); } .heat-cell { min-height:78px; } }
+
+    /* Industries treemap (alternative) */
+    .ind-heat { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:3px; }
+    .ind-heat-cell { padding:10px; border-radius:6px; min-height:60px; display:flex; flex-direction:column; justify-content:center; }
+    .ind-heat-cell .h-name { font-family:var(--font-sans); font-size:0.74rem; font-weight:600; }
+    .ind-heat-cell .h-pct  { font-family:var(--font-mono); font-weight:700; font-size:0.85rem; margin-top:2px; }
+
+    /* ── KPI tiles ─────────────────────────────────────────────────────── */
+    .kpi-tile { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow-sm); }
+    .kpi-tile .kpi-label { font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:600; }
+    .kpi-tile .kpi-value { font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin-top:4px; }
+    .kpi-tile .kpi-meta  { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); margin-top:4px; }
+
+    /* ── RRG & charts ─────────────────────────────────────────────────── */
+    .chart-wrap { position:relative; height:340px; }
+    .chart-wrap-tall { position:relative; height:420px; }
+    .quad-pill { display:inline-block; padding:2px 8px; border-radius:var(--radius-pill); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; }
+    .quad-leading   { background:var(--green-soft); color:var(--green); }
+    .quad-improving { background:var(--blue-soft);  color:var(--blue);  }
+    .quad-weakening { background:var(--yellow-soft); color:var(--yellow); }
+    .quad-lagging   { background:var(--red-soft);   color:var(--red);   }
+
+    /* ── Caption styling ──────────────────────────────────────────────── */
+    .caption {
+      font-size:0.84rem; color:var(--text-dim); line-height:1.6;
+      margin:6px 0 14px; max-width:780px;
+    }
+
+    /* ── Style box ────────────────────────────────────────────────────── */
+    .style-box { display:grid; grid-template-columns:120px repeat(3, 1fr); gap:6px; }
+    .style-box .sb-cell { padding:10px; border:1px solid var(--border); border-radius:8px; text-align:center; background:var(--surface); }
+    .style-box .sb-h { font-family:var(--font-display); font-weight:700; color:var(--text-dim); font-size:0.78rem; }
+
+    /* ── Catalyst ticker ──────────────────────────────────────────────── */
+    .cal-list { font-family:var(--font-mono); font-size:0.78rem; line-height:1.7; }
+    .cal-list .cal-row { display:flex; gap:10px; padding:5px 0; border-bottom:1px solid var(--border); }
+    .cal-list .cal-row:last-child { border-bottom:none; }
+    .cal-list .cal-date { color:var(--text-muted); flex:0 0 70px; }
+    .cal-list .cal-evt { color:var(--text); flex:1; }
+    .cal-list .cal-meta { color:var(--text-muted); flex:0 0 auto; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="industries.html">Industries</a>
+      <a href="investordebate.html">Debate</a>
+      <a href="weekly.html">Weekly</a>
+      <a href="podcast.html">Podcast</a>
+      <a href="earnings.html">Earnings</a>
+      <a href="archive.html">Archive</a>
+    </nav>
+    <div class="header-date">{{ report_date }}</div>
+  </div>
+</header>
+
+{% set narrative = brief.get('narrative', {}) if brief.get('narrative') is mapping else {} %}
+{% set regime = dashboard.get('regime', {}) %}
+{% set extremes = dashboard.get('extremes_52w', {}) %}
+{% set cross_asset = dashboard.get('cross_asset', []) %}
+{% set crowd = dashboard.get('crowdedness', {}) %}
+{% set style = dashboard.get('style_box', {}) %}
+{% set summary = industries.get('summary', {}) %}
+{% set rotation = industries.get('rotation', {}) %}
+{% set ind_events = industries.get('industry_events', {}) %}
+{% set stock_events = industries.get('stock_events', {}) %}
+{% set ind_list = industries.get('industries', []) %}
+{% set sectors = brief.get('sectors', []) %}
+{% set macro = brief.get('macro', {}) %}
+{% set spx = brief.indices.get('SPY', {}) %}
+{% set sig = brief.get('market_signal', {}) %}
+
+<div class="page-wrapper" style="padding-top:30px">
+
+  {# ─── 1. Strategist Letter ───────────────────────────────────────── #}
+  <div class="letter">
+    <div class="eyebrow">Strategist Letter · {{ report_date }}</div>
+    <h1>Morning Note</h1>
+    <div class="body">
+      {% if narrative.get('morning_note') %}
+        <p>{{ narrative.get('morning_note') }}</p>
+      {% else %}
+        <p>{{ narrative.get('summary', 'Market data is loaded but the narrative step is unavailable.') }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ─── 1b. Cross-sector dynamics row (right under the letter) ───── #}
+  {% set dyns = narrative.get('cross_sector_dynamics', []) %}
+  {% if dyns %}
+  <div class="section" style="margin-top:6px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Cross-Sector Linkages</div>
+        <div class="section-title">What the spreads are telling us</div>
+      </div>
+      <div class="section-note">{{ dyns|length }} active linkages today.</div>
+    </div>
+    <div class="caption">Each card shows a classic cross-sector or cross-asset spread, today's reading, and the positioning takeaway. Risk-on / risk-off / mixed badges aggregate into the regime read.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px;">
+      {% for d in dyns %}
+      {% set sig = d.get('signal', 'neutral') %}
+      {% set sig_color = 'var(--green)' if sig == 'risk-on' else 'var(--red)' if sig == 'risk-off' else 'var(--yellow)' if sig == 'mixed' else 'var(--text-muted)' %}
+      {% set sig_bg = 'var(--green-soft)' if sig == 'risk-on' else 'var(--red-soft)' if sig == 'risk-off' else 'var(--yellow-soft)' if sig == 'mixed' else 'rgba(157,106,46,0.08)' %}
+      <div class="dash-card" style="padding:18px;border-left:4px solid {{ sig_color }};">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:0.96rem;color:var(--text);">{{ d.get('label', '') }}</div>
+          <span style="background:{{ sig_bg }};color:{{ sig_color }};padding:3px 10px;border-radius:var(--radius-pill);font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">{{ sig }}</span>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-dim);margin-bottom:8px;">{{ d.get('observation', '') }}</div>
+        <div style="font-size:0.84rem;color:var(--text);line-height:1.55;">{{ d.get('implication', '') }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ─── 2. Top KPI Strip ────────────────────────────────────────────── #}
+  <div class="dash-grid cols-4" style="margin-bottom:18px;">
+    <div class="kpi-tile">
+      <div class="kpi-label">Regime</div>
+      <div class="kpi-value" style="color: {% if regime.get('score', 0) > 10 %}var(--green){% elif regime.get('score', 0) < -10 %}var(--red){% else %}var(--yellow){% endif %};">
+        {{ regime.get('regime', 'N/A') }}
+      </div>
+      <div class="kpi-meta">Composite {{ "%+.1f"|format(regime.get('score', 0)) }} (-100..+100)</div>
+      <div class="regime-bar"><span class="marker" style="left: {{ ((regime.get('score', 0) + 100) / 2)|round(0) }}%;"></span></div>
+      <div class="pill-strip">
+        {% for name, comp in regime.get('components', {}).items() %}
+        <span class="regime-pill {{ 'pos' if comp.score > 0.1 else 'neg' if comp.score < -0.1 else '' }}">{{ name }} {{ "%+.2f"|format(comp.score) }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="kpi-tile">
+      <div class="kpi-label">VIX (Vol Regime)</div>
+      <div class="kpi-value" style="color: {% if regime.get('vix_level', 20) <= 18 %}var(--green){% elif regime.get('vix_level', 20) >= 25 %}var(--red){% else %}var(--yellow){% endif %};">
+        {{ "%.2f"|format(regime.get('vix_level', 0)) }}
+      </div>
+      <div class="kpi-meta">5d Δ {{ "%+.1f"|format(regime.get('vix_5d_change', 0)) }}% · {{ 'Compressed' if regime.get('vix_level', 0) < 16 else 'Stable' if regime.get('vix_level', 0) < 22 else 'Elevated' }}</div>
+    </div>
+    <div class="kpi-tile">
+      <div class="kpi-label">Breadth (S&P 1500)</div>
+      <div class="kpi-value">
+        {{ "%.0f"|format(industries.get('stock_breadth', {}).get('pct_above_50d', 0)) }}% · {{ "%.0f"|format(industries.get('stock_breadth', {}).get('pct_above_200d', 0)) }}%
+      </div>
+      <div class="kpi-meta">Above 50d / above 200d</div>
+      <div class="kpi-meta">52w highs: {{ extremes.get('new_highs', {}).get('count', 0) }} · 52w lows: {{ extremes.get('new_lows', {}).get('count', 0) }}</div>
+    </div>
+    <div class="kpi-tile">
+      <div class="kpi-label">Yield Curve · 2s10s</div>
+      <div class="kpi-value" style="color: {% if (macro.get('spread_2s10s', 0)*100) > 0 %}var(--green){% else %}var(--red){% endif %};">
+        {{ "%+.0f"|format(macro.get('spread_2s10s', 0)*100) }}bps
+      </div>
+      <div class="kpi-meta">10Y {{ "%.2f"|format(macro.get('tnx', {}).get('level', 0)) }}% · 2Y {{ "%.2f"|format(macro.get('irx', {}).get('level', 0)) }}%</div>
+      <div class="kpi-meta">{{ 'Steepening' if (macro.get('spread_2s10s', 0)*100) > 30 else 'Flat' if (macro.get('spread_2s10s', 0)*100) > 0 else 'Inverted' }}</div>
+    </div>
+  </div>
+
+  {# ─── 3. Sector Heatmap ───────────────────────────────────────────── #}
+  <div class="section" style="margin-top:30px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Equity Markets</div>
+        <div class="section-title">Sector Heatmap</div>
+      </div>
+      <div class="section-note">Color intensity = magnitude of 1d move. YTD shown beneath.</div>
+    </div>
+    <div class="caption">Where the money is flowing today across the 11 GICS sectors. Green = leadership, red = laggards. The intensity of the color tracks the magnitude of the day's move.</div>
+    <div class="heatmap">
+      {% for s in sectors %}
+        {% set chg = s.day_change %}
+        {% set max_abs = 2.0 %}
+        {% set intensity = ((chg / max_abs)|abs) %}
+        {% if intensity > 1 %}{% set intensity = 1 %}{% endif %}
+        {% set bg_pos = 'rgba(15, 123, 84, ' ~ (0.15 + intensity * 0.55) ~ ')' %}
+        {% set bg_neg = 'rgba(196, 86, 80, ' ~ (0.15 + intensity * 0.55) ~ ')' %}
+        <div class="heat-cell" style="background: {{ bg_pos if chg >= 0 else bg_neg }};">
+          <div class="h-name">{{ s.name }}</div>
+          <div class="h-pct" style="color: {{ 'var(--green)' if chg >= 0 else 'var(--red)' }};">{{ "%+.2f"|format(chg) }}%</div>
+          <div class="h-meta">YTD {{ "%+.1f"|format(s.ytd_change) }}%</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ─── 4. Cross-Asset Grid ─────────────────────────────────────────── #}
+  <div class="section" style="margin-top:30px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Intermarket</div>
+        <div class="section-title">Cross-Asset Tape</div>
+      </div>
+      <div class="section-note">Equities · rates / credit · commodities · FX / crypto.</div>
+    </div>
+    <div class="caption">A single tape across the major asset classes. Use this to read regime: equities up + dollar down + bonds up + credit tightening = classic risk-on; the inverse is risk-off.</div>
+    <div class="dash-grid cols-2">
+      {% for grp in cross_asset %}
+      <div class="dash-card dense">
+        <div class="ca-group-header">{{ grp.group }}</div>
+        <table class="ca-table">
+          <thead><tr><th>Symbol</th><th></th><th style="text-align:right">1d</th><th style="text-align:right">5d</th><th style="text-align:right">MTD</th><th style="text-align:right">YTD</th></tr></thead>
+          <tbody>
+            {% for r in grp.rows %}
+            <tr>
+              <td><span class="ca-symbol">{{ r.symbol }}</span></td>
+              <td><span class="ca-label">{{ r.label }}</span></td>
+              <td style="text-align:right" class="{{ 'pos' if r['1d']|float >= 0 else 'neg' }}">{{ "%+.2f"|format(r['1d']|float) }}%</td>
+              <td style="text-align:right" class="{{ 'pos' if (r['5d'] or 0)|float >= 0 else 'neg' }}">{% if r['5d'] is none %}—{% else %}{{ "%+.2f"|format(r['5d']|float) }}%{% endif %}</td>
+              <td style="text-align:right" class="{{ 'pos' if (r['mtd'] or 0)|float >= 0 else 'neg' }}">{% if r['mtd'] is none %}—{% else %}{{ "%+.2f"|format(r['mtd']|float) }}%{% endif %}</td>
+              <td style="text-align:right" class="{{ 'pos' if r['ytd']|float >= 0 else 'neg' }}">{{ "%+.2f"|format(r['ytd']|float) }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ─── 5. Industry Rotation ───────────────────────────────────────── #}
+  <div class="section" style="margin-top:30px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sub-Sectors</div>
+        <div class="section-title">Industry Rotation Map (RRG)</div>
+      </div>
+      <div class="section-note">Equal-weighted GICS industry indices vs SPY. <a href="industries.html" style="color:var(--blue);font-weight:600">Full view →</a></div>
+    </div>
+    <div class="caption">Industries in the upper-right (Leading) quadrant are outperforming SPY with positive momentum — that's where the money is. Industries in Improving (top-left) often deliver the best forward returns. The trail shows where they came from over the last ~3 weeks.</div>
+    <div class="dash-grid cols-2">
+      <div class="dash-card">
+        <div class="chart-wrap-tall"><canvas id="rrg-chart"></canvas></div>
+      </div>
+      <div class="dash-card">
+        <div class="label" style="margin-bottom:10px;">Today's industry leaders</div>
+        <table class="ca-table">
+          <thead><tr><th>Industry</th><th></th><th style="text-align:right">1d</th><th style="text-align:right">5d</th><th style="text-align:right">YTD</th><th>Quad</th></tr></thead>
+          <tbody>
+            {% for ind in ind_list[:8] %}
+            {% set q = ind.rrg.quadrant if ind.rrg else 'N/A' %}
+            {% set qclass = 'quad-leading' if q == 'Leading' else 'quad-improving' if q == 'Improving' else 'quad-weakening' if q == 'Weakening' else 'quad-lagging' %}
+            <tr>
+              <td><span class="ca-symbol">{{ ind.industry }}</span></td>
+              <td><span class="ca-label">{{ ind.sector }}</span></td>
+              <td style="text-align:right" class="{{ 'pos' if ind.performance['1d'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['1d']) }}%</td>
+              <td style="text-align:right" class="{{ 'pos' if ind.performance['5d'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['5d']) }}%</td>
+              <td style="text-align:right" class="{{ 'pos' if ind.performance['ytd'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['ytd']) }}%</td>
+              <td><span class="quad-pill {{ qclass }}">{{ q }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="label" style="margin-top:14px;">Today's industry laggards</div>
+        <table class="ca-table">
+          <tbody>
+            {% for ind in ind_list|sort(attribute='performance.1d')|list|batch(20)|first %}
+            {% set q = ind.rrg.quadrant if ind.rrg else 'N/A' %}
+            {% set qclass = 'quad-leading' if q == 'Leading' else 'quad-improving' if q == 'Improving' else 'quad-weakening' if q == 'Weakening' else 'quad-lagging' %}
+            <tr>
+              <td><span class="ca-symbol">{{ ind.industry }}</span></td>
+              <td><span class="ca-label">{{ ind.sector }}</span></td>
+              <td style="text-align:right" class="{{ 'pos' if ind.performance['1d'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['1d']) }}%</td>
+              <td style="text-align:right" class="{{ 'pos' if ind.performance['5d'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['5d']) }}%</td>
+              <td style="text-align:right" class="{{ 'pos' if ind.performance['ytd'] >= 0 else 'neg' }}">{{ "%+.2f"|format(ind.performance['ytd']) }}%</td>
+              <td><span class="quad-pill {{ qclass }}">{{ q }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {# ─── 6. Factor Tape ─────────────────────────────────────────────── #}
+  <div class="section" style="margin-top:30px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Factors &amp; Style</div>
+        <div class="section-title">Factor Tape</div>
+      </div>
+      <div class="section-note">What's working in cross-section.</div>
+    </div>
+    <div class="caption">Momentum &gt; Value indicates trend-followers winning. Min Vol/Quality outperforming = defensive rotation. High Beta &gt; Low Beta = risk appetite returning.</div>
+    <div class="dash-grid cols-3">
+      {% for f in brief.factors.performance %}
+      <div class="kpi-tile">
+        <div class="kpi-label">{{ f.name }}</div>
+        <div class="kpi-value" style="color: {% if f['1d'] >= 0 %}var(--green){% else %}var(--red){% endif %};">
+          {{ "%+.2f"|format(f['1d']) }}%
+        </div>
+        <div class="kpi-meta">5d {{ "%+.2f"|format(f['5d']) }}% · QTD {{ "%+.2f"|format(f.qtd) }}% · YTD {{ "%+.2f"|format(f.ytd) }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ─── 7. Internals & Cross Events ─────────────────────────────────── #}
+  <div class="section" style="margin-top:30px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Market Internals</div>
+        <div class="section-title">Breadth, Highs/Lows, Cross Events</div>
+      </div>
+      <div class="section-note">Health checks for the underlying tape.</div>
+    </div>
+    <div class="caption">Breadth and 52-week-extreme counts reveal whether the rally is broad or narrow. Cross-event counts show where regime change is brewing — clusters of golden crosses signal a bottom forming, death-cross clusters warn of distribution.</div>
+    <div class="dash-grid cols-4">
+      <div class="kpi-tile">
+        <div class="kpi-label">52-week highs</div>
+        <div class="kpi-value" style="color:var(--green);">{{ extremes.get('new_highs', {}).get('count', 0) }}</div>
+        <div class="kpi-meta">Near highs (within 1%): {{ extremes.get('near_highs', {}).get('count', 0) }}</div>
+        <div class="kpi-meta" style="margin-top:4px;font-size:0.65rem;">{{ extremes.get('new_highs', {}).get('tickers', [])[:8]|join(' · ') }}</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">52-week lows</div>
+        <div class="kpi-value" style="color:var(--red);">{{ extremes.get('new_lows', {}).get('count', 0) }}</div>
+        <div class="kpi-meta">Near lows (within 1%): {{ extremes.get('near_lows', {}).get('count', 0) }}</div>
+        <div class="kpi-meta" style="margin-top:4px;font-size:0.65rem;">{{ extremes.get('new_lows', {}).get('tickers', [])[:8]|join(' · ') }}</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">Stock golden crosses</div>
+        <div class="kpi-value" style="color:var(--green);">{{ stock_events.get('golden_cross', {}).get('count', 0) }}</div>
+        <div class="kpi-meta">Death crosses: {{ stock_events.get('death_cross', {}).get('count', 0) }}</div>
+        <div class="kpi-meta" style="margin-top:4px;font-size:0.65rem;">{{ stock_events.get('golden_cross', {}).get('tickers', [])[:8]|join(' · ') }}</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">Stock 200d reclaims</div>
+        <div class="kpi-value" style="color:var(--blue);">{{ stock_events.get('reclaim_200d', {}).get('count', 0) }}</div>
+        <div class="kpi-meta">Lost 200d: {{ stock_events.get('lost_200d', {}).get('count', 0) }}</div>
+        <div class="kpi-meta" style="margin-top:4px;font-size:0.65rem;">{{ stock_events.get('reclaim_200d', {}).get('tickers', [])[:8]|join(' · ') }}</div>
+      </div>
+    </div>
+  </div>
+
+  {# ─── 8. Crowdedness & Top Setups ────────────────────────────────── #}
+  <div class="section" style="margin-top:30px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Quant Pulse</div>
+        <div class="section-title">Crowdedness &amp; Leadership</div>
+      </div>
+      <div class="section-note">How concentrated is today's leadership?</div>
+    </div>
+    <div class="caption">High crowdedness + concentrated sector exposure = vulnerable to mean reversion. Diverse leadership across sectors = healthier trend.</div>
+    <div class="dash-grid cols-3">
+      <div class="kpi-tile">
+        <div class="kpi-label">Top sector in breakouts</div>
+        <div class="kpi-value">{{ crowd.get('top_sector', '—') }}</div>
+        <div class="kpi-meta">{{ crowd.get('top_sector_pct', 0) }}% of qualifying setups</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">Sector concentration (HHI)</div>
+        <div class="kpi-value">{{ crowd.get('herfindahl', 0) }}</div>
+        <div class="kpi-meta">{{ '< 1500 = diverse · 1500-2500 = moderate · > 2500 = concentrated' }}</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">Persistent leaders (3+ days)</div>
+        <div class="kpi-value">{{ crowd.get('streak3plus', 0) }}</div>
+        <div class="kpi-meta">Names locked in the top 15 for ≥3 sessions</div>
+      </div>
+    </div>
+  </div>
+
+  {# ─── 9. Catalysts ahead ────────────────────────────────────────── #}
+  {% if brief.get('catalyst_calendar') %}
+  <div class="section" style="margin-top:30px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">What's next</div>
+        <div class="section-title">Catalysts ahead</div>
+      </div>
+    </div>
+    <div class="caption">Macro releases and events on the runway over the next several sessions.</div>
+    <div class="dash-card">
+      <div class="cal-list">
+        {% for c in brief.catalyst_calendar[:14] %}
+        <div class="cal-row">
+          <div class="cal-date">{{ c.date }}</div>
+          <div class="cal-evt">{{ c.event }}</div>
+          <div class="cal-meta">{{ c.detail }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated {{ generated_at }} · Not financial advice.</div>
+</footer>
+
+<script>
+(function(){
+  const data = {{ rrg_json|safe }};
+  if (!data || !data.length) return;
+  const ctx = document.getElementById('rrg-chart');
+  if (!ctx) return;
+  const colorFor = (q) => q === 'Leading' ? '#0f7b54' : q === 'Improving' ? '#315b96' : q === 'Weakening' ? '#a97d22' : '#c45650';
+  const datasets = data.map(d => ({
+    label: d.industry,
+    data: (d.tail || []).map(p => ({ x: p.r, y: p.m })),
+    showLine: true,
+    borderColor: colorFor(d.quadrant),
+    backgroundColor: colorFor(d.quadrant) + '40',
+    borderWidth: 1.5,
+    pointRadius: (ctx) => ctx.dataIndex === (d.tail || []).length - 1 ? 5 : 2,
+    pointBackgroundColor: colorFor(d.quadrant),
+    pointBorderColor: colorFor(d.quadrant),
+    tension: 0.2,
+  }));
+  new Chart(ctx, {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0].dataset.label,
+            label: (item) => `R ${item.parsed.x.toFixed(1)} · M ${item.parsed.y.toFixed(1)}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          title: { display: true, text: 'RS-Ratio (relative strength)' },
+          grid: { color: '#d7d0c3' },
+          ticks: { color: '#5e6878', font: { family: 'IBM Plex Mono' } },
+        },
+        y: {
+          type: 'linear',
+          title: { display: true, text: 'RS-Momentum' },
+          grid: { color: '#d7d0c3' },
+          ticks: { color: '#5e6878', font: { family: 'IBM Plex Mono' } },
+        },
+      },
+    },
+    plugins: [{
+      id: 'quadlines',
+      beforeDraw: (chart) => {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea) return;
+        const x100 = scales.x.getPixelForValue(100);
+        const y100 = scales.y.getPixelForValue(100);
+        ctx.save();
+        ctx.fillStyle = 'rgba(15, 123, 84, 0.06)';
+        ctx.fillRect(x100, chartArea.top, chartArea.right - x100, y100 - chartArea.top); // Leading
+        ctx.fillStyle = 'rgba(49, 91, 150, 0.06)';
+        ctx.fillRect(chartArea.left, chartArea.top, x100 - chartArea.left, y100 - chartArea.top); // Improving
+        ctx.fillStyle = 'rgba(196, 86, 80, 0.06)';
+        ctx.fillRect(chartArea.left, y100, x100 - chartArea.left, chartArea.bottom - y100); // Lagging
+        ctx.fillStyle = 'rgba(169, 125, 34, 0.06)';
+        ctx.fillRect(x100, y100, chartArea.right - x100, chartArea.bottom - y100); // Weakening
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x100, chartArea.top); ctx.lineTo(x100, chartArea.bottom);
+        ctx.moveTo(chartArea.left, y100); ctx.lineTo(chartArea.right, y100);
+        ctx.stroke();
+        ctx.fillStyle = '#5e6878';
+        ctx.font = '10px IBM Plex Mono';
+        ctx.fillText('Leading', chartArea.right - 50, chartArea.top + 14);
+        ctx.fillText('Improving', chartArea.left + 8, chartArea.top + 14);
+        ctx.fillText('Lagging', chartArea.left + 8, chartArea.bottom - 6);
+        ctx.fillText('Weakening', chartArea.right - 60, chartArea.bottom - 6);
+        ctx.restore();
+      },
+    }],
+  });
+})();
+</script>
+
+</body>
+</html>

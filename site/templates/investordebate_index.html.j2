@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <style>
+    .id-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:18px; }
+    .id-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; box-shadow:var(--shadow-sm); position:relative; overflow:hidden;
+      transition:transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .id-card:hover { transform:translateY(-1px); box-shadow:var(--shadow-md); }
+    .id-card.empty { background:rgba(157,106,46,0.02); border-style:dashed; opacity:0.7; }
+    .id-card .accent-bar { position:absolute; top:0; left:0; bottom:0; width:4px; }
+    .id-card h3 {
+      font-family:var(--font-display); font-weight:700; font-size:1.15rem; color:var(--text);
+      margin:0 0 4px 14px;
+    }
+    .id-meta { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); margin:0 0 16px 14px; }
+    .id-meta .pill {
+      display:inline-block; padding:2px 8px; border-radius:var(--radius-pill);
+      background:rgba(157,106,46,0.08); color:var(--text-dim); margin-right:6px;
+    }
+
+    .id-top5 { padding-left:14px; }
+    .id-top5-row {
+      display:grid; grid-template-columns: 24px 60px 1fr 80px; gap:10px;
+      padding:6px 0; border-bottom:1px solid rgba(215,208,195,0.4);
+      align-items:center; font-size:0.82rem;
+    }
+    .id-top5-row:last-child { border-bottom:none; }
+    .id-rank { font-family:var(--font-mono); color:var(--text-muted); font-weight:700; font-size:0.78rem; }
+    .id-ticker { font-family:var(--font-mono); font-weight:700; color:var(--text); }
+    .id-thesis { color:var(--text-dim); font-size:0.78rem; line-height:1.4; }
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; text-align:center;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .id-diff-strip {
+      margin:14px 14px 0 14px; padding:10px 12px; border-radius:8px;
+      background:rgba(49,91,150,0.05); border-left:3px solid var(--blue);
+      font-size:0.74rem; font-family:var(--font-mono); color:var(--text-dim);
+    }
+    .id-diff-strip.has-changes { background:rgba(15,123,84,0.06); border-left-color:var(--green); }
+    .id-diff-strip strong { color:var(--text); font-weight:700; }
+
+    .id-cta {
+      margin:14px 14px 0 14px; display:inline-flex; align-items:center; gap:6px;
+      font-family:var(--font-sans); font-weight:600; font-size:0.84rem; color:var(--blue);
+      text-decoration:none;
+    }
+    .id-cta:hover { color:var(--text); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="index.html" class="logo">
+      <img src="assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="industries.html">Industries</a>
+      <a href="investordebate.html" class="active">Debate</a>
+      <a href="weekly.html">Weekly</a>
+      <a href="podcast.html">Podcast</a>
+      <a href="earnings.html">Earnings</a>
+      <a href="archive.html">Archive</a>
+    </nav>
+    <div class="header-date">{{ generated_at }}</div>
+  </div>
+</header>
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Weekly Investment Committee</div>
+        <div class="hero-title">Sector-by-sector ranked picks &amp; debate</div>
+        <div class="hero-summary">
+          A simulated 8-specialist investment committee — Fundamental, Quant/Factor, Technical, Macro, Credit, Sentiment,
+          MomentumPulse, and a sector-specific analyst — debate every US-listed stock above $2B market cap and
+          publish a ranked report. Each weekly run gets diffed against the prior so you can see who got upgraded,
+          who fell out, and where conviction shifted.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">{{ index_data.sectors_with_data }}/11 sectors with reports</span>
+          <span class="pill">{{ index_data.total_reports }} total reports</span>
+          <span class="pill">Updated {{ index_data.generated_at[:16] }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector cards</div>
+        <div class="section-title">Latest committee call by sector</div>
+      </div>
+      <div class="section-note">Click any sector to see the full debate, ranked picks, and the diff vs the prior run.</div>
+    </div>
+
+    <div class="id-grid">
+      {% for s in index_data.sectors %}
+      <div class="id-card {{ 'empty' if not s.has_data else '' }}">
+        <div class="accent-bar" style="background: {{ s.sector_color }};"></div>
+        <h3>{{ s.sector_name }}</h3>
+        <div class="id-meta">
+          {% if s.has_data %}
+            <span class="pill">{{ s.report_count }} report{{ 's' if s.report_count != 1 else '' }}</span>
+            <span class="pill">Latest {{ s.latest.date }}</span>
+            {% if s.latest.universe_size %}<span class="pill">{{ s.latest.universe_size }}-stock universe</span>{% endif %}
+          {% else %}
+            <span class="pill">No reports yet</span>
+          {% endif %}
+        </div>
+
+        {% if s.has_data and s.latest.top5 %}
+        <div class="id-top5">
+          {% for row in s.latest.top5[:5] %}
+          {% set r = row.rating|lower|replace(' ', '-') %}
+          <div class="id-top5-row">
+            <div class="id-rank">#{{ row.rank }}</div>
+            <div class="id-ticker">{{ row.ticker }}</div>
+            <div class="id-thesis">{{ row.thesis[:80] }}{% if row.thesis|length > 80 %}…{% endif %}</div>
+            <div><span class="id-rating-pill rating-{{ r }}">{{ row.rating }}</span></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if s.has_data and not s.diff.new_sector %}
+          {% set d = s.diff %}
+          {% set total_changes = (d.rank_changes|length) + (d.rating_changes|length) + (d.new_entrants|length) + (d.dropouts|length) + (d.conviction_deltas|length) %}
+          <div class="id-diff-strip {{ 'has-changes' if total_changes > 0 else '' }}">
+            {% if total_changes == 0 %}
+              <strong>No changes</strong> vs {{ d.prior_date }} — committee is consistent.
+            {% else %}
+              <strong>{{ total_changes }} change{{ 's' if total_changes != 1 else '' }}</strong> vs {{ d.prior_date }}:
+              {% if d.new_entrants %}+{{ d.new_entrants|length }} new{% endif %}
+              {% if d.dropouts %}{% if d.new_entrants %}, {% endif %}-{{ d.dropouts|length }} dropped{% endif %}
+              {% if d.rating_changes %}, {{ d.rating_changes|length }} rating Δ{% endif %}
+              {% if d.rank_changes %}, {{ d.rank_changes|length }} rank Δ{% endif %}
+              {% if d.conviction_deltas %}, {{ d.conviction_deltas|length }} conviction Δ{% endif %}
+            {% endif %}
+          </div>
+        {% elif s.has_data %}
+          <div class="id-diff-strip">First report on file — no prior to diff against.</div>
+        {% endif %}
+
+        {% if s.has_data %}
+          <a class="id-cta" href="investordebate/{{ s.sector_slug }}.html">Read full debate →</a>
+        {% else %}
+          <div class="id-meta" style="margin-top:14px;">Run the InvestorDebate skill on this sector to populate.</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated {{ generated_at }} · Not financial advice.</div>
+</footer>
+</body>
+</html>

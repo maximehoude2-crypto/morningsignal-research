@@ -72,27 +72,41 @@ def get_sp1500_tickers() -> list[str]:
 # Price data with caching
 # ---------------------------------------------------------------------------
 
-def _cache_path(ticker: str) -> Path:
-    return CACHE_DIR / f"{ticker}_{date.today().isoformat()}.parquet"
+def _resolve_target_date(target_date: str | date | None) -> date:
+    if target_date is None:
+        return date.today()
+    if isinstance(target_date, date):
+        return target_date
+    return datetime.strptime(target_date, "%Y-%m-%d").date()
 
 
-def load_cached(ticker: str) -> pd.DataFrame | None:
-    p = _cache_path(ticker)
+def _cache_path(ticker: str, target_date: str | date | None = None) -> Path:
+    target_dt = _resolve_target_date(target_date)
+    return CACHE_DIR / f"{ticker}_{target_dt.isoformat()}.parquet"
+
+
+def load_cached(ticker: str, target_date: str | date | None = None) -> pd.DataFrame | None:
+    p = _cache_path(ticker, target_date)
     if p.exists():
         return pd.read_parquet(p)
     return None
 
 
-def save_cache(ticker: str, df: pd.DataFrame):
-    df.to_parquet(_cache_path(ticker))
+def save_cache(ticker: str, df: pd.DataFrame, target_date: str | date | None = None):
+    df.to_parquet(_cache_path(ticker, target_date))
 
 
-def fetch_prices_batch(tickers: list[str], dry_run: bool = False) -> dict[str, pd.DataFrame]:
+def fetch_prices_batch(
+    tickers: list[str],
+    dry_run: bool = False,
+    target_date: str | date | None = None,
+) -> dict[str, pd.DataFrame]:
     """Fetch 1 year of daily OHLCV for a batch of tickers."""
     if dry_run:
         return {}
     import yfinance as yf
-    end = datetime.now()
+    target_dt = _resolve_target_date(target_date)
+    end = datetime.combine(target_dt + timedelta(days=1), datetime.min.time())
     start = end - timedelta(days=380)
     data = yf.download(
         tickers,
@@ -119,13 +133,17 @@ def fetch_prices_batch(tickers: list[str], dry_run: bool = False) -> dict[str, p
     return result
 
 
-def get_price_data(ticker: str, all_data: dict) -> pd.DataFrame | None:
-    cached = load_cached(ticker)
+def get_price_data(
+    ticker: str,
+    all_data: dict,
+    target_date: str | date | None = None,
+) -> pd.DataFrame | None:
+    cached = load_cached(ticker, target_date)
     if cached is not None:
         return cached
     df = all_data.get(ticker)
     if df is not None and not df.empty:
-        save_cache(ticker, df)
+        save_cache(ticker, df, target_date)
     return df
 
 
@@ -145,10 +163,11 @@ def save_streak_state(state: dict):
     p.write_text(json.dumps(state, indent=2))
 
 
-def update_streaks(top_tickers: list[str]) -> dict:
+def update_streaks(top_tickers: list[str], target_date: str | date | None = None) -> dict:
     """Track how many consecutive days each ticker has been in top 15."""
     streak = load_streak_state()
-    today_str = date.today().isoformat()
+    target_dt = _resolve_target_date(target_date)
+    today_str = target_dt.isoformat()
     # Expire old entries (not in top 15 today)
     new_streak = {}
     for t in top_tickers:
@@ -158,14 +177,15 @@ def update_streaks(top_tickers: list[str]) -> dict:
     return new_streak
 
 
-def update_deep_dive_queue(streaks: dict):
+def update_deep_dive_queue(streaks: dict, target_date: str | date | None = None):
     """Flag tickers with 3+ consecutive days for deep dive."""
     p = STATE_DIR / "deep_dive_queue.json"
     queue = json.loads(p.read_text()) if p.exists() else []
     existing = {e["ticker"] for e in queue}
+    target_dt = _resolve_target_date(target_date)
     for ticker, info in streaks.items():
         if info["count"] >= 3 and ticker not in existing:
-            queue.append({"ticker": ticker, "flagged_date": date.today().isoformat(),
+            queue.append({"ticker": ticker, "flagged_date": target_dt.isoformat(),
                           "streak_days": info["count"]})
             print(f"  >> Auto-flagged {ticker} for deep dive ({info['count']} consecutive days)")
     p.write_text(json.dumps(queue, indent=2))
@@ -228,16 +248,22 @@ def mock_breakout_data() -> list[dict]:
     return results
 
 
-def run_scanner(dry_run: bool = False) -> list[dict]:
+def run_scanner(
+    dry_run: bool = False,
+    target_date: str | date | None = None,
+) -> list[dict]:
     """
     Main entry point. Returns list of top breakout dicts.
     """
-    today = date.today().isoformat()
+    target_dt = _resolve_target_date(target_date)
+    today = target_dt.isoformat()
     out_path = STATE_DIR / f"breakouts_{today}.json"
 
     if dry_run:
         print("[DRY RUN] Generating mock breakout data...")
         results = mock_breakout_data()
+        out_path = STATE_DIR / "dry_run" / f"breakouts_{today}.json"
+        out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(json.dumps(results, indent=2))
         print(f"  Saved {len(results)} mock breakouts → {out_path}")
         return results
@@ -250,7 +276,13 @@ def run_scanner(dry_run: bool = False) -> list[dict]:
     # Fetch benchmark using Ticker API (avoids MultiIndex issue with yf.download)
     import yfinance as yf
     print(f"Fetching benchmark ({BENCHMARK})...")
-    bench_hist = yf.Ticker(BENCHMARK).history(period="1y")
+    bench_end = datetime.combine(target_dt + timedelta(days=1), datetime.min.time())
+    bench_start = bench_end - timedelta(days=380)
+    bench_hist = yf.Ticker(BENCHMARK).history(
+        start=bench_start.strftime("%Y-%m-%d"),
+        end=bench_end.strftime("%Y-%m-%d"),
+        auto_adjust=True,
+    )
     if bench_hist is None or bench_hist.empty:
         print("ERROR: Could not fetch benchmark data")
         return []
@@ -267,11 +299,13 @@ def run_scanner(dry_run: bool = False) -> list[dict]:
         print(f"  Batch {batch_idx + 1}/{len(batches)}: {batch[:3]}...")
 
         # Check cache first
-        uncached = [t for t in batch if load_cached(t) is None]
-        batch_data = fetch_prices_batch(uncached) if uncached else {}
+        uncached = [t for t in batch if load_cached(t, target_dt) is None]
+        batch_data = (
+            fetch_prices_batch(uncached, target_date=target_dt) if uncached else {}
+        )
 
         for ticker in batch:
-            df = get_price_data(ticker, batch_data)
+            df = get_price_data(ticker, batch_data, target_dt)
             if df is None or len(df) < 200:
                 continue
 
@@ -328,8 +362,8 @@ def run_scanner(dry_run: bool = False) -> list[dict]:
         item["rank"] = i + 1
 
     # Update streaks and deep dive queue
-    streaks = update_streaks([item["ticker"] for item in top])
-    update_deep_dive_queue(streaks)
+    streaks = update_streaks([item["ticker"] for item in top], target_dt)
+    update_deep_dive_queue(streaks, target_dt)
     for item in top:
         item["streak_days"] = streaks.get(item["ticker"], {}).get("count", 1)
 

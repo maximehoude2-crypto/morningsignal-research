@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · {{ sector.sector_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">{{ generated_at }}</div>
+  </div>
+</header>
+
+{% set latest = sector.latest %}
+{% set diff = sector.diff %}
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · {{ sector.sector_name }}</div>
+        <div class="hero-title">{{ sector.sector_name }} — Committee Report</div>
+        <div class="hero-summary">
+          {% if latest.macro_context %}{{ latest.macro_context[:300] }}{% else %}Multi-specialist committee review covering every US-listed stock above $2B market cap in the {{ sector.sector_name }} sector.{% endif %}
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest {{ latest.date }}</span>
+          {% if latest.universe_size %}<span class="pill">{{ latest.universe_size }} stocks reviewed</span>{% endif %}
+          <span class="pill">{{ sector.report_count }} report{{ 's' if sector.report_count != 1 else '' }} on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All sectors</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  {# ─── Diff banner ─────────────────────────────────────────────── #}
+  {% if diff.new_sector %}
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for {{ sector.sector_name }} yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  {% else %}
+    {% set total_changes = (diff.rank_changes|length) + (diff.rating_changes|length) + (diff.new_entrants|length) + (diff.dropouts|length) + (diff.conviction_deltas|length) %}
+    {% if total_changes == 0 %}
+      <div class="diff-banner no-changes">
+        <h2>No Changes <span class="badge" style="background:var(--text-muted);">UNCHANGED</span></h2>
+        <div style="font-size:0.86rem;color:var(--text-dim);">Top-5 ranking, ratings and conviction scores are identical to the {{ diff.prior_date }} run. Committee is consistent.</div>
+      </div>
+    {% else %}
+      <div class="diff-banner">
+        <h2>{{ total_changes }} change{{ 's' if total_changes != 1 else '' }} vs {{ diff.prior_date }} <span class="badge">DIFF</span></h2>
+        <div class="diff-grid">
+
+          {# New entrants #}
+          <div class="diff-cell">
+            <h4>New entrants ({{ diff.new_entrants|length }})</h4>
+            {% if diff.new_entrants %}
+              {% for n in diff.new_entrants %}
+              <div class="diff-row">
+                <div><span class="ticker">{{ n.ticker }}</span> <span class="meta">→ #{{ n.rank }}</span></div>
+                <div>{% set r = n.rating|lower|replace(' ', '-') %}<span class="id-rating-pill rating-{{ r }}">{{ n.rating }}</span></div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty">None</div>
+            {% endif %}
+          </div>
+
+          {# Dropouts #}
+          <div class="diff-cell">
+            <h4>Dropouts ({{ diff.dropouts|length }})</h4>
+            {% if diff.dropouts %}
+              {% for d in diff.dropouts %}
+              <div class="diff-row">
+                <div><span class="ticker">{{ d.ticker }}</span> <span class="meta">was #{{ d.prior_rank }}</span></div>
+                <div>{% set r = d.prior_rating|lower|replace(' ', '-') %}<span class="id-rating-pill rating-{{ r }}">{{ d.prior_rating }}</span></div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty">None</div>
+            {% endif %}
+          </div>
+
+          {# Rank changes #}
+          <div class="diff-cell">
+            <h4>Rank moves ({{ diff.rank_changes|length }})</h4>
+            {% if diff.rank_changes %}
+              {% for rc in diff.rank_changes %}
+              <div class="diff-row">
+                <div><span class="ticker">{{ rc.ticker }}</span></div>
+                <div>
+                  <span class="meta">#{{ rc.prior_rank }} →</span>
+                  <span class="{{ 'arrow-up' if rc.delta > 0 else 'arrow-down' }}">#{{ rc.current_rank }} ({{ '+' if rc.delta > 0 else '' }}{{ rc.delta }})</span>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty">None</div>
+            {% endif %}
+          </div>
+
+          {# Rating changes #}
+          <div class="diff-cell">
+            <h4>Rating Δ ({{ diff.rating_changes|length }})</h4>
+            {% if diff.rating_changes %}
+              {% for rc in diff.rating_changes %}
+              <div class="diff-row">
+                <div><span class="ticker">{{ rc.ticker }}</span></div>
+                <div>
+                  {% set rp = rc.prior_rating|lower|replace(' ', '-') %}
+                  {% set rc_now = rc.current_rating|lower|replace(' ', '-') %}
+                  <span class="id-rating-pill rating-{{ rp }}">{{ rc.prior_rating }}</span>
+                  <span class="meta">→</span>
+                  <span class="id-rating-pill rating-{{ rc_now }}">{{ rc.current_rating }}</span>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty">None</div>
+            {% endif %}
+          </div>
+
+          {# Conviction deltas #}
+          <div class="diff-cell" style="grid-column:span 2;">
+            <h4>Conviction deltas ({{ diff.conviction_deltas|length }})</h4>
+            {% if diff.conviction_deltas %}
+              {% for cd in diff.conviction_deltas %}
+              <div class="diff-row">
+                <div><span class="ticker">{{ cd.ticker }}</span> <span class="meta">{{ cd.prior }} → {{ cd.current }}</span></div>
+                <div class="{{ 'arrow-up' if cd.delta > 0 else 'arrow-down' }}">{{ '+' if cd.delta > 0 else '' }}{{ cd.delta }}</div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty">None</div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {# ─── Top 5 Ranked Picks ────────────────────────────────────── #}
+  {% if latest.top5 %}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · {{ latest.date }}</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in latest.top5 %}
+          {% set cls = r.rating|lower|replace(' ', '-') %}
+          <tr>
+            <td>#{{ r.rank }}</td>
+            <td class="ticker-cell">{{ r.ticker }}</td>
+            <td><span class="id-rating-pill rating-{{ cls }}">{{ r.rating }}</span></td>
+            <td>{% if r.conviction is not none %}{{ r.conviction }}/5{% else %}—{% endif %}</td>
+            <td>{% if r.composite is not none %}{{ r.composite }}/10{% else %}—{% endif %}</td>
+            <td class="thesis-cell">{{ r.thesis }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ─── Key sector calls ─────────────────────────────────────── #}
+  {% if latest.sector_call or latest.biggest_disagreement or latest.contrarian_call or latest.wrong_about %}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      {% if latest.sector_call %}
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--green);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Key Sector Call</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">{{ latest.sector_call }}</div>
+      </div>
+      {% endif %}
+      {% if latest.biggest_disagreement %}
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">{{ latest.biggest_disagreement }}</div>
+      </div>
+      {% endif %}
+      {% if latest.contrarian_call %}
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--blue);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Where We Differ from Consensus</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">{{ latest.contrarian_call }}</div>
+      </div>
+      {% endif %}
+      {% if latest.wrong_about %}
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--red);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">What We're Probably Wrong About</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">{{ latest.wrong_about }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ─── Detailed stock analysis ─────────────────────────────── #}
+  {% if latest.detailed_stocks %}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · {{ latest.detailed_stocks|length }} stocks</div>
+      </div>
+    </div>
+    {% for st in latest.detailed_stocks %}
+    {% set cls = st.rating|lower|replace(' ', '-') %}
+    <div class="stock-card">
+      <h3>#{{ st.rank }} · {{ st.ticker }} — {{ st.company }}</h3>
+      <div class="stock-meta">
+        {% if st.rating %}<span class="id-rating-pill rating-{{ cls }}">{{ st.rating }}</span> · {% endif %}
+        {% if st.conviction is not none %}Conviction {{ st.conviction }}/5 · {% endif %}
+        {% if st.composite is not none %}Composite {{ st.composite }}/10{% endif %}
+      </div>
+      {% if st.bull_case %}
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>{{ st.bull_case }}</p>
+      </div>
+      {% endif %}
+      {% if st.bear_case %}
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>{{ st.bear_case }}</p>
+      </div>
+      {% endif %}
+      {% if st.key_debate %}
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>{{ st.key_debate }}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ─── Version history ─────────────────────────────────────── #}
+  {% if sector.history|length > 1 %}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">History</div>
+        <div class="section-title">Past committee reports for {{ sector.sector_name }}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="history-list">
+        {% for h in sector.history %}
+        <div class="h-row">
+          <div>
+            <strong>{{ h.date }}</strong>
+            {% if h.universe_size %}<span style="color:var(--text-muted);font-size:0.74rem;margin-left:8px;">{{ h.universe_size }}-stock universe</span>{% endif %}
+          </div>
+          <div style="color:var(--text-muted);font-size:0.74rem;">
+            {% if h.top5 %}Top picks: {{ h.top5[:5]|map(attribute='ticker')|join(' · ') }}{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ─── Full markdown report (collapsible) ──────────────────── #}
+  {% if latest.raw_markdown %}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown ({{ latest.raw_markdown|length }} chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);">{{ latest.raw_markdown }}</pre>
+    </details>
+  </div>
+  {% endif %}
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated {{ generated_at }} · Not financial advice.</div>
+</footer>
+</body>
+</html>

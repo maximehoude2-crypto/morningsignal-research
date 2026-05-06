@@ -42,7 +42,7 @@ cd morningsignal-research
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env and add your RESEND_API_KEY
+# Edit .env and add your OPENAI_API_KEY and RESEND_API_KEY
 ```
 
 ## GitHub repository
@@ -161,6 +161,7 @@ launchctl load ~/Library/LaunchAgents/xyz.morningsignal.weekly.plist
 
 | Variable | Purpose |
 |----------|---------|
+| `OPENAI_API_KEY` | GPT-5.4 market, weekly, and earnings generation |
 | `GITHUB_TOKEN` | Push access to `docs/` branch |
 | `GITHUB_REPO` | `owner/repo` slug |
 | `RESEND_API_KEY` | Weekly newsletter emails |

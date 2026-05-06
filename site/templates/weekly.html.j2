@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — Weekly Summary {{ week.week_start }} to {{ week.week_end }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ prefix|default('') }}assets/style.css">
+  <link rel="icon" href="{{ prefix|default('') }}assets/logo.svg" type="image/svg+xml">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="{{ prefix|default('') }}index.html" class="logo">
+      <img src="{{ prefix|default('') }}assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="{{ prefix|default('') }}index.html">Home</a>
+      <a href="{{ prefix|default('') }}daily/{{ week.week_end }}.html">Today</a>
+      <a href="{{ prefix|default('') }}dashboard.html">Dashboard</a>
+      <a href="{{ prefix|default('') }}industries.html">Industries</a>
+      <a href="{{ prefix|default('') }}investordebate.html">Debate</a>
+      <a href="{{ prefix|default('') }}weekly.html" class="active">Weekly</a>
+      <a href="{{ prefix|default('') }}podcast.html">Podcast</a>
+      <a href="{{ prefix|default('') }}earnings.html">Earnings</a>
+      <a href="{{ prefix|default('') }}archive.html">Archive</a>
+    </nav>
+    <div class="header-date">{{ week.generated_at[:16] }}</div>
+  </div>
+</header>
+
+<div class="hero-strip">
+  <div class="page-wrapper reading-shell">
+    <div class="hero-panel">
+      <div class="eyebrow">Weekly Intelligence Summary</div>
+      <div class="hero-title">{{ week.narrative.headline }}</div>
+      <div class="hero-summary">{{ week.week_start }} to {{ week.week_end }} · {{ week.trading_days }} trading days</div>
+      <div class="hero-meta-row">
+        <span class="pill">Week Start {{ week.week_start }}</span>
+        <span class="pill">Week End {{ week.week_end }}</span>
+        <span class="pill">{{ week.trading_days }} sessions</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper reading-shell">
+
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Performance</div>
+        <div class="section-title">Weekly Index Snapshot</div>
+      </div>
+      <div class="section-note">Closing levels and compounded weekly performance.</div>
+    </div>
+    <div class="card-grid card-grid-4">
+      {% for sym, idx in week.indices.items() %}
+      <div class="stat-card card">
+        <div class="stat-label">{{ idx.name }}</div>
+        <div class="stat-value">${{ "%.2f"|format(idx.last_price) }}</div>
+        <div class="stat-meta {{ 'pos' if idx.weekly_change >= 0 else 'neg' }}">{{ "%+.2f"|format(idx.weekly_change) }}% this week</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Narrative</div>
+        <div class="section-title">Executive Summary</div>
+      </div>
+      <div class="section-note">A high-level read on the week’s dominant catalysts and positioning implications.</div>
+    </div>
+    <div class="weekly-prose">
+      <p>{{ week.narrative.executive_summary | replace('\n\n', '</p><p>') | safe }}</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Sector Performance</div>
+    <div class="card">
+      <div class="sector-list">
+        {% set max_abs = namespace(val=0.01) %}
+        {% for s in week.sectors %}
+          {% if s.weekly_change|abs > max_abs.val %}{% set max_abs.val = s.weekly_change|abs %}{% endif %}
+        {% endfor %}
+        {% for s in week.sectors %}
+        <div class="sector-row">
+          <div class="sector-name">{{ s.name }}</div>
+          <div class="sector-bar-wrap">
+            {% set pct = (s.weekly_change / max_abs.val * 100)|abs %}
+            <div class="sector-bar {{ 'pos-bar' if s.weekly_change >= 0 else 'neg-bar' }}" style="width:{{ pct }}%"></div>
+          </div>
+          <div class="sector-chg {{ 'pos' if s.weekly_change >= 0 else 'neg' }}">{{ "%+.2f"|format(s.weekly_change) }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {% if week.narrative.key_events %}
+  <div class="section">
+    <div class="section-title">Key Events</div>
+    <div class="archive-list">
+      {% for ev in week.narrative.key_events %}
+      <div class="archive-row">
+        <div style="flex:1">
+          <div class="archive-title">{{ ev.event }}</div>
+          <div class="archive-meta">{{ ev.impact }}</div>
+        </div>
+        <div class="archive-date">{{ ev.date }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if week.narrative.thematic_analysis %}
+  <div class="section">
+    <div class="section-title">Thematic Analysis</div>
+    <div class="archive-list">
+      {% for item in week.narrative.thematic_analysis %}
+      <div class="card">
+        <div class="archive-title">{{ item.theme }}</div>
+        <div class="archive-meta" style="margin-top:10px">{{ item.narrative }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if week.narrative.sector_review %}
+  <div class="section">
+    <div class="section-title">Sector Review</div>
+    <div class="archive-list">
+      {% for sr in week.narrative.sector_review %}
+      <div class="archive-row">
+        <div style="flex:1">
+          <div class="archive-title">{{ sr.sector }}</div>
+          <div class="archive-meta">{{ sr.narrative }}</div>
+        </div>
+        <div class="mono {{ 'pos' if sr.weekly_change >= 0 else 'neg' }}">{{ "%+.2f"|format(sr.weekly_change) }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if week.narrative.notable_moves %}
+  <div class="section">
+    <div class="section-title">Notable Moves</div>
+    <div class="breakout-table-wrap">
+      <table class="breakout-table">
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Move</th>
+            <th>Date</th>
+            <th>Context</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for move in week.narrative.notable_moves %}
+          <tr>
+            <td class="ticker-cell">{{ move.ticker }}</td>
+            <td class="mono {{ 'pos' if '+' in move.move else 'neg' }}">{{ move.move }}</td>
+            <td class="mono">{{ move.date }}</td>
+            <td>{{ move.context }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if week.narrative.earnings_and_data %}
+  <div class="section">
+    <div class="section-title">Key Earnings & Data</div>
+    <div class="archive-list">
+      {% for ed in week.narrative.earnings_and_data %}
+      <div class="card">
+        <div class="archive-title">{{ ed.event }}</div>
+        <div class="archive-meta" style="margin-top:10px">{{ ed.impact }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if week.narrative.factor_commentary %}
+  <div class="section">
+    <div class="section-title">Factor Commentary</div>
+    <div class="note-card">{{ week.narrative.factor_commentary }}</div>
+  </div>
+  {% endif %}
+
+  {% if week.narrative.signal_commentary %}
+  <div class="section">
+    <div class="section-title">Signal Commentary</div>
+    <div class="note-card">{{ week.narrative.signal_commentary }}</div>
+  </div>
+  {% endif %}
+
+  {% if week.narrative.week_ahead %}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Forward Look</div>
+        <div class="section-title">Week Ahead</div>
+      </div>
+      <div class="section-note">Upcoming catalysts and areas of concentration for the next session cycle.</div>
+    </div>
+    <div class="weekly-prose">
+      <p>{{ week.narrative.week_ahead }}</p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Weekly summary generated {{ week.generated_at[:16] }} · Commentary is for research purposes only and not investment advice.</div>
+</footer>
+
+</body>
+</html>

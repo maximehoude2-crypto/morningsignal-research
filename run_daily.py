@@ -108,7 +108,7 @@ def main():
 
     # ── Step 2: Breakout Scanner ───────────────────────────────────────────
     from scanner.breakout_scanner import run_scanner
-    ok2, breakouts = step("Breakout Scanner", run_scanner, dry_run=args.dry_run)
+    ok2, breakouts = step("Breakout Scanner", run_scanner, dry_run=args.dry_run, target_date=today)
     results["scanner"] = ok2
 
     if not ok2:
@@ -117,7 +117,7 @@ def main():
     # ── Step 2a: Industry / Sub-Sector Scanner ─────────────────────────────
     # Runs after the breakout scanner so the parquet price cache is already warm.
     from scanner.industry_scanner import run_industry_scan
-    ok2a, industries = step("Industry Scan", run_industry_scan, dry_run=args.dry_run)
+    ok2a, industries = step("Industry Scan", run_industry_scan, dry_run=args.dry_run, target_date=today)
     results["industries"] = ok2a
 
     # Merge industry data into the brief so the narrative step can use it
@@ -134,7 +134,7 @@ def main():
                 _generate_narrative, fallback_narrative, narrative_has_content,
             )
             print("\n  Regenerating narrative with industry context...")
-            new_narr = _generate_narrative(brief)
+            new_narr = None if args.dry_run else _generate_narrative(brief)
             current = brief.get("narrative") or {}
             current_is_fallback = (
                 isinstance(current, dict) and current.get("source") == "fallback"
@@ -156,7 +156,7 @@ def main():
     # Computes 52w highs/lows, regime score, cross-asset grid, style box,
     # crowdedness — feeds the dashboard page.
     from scanner.dashboard_data import run_dashboard_data
-    ok2b, dashboard = step("Dashboard Data", run_dashboard_data, dry_run=args.dry_run)
+    ok2b, dashboard = step("Dashboard Data", run_dashboard_data, dry_run=args.dry_run, target_date=today)
     results["dashboard"] = ok2b
 
     # ── Step 2bb: InvestorDebate Index ────────────────────────────────────
@@ -169,7 +169,7 @@ def main():
     # ── Step 2c: News Intelligence ────────────────────────────────────────
     # Multi-source headline scrape + theme/sector tagging.
     from scanner.news_intelligence import run_news_intelligence
-    ok2c, news = step("News Intelligence", run_news_intelligence, dry_run=args.dry_run)
+    ok2c, news = step("News Intelligence", run_news_intelligence, dry_run=args.dry_run, target_date=today)
     results["news"] = ok2c
 
     # Merge news into the brief so narrative/templates can reference it
@@ -182,7 +182,7 @@ def main():
             from scanner.market_brief import (
                 _generate_narrative, fallback_narrative, narrative_has_content,
             )
-            new_narr = _generate_narrative(brief)
+            new_narr = None if args.dry_run else _generate_narrative(brief)
             current = brief.get("narrative") or {}
             current_is_fallback = (
                 isinstance(current, dict) and current.get("source") == "fallback"

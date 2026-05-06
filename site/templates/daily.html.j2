@@ -4,103 +4,379 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MorningSignal — Daily Report {{ report_date }}</title>
-  <link rel="stylesheet" href="../../assets/style.css">
-  <link rel="icon" href="../../assets/logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ prefix|default('../') }}assets/style.css">
+  <link rel="icon" href="{{ prefix|default('../') }}assets/logo.svg" type="image/svg+xml">
 </head>
 <body>
 
 <header>
   <div class="header-inner">
-    <a href="../../index.html" class="logo">
-      <img src="../../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+    <a href="{{ prefix|default('../') }}index.html" class="logo">
+      <img src="{{ prefix|default('../') }}assets/logo.svg" width="32" height="32" alt="MorningSignal">
       <div>
         <div class="logo-text">Morning<span>Signal</span></div>
         <div class="logo-sub">Research Platform</div>
       </div>
     </a>
     <nav>
-      <a href="../../index.html">Home</a>
+      <a href="{{ prefix|default('../') }}index.html">Home</a>
       <a href="" class="active">Daily Report</a>
-      <a href="../../archive.html">Archive</a>
+      <a href="{{ prefix|default('../') }}dashboard.html">Dashboard</a>
+      <a href="{{ prefix|default('../') }}industries.html">Industries</a>
+      <a href="{{ prefix|default('../') }}investordebate.html">Debate</a>
+      <a href="{{ prefix|default('../') }}weekly.html">Weekly</a>
+      <a href="{{ prefix|default('../') }}podcast.html">Podcast</a>
+      <a href="{{ prefix|default('../') }}earnings.html">Earnings</a>
+      <a href="{{ prefix|default('../') }}archive.html">Archive</a>
     </nav>
     <div class="header-date">{{ report_date }}</div>
   </div>
 </header>
 
+{% set narrative = brief.get('narrative', {}) if brief.get('narrative') is mapping else {} %}
+{% set spx = brief.indices.get('SPY', {}) %}
+{% set qqq = brief.indices.get('QQQ', {}) %}
+{% set signal = brief.get('market_signal', {}) %}
+{% set market_up = spx.get('day_change', 0) >= 0 %}
+{% set news = brief.get('news', {}) %}
+
 <div class="hero-strip">
   <div class="page-wrapper">
-    <div class="hero-title">Daily Report — {{ report_date }}</div>
-    <div class="hero-subtitle">
-      {{ breakouts|length }} breakout setups identified ·
-      Generated {{ generated_at }}
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">Daily Report</div>
+        <div class="hero-title">{{ report_date }}</div>
+        <div class="hero-summary">
+          {{ narrative.get('summary', 'A full-session read on the market backdrop and the highest-conviction breakout setups from today’s scan.') }}
+        </div>
+        <div class="hero-meta-row">
+          <span class="hero-market-badge {{ 'hero-badge-up' if market_up else 'hero-badge-down' }}">SPY {{ "%+.2f"|format(spx.get('day_change', 0)) }}%</span>
+          <span class="pill">QQQ {{ "%+.2f"|format(qqq.get('day_change', 0)) }}%</span>
+          <span class="pill">{{ breakouts|length }} qualifying setups</span>
+        </div>
+      </div>
+
+      <div class="hero-aside">
+        <div class="hero-metric-grid">
+          <div class="hero-mini-card">
+            <div class="hero-mini-label">Market Signal</div>
+            <div class="hero-mini-value">{{ signal.get('signal', 'N/A') }}</div>
+            <div class="hero-mini-meta">Score {{ "%.2f"|format(signal.get('score', 0)) }}</div>
+          </div>
+          <div class="hero-mini-card">
+            <div class="hero-mini-label">Generated</div>
+            <div class="hero-mini-value">{{ generated_at }}</div>
+            <div class="hero-mini-meta">Static build timestamp</div>
+          </div>
+          <div class="hero-mini-card">
+            <div class="hero-mini-label">Leaders</div>
+            <div class="hero-mini-value">{{ brief.sectors[0].name if brief.sectors else 'N/A' }}</div>
+            <div class="hero-mini-meta">Best-performing sector today</div>
+          </div>
+          <div class="hero-mini-card">
+            <div class="hero-mini-label">Lagging</div>
+            <div class="hero-mini-value">{{ brief.sectors[-1].name if brief.sectors else 'N/A' }}</div>
+            <div class="hero-mini-meta">Weakest sector on the tape</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="page-wrapper">
 
-  <!-- ── Market Overview ── -->
   <div class="section">
-    <div class="section-title">Market Overview</div>
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Overview</div>
+        <div class="section-title">Index & Macro Snapshot</div>
+      </div>
+      <div class="section-note">Core benchmarks, volatility, and curve shape for the session.</div>
+    </div>
     <div class="card-grid card-grid-4">
       {% for sym, idx in brief.indices.items() %}
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-label">{{ idx.name }}</div>
         <div class="stat-value">${{ "%.2f"|format(idx.price) }}</div>
         <div class="stat-meta">
-          <span class="{{ 'pos' if idx.day_change >= 0 else 'neg' }}">
-            {{ "%+.2f"|format(idx.day_change) }}% today
-          </span>
-          <span style="color:var(--text-dim)">
-            {{ "%+.2f"|format(idx.ytd_change) }}% YTD
-          </span>
+          <span class="{{ 'pos' if idx.day_change >= 0 else 'neg' }}">{{ "%+.2f"|format(idx.day_change) }}% today</span>
+          ·
+          <span class="{{ 'pos' if idx.ytd_change >= 0 else 'neg' }}">{{ "%+.2f"|format(idx.ytd_change) }}% YTD</span>
         </div>
       </div>
       {% endfor %}
     </div>
-  </div>
 
-  <!-- ── Macro ── -->
-  <div class="section">
-    <div class="section-title">Macro Conditions</div>
-    <div class="macro-grid">
-      <div class="stat-card">
-        <div class="stat-label">VIX — Fear Index</div>
-        <div class="stat-value {{ 'neg' if brief.macro.vix.level > 20 else ('yellow' if brief.macro.vix.level > 15 else 'pos') }}">
-          {{ "%.2f"|format(brief.macro.vix.level) }}
-        </div>
-        <div class="stat-meta">
-          <span class="{{ 'neg' if brief.macro.vix['5d_change'] > 0 else 'pos' }}">
-            {{ "%+.2f"|format(brief.macro.vix['5d_change']) }}% 5d
-          </span>
-        </div>
+    <div class="macro-grid mt-24">
+      <div class="stat-card card">
+        <div class="stat-label">VIX</div>
+        <div class="stat-value {{ 'neg' if brief.macro.vix.level > 20 else ('yellow' if brief.macro.vix.level > 15 else 'pos') }}">{{ "%.2f"|format(brief.macro.vix.level) }}</div>
+        <div class="stat-meta">{{ "%+.2f"|format(brief.macro.vix['5d_change']) }}% over 5d</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">10Y Treasury Yield</div>
+      <div class="stat-card card">
+        <div class="stat-label">10Y Treasury</div>
         <div class="stat-value">{{ "%.2f"|format(brief.macro.tnx.level) }}%</div>
+        <div class="stat-meta">Long-end benchmark</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">2Y Treasury Yield</div>
+      <div class="stat-card card">
+        <div class="stat-label">2Y Treasury</div>
         <div class="stat-value">{{ "%.2f"|format(brief.macro.irx.level) }}%</div>
+        <div class="stat-meta">Policy-sensitive front end</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-label">2s/10s Curve</div>
         {% set spread = brief.macro.spread_2s10s %}
-        <div class="stat-value {{ 'pos' if spread >= 0 else 'neg' }}">
-          {{ "%+.0f"|format(spread * 100) }}bps
+        <div class="stat-value {{ 'pos' if spread >= 0 else 'neg' }}">{{ "%+.0f"|format(spread * 100) }}bps</div>
+        <div class="stat-meta">{{ 'Normal / steepening' if spread >= 0 else 'Inverted' }}</div>
+      </div>
+    </div>
+  </div>
+
+  {# ─── What's Moving Markets — narrative + cross-sector dynamics ─── #}
+  {% if narrative.get('morning_note') or narrative.get('cross_sector_dynamics') %}
+  <div class="section" style="margin-top:30px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Tape Read</div>
+        <div class="section-title">What's Moving Markets Today</div>
+      </div>
+      <div class="section-note">Daily strategist letter and the cross-sector spreads behind today's tape.</div>
+    </div>
+
+    {% if narrative.get('morning_note') %}
+    <div class="card" style="background:linear-gradient(135deg, var(--surface-strong), var(--surface));border:1px solid var(--border-strong);padding:24px 30px;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);margin-bottom:18px;">
+      <div style="font-size:0.7rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;font-weight:700;margin-bottom:6px;">Strategist Letter · {{ report_date }}</div>
+      <div style="font-family:var(--font-display);font-weight:700;font-size:1.4rem;color:var(--text);margin-bottom:14px;">Morning Note</div>
+      <div style="font-size:0.94rem;line-height:1.75;color:var(--text);max-width:800px;">
+        {{ narrative.get('morning_note') }}
+      </div>
+    </div>
+    {% endif %}
+
+    {% set dyns = narrative.get('cross_sector_dynamics', []) %}
+    {% if dyns %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;">
+      {% for d in dyns %}
+      {% set sig = d.get('signal', 'neutral') %}
+      {% set sig_class = 'pos-bar' if sig == 'risk-on' else 'neg-bar' if sig == 'risk-off' else '' %}
+      {% set sig_color = 'var(--green)' if sig == 'risk-on' else 'var(--red)' if sig == 'risk-off' else 'var(--yellow)' if sig == 'mixed' else 'var(--text-muted)' %}
+      {% set sig_bg = 'var(--green-soft)' if sig == 'risk-on' else 'var(--red-soft)' if sig == 'risk-off' else 'var(--yellow-soft)' if sig == 'mixed' else 'rgba(157,106,46,0.08)' %}
+      <div class="card" style="padding:18px;border-left:4px solid {{ sig_color }};">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:0.96rem;color:var(--text);">{{ d.get('label', '') }}</div>
+          <span style="background:{{ sig_bg }};color:{{ sig_color }};padding:3px 10px;border-radius:var(--radius-pill);font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">{{ sig }}</span>
         </div>
-        <div class="stat-meta">
-          <span style="color:var(--text-dim)">
-            {{ 'Normal' if spread >= 0 else 'Inverted' }}
-          </span>
+        <div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-dim);margin-bottom:8px;">{{ d.get('observation', '') }}</div>
+        <div style="font-size:0.84rem;color:var(--text);line-height:1.55;">{{ d.get('implication', '') }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if narrative.get('cross_sector') %}
+    <div class="tape-cross-sector" style="margin-top:16px;">
+      <span class="tape-cross-label">Cross-Sector Synthesis</span>
+      <div class="hero-subtitle" style="margin-top:10px">{{ narrative.get('cross_sector') }}</div>
+    </div>
+    {% endif %}
+
+    {% if narrative.get('industry_rotation') %}
+    <div class="tape-cross-sector" style="margin-top:14px">
+      <span class="tape-cross-label">Industry Rotation</span>
+      <div class="hero-subtitle" style="margin-top:10px">{{ narrative.get('industry_rotation') }}</div>
+      <div style="margin-top:10px;font-size:0.8rem"><a href="{{ prefix|default('../') }}industries.html" style="color:var(--blue);font-weight:600">Explore the full industry view →</a></div>
+    </div>
+    {% endif %}
+
+    {% if narrative.get('ma_events') %}
+    <div class="tape-cross-sector" style="margin-top:14px">
+      <span class="tape-cross-label">Moving-Average Events</span>
+      <div class="hero-subtitle" style="margin-top:10px">{{ narrative.get('ma_events') }}</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# ─── Catalysts & News Flow ─────────────────────────────────────── #}
+  {% if news and news.get('total', 0) > 0 %}
+  <div class="section" style="margin-top:30px;">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">News Flow</div>
+        <div class="section-title">Catalysts driving the tape</div>
+      </div>
+      <div class="section-note">{{ news.get('total', 0) }} relevant headlines across {{ news.get('sources', [])|length }} sources, theme-tagged.</div>
+    </div>
+    <div class="caption">Headlines grouped by what's actually moving the market: geopolitics, Fed/macro, AI/tech, earnings, energy, regulation. Each headline is tagged to the sectors it most likely impacts. Urgency markers (!) indicate market-moving signals.</div>
+
+    {% set theme_specs = [
+      ('Geopolitics',  'Geopolitics',     'rotation_breakout'),
+      ('Fed/Macro',    'Fed / Macro',     'reclaim_200d'),
+      ('AI/Tech',      'AI / Tech',       'golden_cross'),
+      ('Earnings',     'Earnings',        'earnings'),
+      ('Energy/Oil',   'Energy / Oil',    'energy'),
+      ('China/Trade',  'China / Trade',   'china'),
+      ('Healthcare',   'Healthcare',      'health'),
+      ('Crypto',       'Crypto',          'crypto'),
+      ('M&A',          'Mergers & Acquisitions', 'ma'),
+      ('Regulation',   'Regulation',      'reg'),
+      ('Layoffs/Labor','Layoffs / Labor', 'labor'),
+    ] %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px;">
+      {% for theme_key, theme_label, _slug in theme_specs %}
+      {% set items = news.get('by_theme', {}).get(theme_key, []) %}
+      {% if items %}
+      <div class="card" style="padding:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);">{{ theme_label }}</div>
+          <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);background:rgba(157,106,46,0.08);padding:2px 8px;border-radius:var(--radius-pill);">{{ items|length }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          {% for h in items[:6] %}
+          <div style="padding:8px 0;border-bottom:1px solid rgba(215,208,195,0.5);">
+            <div style="font-size:0.84rem;line-height:1.45;color:var(--text);">
+              {% if h.get('url') %}<a href="{{ h.url }}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;">{{ h.title }}</a>{% else %}{{ h.title }}{% endif %}
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;align-items:center;">
+              <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--accent);font-weight:700;">{{ h.source }}</span>
+              {% if h.get('urgency', 1) >= 4 %}<span style="font-size:0.65rem;color:var(--red);font-weight:700;">!! HIGH</span>
+              {% elif h.get('urgency', 1) == 3 %}<span style="font-size:0.65rem;color:var(--yellow);font-weight:700;">! MED</span>{% endif %}
+              {% for sec in h.get('sectors', [])[:3] %}
+              <span style="font-size:0.62rem;color:var(--text-muted);background:var(--surface-strong);padding:1px 6px;border-radius:var(--radius-pill);border:1px solid var(--border);">{{ sec }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if news.get('earnings') %}
+    <div class="section" style="margin-top:24px;">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker">Earnings Tape</div>
+          <div class="section-title">Reporting today</div>
+        </div>
+        <div class="section-note">{{ news.earnings|length }} watchlist names from the EPS calendar.</div>
+      </div>
+      <div class="card" style="padding:14px;">
+        <table class="ca-table" style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:0.78rem;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border);">
+              <th style="text-align:left;padding:6px 10px;color:var(--text-muted);">Ticker</th>
+              <th style="text-align:left;padding:6px 10px;color:var(--text-muted);">Name</th>
+              <th style="text-align:left;padding:6px 10px;color:var(--text-muted);">Sector</th>
+              <th style="text-align:left;padding:6px 10px;color:var(--text-muted);">Reports</th>
+              <th style="text-align:right;padding:6px 10px;color:var(--text-muted);">Surprise</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in news.earnings %}
+            <tr style="border-bottom:1px solid rgba(215,208,195,0.5);">
+              <td style="padding:6px 10px;font-weight:700;color:var(--text);">{{ e.ticker }}</td>
+              <td style="padding:6px 10px;color:var(--text-dim);font-family:var(--font-sans);">{{ e.name }}</td>
+              <td style="padding:6px 10px;color:var(--text-muted);font-family:var(--font-sans);font-size:0.74rem;">{{ e.sector }}</td>
+              <td style="padding:6px 10px;color:var(--text-muted);">{{ e.earnings_date }}</td>
+              <td style="padding:6px 10px;text-align:right;" class="{{ 'pos' if (e.get('surprise_pct') or 0) >= 0 else 'neg' }}">{% if e.get('surprise_pct') %}{{ "%+.1f"|format(e.surprise_pct) }}%{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if narrative.get('bullets') %}
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Narrative</div>
+        <div class="section-title">Sector Commentary</div>
+      </div>
+      <div class="section-note">GPT-5.4 commentary grounded in the market inputs for this session.</div>
+    </div>
+    <div class="tape-summary">{{ narrative.get('summary', '') }}</div>
+    <div class="tape-bullets">
+      {% for bullet in narrative.get('bullets', []) %}
+      <div class="tape-bullet {{ 'tape-bullet-up' if bullet.change >= 0 else 'tape-bullet-down' }}">
+        <div class="tape-bullet-header">
+          <span class="tape-bullet-sector">{{ bullet.sector }}</span>
+          <span class="tape-bullet-change {{ 'pos' if bullet.change >= 0 else 'neg' }}">{{ "%+.1f"|format(bullet.change) }}%</span>
+        </div>
+        <div class="tape-bullet-text">{{ bullet.narrative }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="two-col mt-24">
+    <div class="section">
+      <div class="section-title">Sector Breadth</div>
+      <div class="card">
+        <div class="sector-list">
+          {% set max_abs = namespace(val=0.01) %}
+          {% for s in brief.sectors %}
+            {% if s.day_change|abs > max_abs.val %}{% set max_abs.val = s.day_change|abs %}{% endif %}
+          {% endfor %}
+          {% for s in brief.sectors %}
+          <div class="sector-row">
+            <div class="sector-name">{{ s.name }}</div>
+            <div class="sector-bar-wrap">
+              {% set pct = (s.day_change / max_abs.val * 100)|abs %}
+              <div class="sector-bar {{ 'pos-bar' if s.day_change >= 0 else 'neg-bar' }}" style="width:{{ pct }}%"></div>
+            </div>
+            <div class="sector-chg {{ 'pos' if s.day_change >= 0 else 'neg' }}">{{ "%+.2f"|format(s.day_change) }}%</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Top Movers</div>
+      <div class="card">
+        <div class="mover-list">
+          {% for mover in brief.top_gainers[:5] %}
+          <div class="mover-row">
+            <div style="flex:1">
+              <div class="archive-title">{{ mover.ticker }}</div>
+              <div class="mover-caption">{{ mover.name }}</div>
+            </div>
+            <div class="mono pos">{{ "%+.2f"|format(mover.day_change) }}%</div>
+          </div>
+          {% endfor %}
+          {% for mover in brief.top_losers[:5] %}
+          <div class="mover-row">
+            <div style="flex:1">
+              <div class="archive-title">{{ mover.ticker }}</div>
+              <div class="mover-caption">{{ mover.name }}</div>
+            </div>
+            <div class="mono neg">{{ "%+.2f"|format(mover.day_change) }}%</div>
+          </div>
+          {% endfor %}
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ── Full Breakout Table ── -->
   <div class="section">
-    <div class="section-title">Breakout Setups — Full Scan Results</div>
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Scan Output</div>
+        <div class="section-title">Full Breakout Table</div>
+      </div>
+      <div class="section-note">Composite score combines relative strength, base quality, trend structure, and stage confirmation.</div>
+    </div>
     <div class="breakout-table-wrap">
       <table class="breakout-table">
         <thead>
@@ -127,28 +403,23 @@
           <tr>
             <td class="rank-cell">{{ b.rank }}</td>
             <td class="ticker-cell">
-              <a href="../deep-dives/{{ b.ticker }}.html">{{ b.ticker }}</a>
+              <a href="{{ prefix|default('../') }}deep-dives/{{ b.ticker }}.html">{{ b.ticker }}</a>
               {% if b.get('streak_days', 1) >= 3 %}
               <span class="flag-badge" title="{{ b.streak_days }} days in a row">★ {{ b.streak_days }}d</span>
               {% endif %}
             </td>
             <td class="name-cell">{{ b.name }}</td>
-            <td class="name-cell" style="font-size:0.78rem;color:var(--text-dim)">{{ b.sector }}</td>
+            <td class="name-cell">{{ b.sector }}</td>
             <td>
               <div class="score-bar">
-                <span class="score-cell {{ 's-high' if sc >= 80 else ('s-mid' if sc >= 60 else 's-low') }}">
-                  {{ "%.1f"|format(sc) }}
-                </span>
+                <span class="score-cell {{ 's-high' if sc >= 80 else ('s-mid' if sc >= 60 else 's-low') }}">{{ "%.1f"|format(sc) }}</span>
                 <div class="score-bar-bg">
-                  <div class="score-bar-fill {{ '' if sc >= 80 else ('mid' if sc >= 60 else 'low') }}"
-                       style="width:{{ sc }}%"></div>
+                  <div class="score-bar-fill {{ '' if sc >= 80 else ('mid' if sc >= 60 else 'low') }}" style="width:{{ sc }}%"></div>
                 </div>
               </div>
             </td>
-            <td class="mono {{ 's-high' if b.rs >= 80 else ('s-mid' if b.rs >= 60 else '') }}">
-              {{ "%.1f"|format(b.rs) }}</td>
-            <td class="mono {{ 's-high' if b.base >= 80 else ('s-mid' if b.base >= 60 else '') }}">
-              {{ "%.1f"|format(b.base) }}</td>
+            <td class="mono {{ 's-high' if b.rs >= 80 else ('s-mid' if b.rs >= 60 else '') }}">{{ "%.1f"|format(b.rs) }}</td>
+            <td class="mono {{ 's-high' if b.base >= 80 else ('s-mid' if b.base >= 60 else '') }}">{{ "%.1f"|format(b.base) }}</td>
             <td class="mono">{{ "%.1f"|format(b.trend) }}</td>
             <td style="text-align:center">
               {% if b.stage2 %}
@@ -158,122 +429,33 @@
               {% endif %}
             </td>
             <td class="mono">${{ "%.2f"|format(b.price) }}</td>
-            <td class="mono" style="color:var(--text-dim)">${{ "%.2f"|format(b.high_52w) }}</td>
-            <td class="mono {{ 'neg' if b.pct_from_high < -10 else ('yellow' if b.pct_from_high < -5 else 'pos') }}">
-              {{ "%+.1f"|format(b.pct_from_high) }}%</td>
-            <td class="mono" style="color:var(--text-dim)">
+            <td class="mono">${{ "%.2f"|format(b.high_52w) }}</td>
+            <td class="mono {{ 'neg' if b.pct_from_high < -10 else ('yellow' if b.pct_from_high < -5 else 'pos') }}">{{ "%+.1f"|format(b.pct_from_high) }}%</td>
+            <td class="mono">
               {% if b.avg_volume >= 1000000 %}
                 {{ "%.1f"|format(b.avg_volume / 1000000) }}M
               {% else %}
                 {{ "%.0f"|format(b.avg_volume / 1000) }}K
               {% endif %}
             </td>
-            <td class="mono {{ 'pos' if b.vol_ratio >= 1.4 else '' }}">
-              {{ "%.2f"|format(b.vol_ratio) }}x</td>
+            <td class="mono {{ 'pos' if b.vol_ratio >= 1.4 else '' }}">{{ "%.2f"|format(b.vol_ratio) }}x</td>
           </tr>
           {% else %}
           <tr>
             <td colspan="14" style="text-align:center;color:var(--text-dim);padding:30px">
-              No breakouts meeting criteria today (Score ≥ 60, Stage 2 confirmed).
+              No breakouts meeting the current threshold today.
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-
-    <div style="margin-top:12px;font-size:0.75rem;color:var(--text-dim);line-height:1.8">
-      <strong style="color:var(--text)">Score legend:</strong>
-      <span class="badge badge-green">≥ 80</span> High-conviction setup ·
-      <span class="badge badge-yellow">60–79</span> Developing setup ·
-      <span class="badge badge-gray">&lt; 60</span> Below threshold ·
-      ★ = 3+ consecutive days in top 15 (auto-flagged for deep dive)
-    </div>
   </div>
 
-  <!-- ── Sectors + Movers ── -->
-  <div class="two-col mt-24">
-    <div class="card">
-      <div class="section-title">Sector Performance</div>
-      <div class="sector-list">
-        {% set max_abs = namespace(val=0.01) %}
-        {% for s in brief.sectors %}
-          {% if s.day_change|abs > max_abs.val %}{% set max_abs.val = s.day_change|abs %}{% endif %}
-        {% endfor %}
-        {% for s in brief.sectors %}
-        <div class="sector-row">
-          <div class="sector-name">{{ s.name }}</div>
-          <div class="sector-bar-wrap">
-            {% set pct = (s.day_change / max_abs.val * 50)|abs %}
-            {% if s.day_change >= 0 %}
-            <div class="sector-bar pos-bar" style="width:{{ pct }}%"></div>
-            {% else %}
-            <div class="sector-bar neg-bar" style="width:{{ pct }}%"></div>
-            {% endif %}
-          </div>
-          <div class="sector-chg {{ 'pos' if s.day_change >= 0 else 'neg' }}">
-            {{ "%+.2f"|format(s.day_change) }}%
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <div>
-      <div class="card" style="margin-bottom:16px">
-        <div class="section-title">Top 5 Gainers (S&P 500)</div>
-        <div class="mover-list">
-          {% for m in brief.top_gainers %}
-          <div class="mover-row">
-            <div>
-              <div class="mover-ticker">{{ m.ticker }}</div>
-              <div class="mover-name">{{ m.name }}</div>
-            </div>
-            <div class="mover-chg pos">{{ "%+.2f"|format(m.day_change) }}%</div>
-          </div>
-          {% else %}
-          <div style="color:var(--text-dim);font-size:0.82rem;padding:8px">No data</div>
-          {% endfor %}
-        </div>
-      </div>
-      <div class="card">
-        <div class="section-title">Top 5 Losers (S&P 500)</div>
-        <div class="mover-list">
-          {% for m in brief.top_losers %}
-          <div class="mover-row">
-            <div>
-              <div class="mover-ticker">{{ m.ticker }}</div>
-              <div class="mover-name">{{ m.name }}</div>
-            </div>
-            <div class="mover-chg neg">{{ "%+.2f"|format(m.day_change) }}%</div>
-          </div>
-          {% else %}
-          <div style="color:var(--text-dim);font-size:0.82rem;padding:8px">No data</div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Methodology Note ── -->
-  <div class="section">
-    <div class="card" style="font-size:0.82rem;color:var(--text-dim);line-height:1.8">
-      <strong style="color:var(--text);font-size:0.85rem">Scoring Methodology</strong><br>
-      Composite score (0–100) combines four frameworks:
-      <strong style="color:var(--text)">Relative Strength (40%)</strong> — IBD-style RS vs S&P 500 benchmark, weighted by recency;
-      <strong style="color:var(--text)">Base Quality (35%)</strong> — Minervini SEPA base depth &amp; volume confirmation;
-      <strong style="color:var(--text)">Trend Structure (25%)</strong> — Price vs 50/200d MAs, golden cross, both MAs rising.
-      <strong style="color:var(--text)">Weinstein Stage 2 gate</strong> — price above rising 30-week MA; fails = score 0.
-    </div>
-  </div>
-
-</div><!-- /.page-wrapper -->
+</div>
 
 <footer>
-  <div>MorningSignal Research · {{ report_date }} ·
-    <a href="../../archive.html">Archive</a> ·
-    Not financial advice. For research purposes only.
-  </div>
+  <div>MorningSignal Research · Daily report for {{ report_date }} · Commentary is for research purposes only and not investment advice.</div>
 </footer>
 
 </body>
