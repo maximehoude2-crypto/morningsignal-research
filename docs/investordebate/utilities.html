@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Utilities</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-05-05 20:53</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Utilities</div>
+        <div class="hero-title">Utilities — Committee Report</div>
+        <div class="hero-summary">
+          We are mid-cycle in a "stagflation-lite" regime: Fed funds held at 3.50-3.75% for the third consecutive meeting (an 8-4 dissent vote — unusual hawkish-dovish split — signals committee fragmentation), the 10Y Treasury sits at 4.38% (up 7bps over 30 days on Iran-driven oil shock), and March CPI printe
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-05-04</span>
+          <span class="pill">28 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All sectors</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Utilities yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-05-04</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">**D**</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.4/10</td>
+            <td class="thesis-cell">Q1 EPS $0.95 vs. est $0.86 (+10% beat) on 8.4% commercial sales growth from data centers; 50GW pipeline (now contracted 47.2GW beyond current need); $65B 5-yr capex plan; new GS-5 large-load rate class effective 1/1/27 transfers grid-upgrade costs to hyperscalers — a structural margin protector other Virginia analysts are underweighting.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">**SO**</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.1/10</td>
+            <td class="thesis-cell">Q1 adj EPS $1.32 vs. est $1.20 ($0.12 beat); commercial weather-normal sales +4.6% with **42% data center growth YoY**; 11GW fully-contracted large load, 6GW being finalized, 12GW progressing, 75GW prospective pipeline across 100+ projects; $26.5B DOE loans secured for AL/GA utilities; Vogtle units 3 & 4 now in rate base providing earnings tailwind.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">**VST**</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>7.8/10</td>
+            <td class="thesis-cell">Down 25% YTD on Q4 miss ($0.54 actual vs. $2.31 est) caused by Martin Lake unit downtime + Moss Landing battery outage — the market has overpriced operational noise at a now-19.3x forward P/E (vs. 37.6x peak Q4 2024); 3.8GW nuclear contracted with AWS (1.2GW Comanche Peak) and Meta (2.18GW + 433MW upgrades) provides 20-year cash flow visibility; analyst consensus 19 Buy / 1 Sell with $234 target = +47% upside. **The committee's highest-alpha contrarian call.**</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">**NEE**</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>7.7/10</td>
+            <td class="thesis-cell">Q1 adj EPS $1.09 (+10% YoY) beat $1.03; record renewables/storage origination quarter (+4GW backlog including 1.3GW battery, total 33GW backlog); selected by US Commerce Dept to build 9.5GW gas in TX/PA tied to Japan trade deal; 21GW large-load interest at FPL with 12GW in advanced talks for 2028 service. The "build everything, anywhere" platform play.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">**DTE**</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>7.5/10</td>
+            <td class="thesis-cell">Q1 EPS $1.95 (+21% YoY) was a "narrative beat" — missed sell-side $2.01 by 3% but the data center story is the only thing that matters: 1.4GW Oracle under construction, 1GW Google awaiting MPSC by Sept 10, additional ~2GW in advanced negotiations, total pipeline 3-4GW; management explicitly biased to high end of 6-8% EPS growth range with data center wins as upside lever. Mizuho raised PT on data center progress.</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--green);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Key Sector Call</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">**OVERWEIGHT.** The committee's overall view: utilities are no longer the bond-proxy defensive sleeve they were in 2015-2022; they have transformed into the **purest pick-and-shovel play on the AI capex super-cycle**. Hyperscaler capex of $700B+ in 2026 (~50% YoY growth) requires power, and the US grid was not designed for it — every 1GW of new data center load creates ~$1B of incremental rate base for the serving utility, monetized at ~10% allowed ROE. However, the sector trades at 17.2-18.2x 2026E (above 16.8x 25-year median) and yields 3.3% vs. a 4.38% 10Y — **valuation is no longer cheap, so security selection now dominates**. Within the sector we strongly favor (1) Virginia/Texas/Mid-Atlantic regulated utilities with explicit data center load (D, SO, DTE), (2) IPPs with merchant nuclear capacity contracted to hyperscalers (VST, CEG), and (3) renewables platforms with execution capability and scale (NEE). We are cautious on (1) IPP names trading at peak narrative multiples without underlying contract coverage (TLN), (2) traditional bond-proxy utilities with limited data center exposure facing the rate-spread headwind (ED, ATO at 22x P/E), and (3) wildfire-impaired utilities where the market is incompletely pricing tail risk (XEL Smokehouse fire, ES Connecticut storm exposure).</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">**VST (Vistra)** — the score range from 4 (Credit/Risk) to 9 (Sentiment/MomentumPulse) is the widest in the universe. The bull case: 25% drawdown is a textbook crowd-psychology dislocation; the company has 3.8GW of contracted nuclear with 20-year terms providing earnings floors that decouple it from spot power; the operational issues (Martin Lake downtime, Moss Landing fire) are non-recurring. The bear case: VST is a fundamentally levered merchant generator (net debt/EBITDA ~3.5x post-Lotus acquisition) whose valuation has historically been compressed during commodity downturns; if AI capex disappoints in late 2026 as MSFT/META rationalize, IPPs are first to derate. **The unresolved question: are hyperscaler PPA contracts genuine 20-year revenue commitments or break-able if AI ROI disappoints?**</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--blue);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Where We Differ from Consensus</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">The committee is **bullish on D (Dominion) where Street consensus is "Buy with concerns about execution risk."** Sell-side has emphasized Virginia regulatory uncertainty and the Coastal Virginia Offshore Wind cost overrun risk. Our differentiated insight: the new **GS-5 rate class effective 1/1/27** is a regulatory innovation that other analysts are systematically underweighting. By creating a separate rate class for customers >25 MW, Dominion is locking in cost-recovery of grid upgrades from data center customers specifically, protecting residential rate base from political backlash and giving the company unilateral ability to raise data-center-specific rates without re-opening general rate cases. This is structurally better than peer regulators (e.g., Texas where ERCOT structure forces socialization). Combined with Q1's +8.4% commercial sales beat, the catalyst path through the 2027 rate case is the cleanest in the sector.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--red);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">What We're Probably Wrong About</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">**CEG (Constellation) at HOLD/BUY transition** — we may be too early. CEG is down 20% YTD on (1) 2026 guidance of $11.50 below $11.78 consensus, (2) Crane restart delay risk (now 2027 target), and (3) Mid-Atlantic capacity price cap risk. The bear case is that the merchant nuclear premium thesis is premised on a perpetual scarcity rent that the market is now realizing was overpriced; if PJM imposes capacity caps and Crane misses 2027, the entire thesis collapses. The committee's BUY rating on CEG (composite 7.0) assumes mean reversion in narrative without a clear catalyst; the steelman is that CEG could trade at $250 (vs. $307 today) before fundamentals justify a re-rating. We hold our BUY but with conviction = 3 (lowest of our buys), and have flagged this as the sector's most likely regret call.</div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 10 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · D — Dominion Energy</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-strong-buy">STRONG BUY</span> · 
+        Conviction 5.0/5 · 
+        Composite 8.4/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 2026 operating EPS of $0.95 beat consensus $0.86 by 10%, with revenue of $5.02B vs. $4.47B forecast — a clean beat across both lines. The driver is unambiguous: commercial sales surged 8.4% YoY driven primarily by Northern Virginia data center demand, a continuation of the secular trend that has now produced 47.2GW of contracted load BEYOND current need (vs. 21GW in mid-2024 — a 124% increase in contracted future load in 18 months). The $65B 2026-2030 capex plan grows rate base at ~9% CAGR, which at the company's allowed ROE generates 6-8% EPS growth from regulated operations alone. The under-appreciated structural catalyst is the **GS-5 rate class** approved by the Virginia SCC effective January 1, 2027, which creates a separate rate tariff for customers demanding ≥25MW. This locks in cost recovery of data-center-driven grid investments from data center customers themselves, insulating residential customers from rate shock and giving Dominion unilateral ability to raise large-load rates without general rate case risk.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>D trades at ~17x forward P/E and ~21x trailing — not cheap by historical standards (median ~16x for D specifically over 5 years). Coastal Virginia Offshore Wind project cost overruns (now estimated $9.8-11B vs. original $9.8B) remain a chronic capex risk. The 2025 SCC biennial review imposed earnings-sharing mechanisms that limit upside. Most importantly, the Northern Virginia data center concentration (>40% of commercial revenue) creates single-jurisdiction concentration risk if Virginia legislators ever impose moratoria (multiple Northern Virginia counties have proposed restrictions). Dividend yield of ~4.4% looks attractive but barely covers the 10Y at 4.38%, providing minimal yield premium for equity risk.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Will Virginia regulatory environment remain constructive through 2027 rate case, or will rising residential bills (already a political flashpoint) trigger anti-utility legislation that compresses ROE? The GS-5 rate class is designed to prevent this, but it has not yet been tested under stress.</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#2 · SO — Southern Company</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 5.0/5 · 
+        Composite 8.1/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>SO's Q1 2026 was the cleanest beat in the sector: adj EPS $1.32 vs. est $1.20 (+10%), revenue $8.4B (+8% YoY). The mix shift is what matters — commercial sales grew 4.6% on weather-normal basis with **42% data center demand growth** YoY. Fully-contracted large load is now 11GW (with another 1.9GW added recently with hyperscalers); 6GW is being finalized for near-term commitment, 12GW progressed during Q1, and the prospective pipeline contains >75GW across 100+ projects. The Vogtle 3 & 4 nuclear units (now both in commercial operation since 2024) are providing the long-promised earnings tailwind without further construction risk overhang. SO secured $26.5B in DOE loan commitments for Alabama Power and Georgia Power, locking in below-market financing through 2030. The dividend (current 3.0% yield) has been increased annually for 24+ consecutive years, with payout ratio at ~67% leaving room for continued growth.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>SO trades at ~21x trailing P/E and ~19x forward — a meaningful premium to the sector median 17.2x and well above its own 5-year median ~17x. The 75GW prospective pipeline includes a wide range of speculative projects; most analysts think only 30-40% of unsigned pipeline ever materializes. Vogtle's $35B+ all-in cost remains a regulatory drag — SO Power continues to absorb a portion of overruns through rate shareholders. Atlanta-area regulatory risk is rising as the GA PSC faces consumer pressure over rate increases.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Is the 42% Q1 data center growth annualizable, or does the pipeline saturate as 2027 approaches and Georgia/Alabama hit capacity constraints? If SO can sustain >25% data center load growth through 2027, the $103B market cap looks cheap; if growth decelerates to 10-15% in 2027, current premium compresses.</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#3 · VST — Vistra Corp.</h3>
+      <div class="stock-meta">
+        
+        Conviction 4.0/5 · 
+        Composite 7.8/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>VST is the committee's highest-alpha contrarian call. The 25% YTD drawdown was triggered by a Q4 2025 EPS miss ($0.54 actual vs. $2.31 estimate — a 76% miss) but the miss was driven by two non-recurring operational events: (1) unexpected downtime at Martin Lake Unit 1 coal plant in Texas, and (2) the Moss Landing battery storage fire in California. Underlying 2025 adj EBITDA hit $5.9B (record) and adj FCF before growth was $3.6B. The transformative story is the contracted nuclear book: **3.8GW of nuclear capacity now under 20-year PPAs** including 1,200MW with Amazon at Comanche Peak and 2,176MW (plus 433MW upgrades) with Meta at PJM nuclear plants. With incremental capacity for up to 3.2GW of additional nuclear contracting at Beaver Valley and Comanche Peak, the run-rate contracted nuclear cash flow at $80-100/MWh PPAs is roughly $2.5-3B in EBITDA visibility through the 2040s. The Q1 2026 estimate of $1.32 EPS (+202% YoY) due to Lotus acquisition contribution would represent a clean reset. At 19.3x forward P/E (down from 37.6x peak fall 2025), the multiple has compressed to historical IPP levels but the underlying earnings power is structurally higher. Analyst consensus 19 Buy / 1 Sell / 0 Hold with $234 average PT (+47% upside).</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>VST is fundamentally a leveraged merchant generator with Net Debt/EBITDA ~3.5x post-Lotus acquisition (the $3.4B Lotus deal added 2.6GW of CCGT capacity but financed with debt). In a downturn, IPP equity historically loses 50%+ — see VST 2014-2016 commodity collapse. The hyperscaler PPA contracts contain force majeure and material adverse change clauses; if AI capex disappoints and AWS/META renegotiate, the contracted EBITDA assumption falls apart. The Q4 miss revealed operational fragility — battery fires and coal unit outages indicate aging asset base with maintenance capex risk. Free cash flow before growth of $3.6B sounds impressive but capex-to-revenue is rising as VST builds new gas plants to chase data center load. Valuation at 19x forward looks reasonable until you compare to historical IPP cycle troughs (8-10x).</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Are the hyperscaler nuclear PPAs equivalent to investment-grade utility revenue (justifying 20-25x multiple) or are they merchant power dressed up with longer terms (deserving 10-12x merchant multiple)? The answer dictates ~50% of the stock's value. Specifically: how much of the 3.8GW contracted capacity is at fixed prices vs. indexed to power markets, and what are the make-whole/termination provisions?</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#4 · NEE — NextEra Energy</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 4.0/5 · 
+        Composite 7.7/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>NEE is the unique scale player in renewables + regulated utilities + emerging gas/nuclear infrastructure. Q1 2026 adj EPS of $1.09 (+10% YoY) beat estimates of $1.03; 162% increase in net income reflected favorable mark-to-market on ZEC contracts. The Resources segment had a record renewables/storage origination quarter, adding 4GW to the backlog (including 1.3GW battery storage), bringing the total backlog to ~33GW. The April 2026 announcement that the US Department of Commerce selected NEER to build 9.5GW of new gas-fired generation in Texas and Pennsylvania (tied to Japan's $550B trade-deal investment commitment) is a transformative win that adds ~$15-20B of contracted capex over 5 years. FPL has 21GW of large-load interest with 12GW in advanced discussions for 2028 service. The "four wallets" approach to Gen 3 SMR (OEM + developer + hyperscaler + federal) provides pathway to nuclear without taking the full balance sheet risk. NEE has paid a dividend for 30+ years and grown it for 26+ consecutive years.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>At $202B market cap and ~22x trailing P/E, NEE is no longer a value play — it trades at a meaningful premium to sector median 17.2x and to its own 5-year median ~19x. The IRA tax credit assumption (~30% ITC + PTC) underpins a meaningful chunk of NEE Resources project economics; any Republican unwind of IRA credits would destroy ~10-15% of project IRRs and force capex deceleration. The Energy Resources segment carries higher merchant/development risk than many investors assume — backlog conversion is not certain, and several PPAs have escape clauses if delivery slips. Florida regulator (FPL's primary jurisdiction) has tightened earnings sharing mechanisms in the 2025 settlement, capping ROE upside. Renewables EPC inflation (steel + transformers) remains a margin headwind despite 2024-2025 supply normalization.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Is the 33GW backlog real economic value, or is it inventory that gets repriced as IRA, interest rates, and EPC costs evolve? The market today values it as ~$60B of net asset value; if backlog conversion returns are 100bps below current assumption, the equity value of Resources segment compresses by ~$30B (~15% of market cap).</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#5 · DTE — DTE Energy</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 4.0/5 · 
+        Composite 7.5/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 2026 operating earnings of $1.95 EPS (+21% YoY) was a strong absolute number even though it missed sell-side $2.01 by 3% (the "narrative beat"). The data center pipeline is the entire story: Oracle 1.4GW under construction in Michigan, Google 1.0GW filed for MPSC approval (decision expected Sept 10, 2026), and additional ~2GW in advanced negotiations — a total 3-4GW pipeline. Management explicitly raised the bias on the long-term 6-8% EPS growth target to "high end with potential to exceed" if data center wins close. Mizuho raised the price target on data center progress. Michigan PSC has been constructive on rate cases; the 5-year capex plan of ~$30B grows rate base ~7% CAGR. Dividend yield 3.2%, payout ratio ~65%, dividend growth 6-8%.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>The Q1 miss vs. sell-side is a real concern — DTE has historically been a "beat-and-raise" name and missing on the most important quarter of the year (where data center contributions should have started showing) signals the data center economic uplift is happening more slowly than the narrative suggests. The Google MPSC approval is not guaranteed; a denial or major modification would crater the data center thesis. Michigan's Republican-led legislature is increasingly skeptical of utility capex and has proposed legislation to limit ROE pass-through on data-center-driven investment. DTE's electric subsidiary (DTE Electric) faces continued reliability complaints from residential customers — political pressure will build if data centers get priority over residential service.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Will the 3-4GW data center pipeline actually materialize at attractive economics, or will Michigan regulators ultimately impose data-center-specific rate structures (similar to Virginia's GS-5) that eat into margins? If pipeline economics are protected, DTE re-rates to 21x; if they get squeezed, DTE stays at 17-18x.</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#6 · CEG — Constellation Energy</h3>
+      <div class="stock-meta">
+        
+        Conviction 3.0/5 · 
+        Composite 7.0/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>CEG is the largest US clean energy producer post-Calpine acquisition (closed January 7, 2026) — uniting the largest zero-emission nuclear fleet with natural gas + geothermal generation totaling ~64GW (combined CEG + Calpine). The platform serves growing data center and industrial demand uniquely well: nuclear baseload + gas peaking provides 24/7 carbon-attribute matched capacity that hyperscalers explicitly require. Recent wins: 380MW deal with CyrusOne for Texas data center, 20-year PPA with Microsoft for restarted Three Mile Island Unit 1 (rebranded "Crane Clean Energy Center"), $1B DOE loan guarantee for Crane restart. The company increased the dividend 10% with another 10% increase planned in 2026. Adjusted operating earnings rose to $9.39/share in 2025 from $8.67 in 2024.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>CEG is the worst-performing major utility YTD (-20%) for specific reasons: (1) 2026 operating earnings guidance of $11.50/share fell short of consensus $11.78 — first major guidance disappointment since the spinoff from Exelon, (2) Crane Clean Energy Center restart delayed (now 2027 target), creating risk against the Microsoft contract, (3) Mid-Atlantic capacity price cap proposals from PJM regulators threaten to limit nuclear scarcity rents. Even at $307, CEG trades at ~26x forward earnings — a meaningful premium to the sector and to its own historical (CEG/Exelon spin median ~19x). The Calpine acquisition added $26.6B of debt; pro-forma net debt/EBITDA is now ~3.0x vs. pre-deal ~1.5x. The "AI nuclear premium" thesis was the entire 2024-2025 rally driver; if PJM caps capacity prices, that thesis cracks structurally.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Are merchant nuclear premiums (currently $80-120/MWh PPAs vs. wholesale $35-45) sustainable, or were they a 2024-2025 scarcity premium that decays as new gas/nuclear comes online and PJM imposes caps? This is the single most important question in the IPP space. The committee's split: Sentiment + MomentumPulse + Macro see opportunity in 20% drawdown; Credit/Risk + Fundamental flag valuation and execution.</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#7 · AEP — American Electric Power</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 4.0/5 · 
+        Composite 7.4/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>AEP serves the largest US electric transmission system spanning 11 states including the data center hot zones of Ohio, Texas, and Virginia (through APCo). The 5-year capex plan of $54B grows rate base ~9% CAGR. Recent Q2 2025 EPS of $1.43 beat by 17.2%. The transmission business (FERC-regulated) provides higher allowed ROE (~10.5%) than retail distribution. Texas data center growth is increasingly being routed through AEP's SWEPCO subsidiary. Dividend yield 3.7%, growth 6%.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>AEP has multiple jurisdictional regulators (11 states + FERC) which creates execution complexity and increases the risk of negative rate case decisions in any single jurisdiction. Ohio rate case currently pending creates uncertainty. Recent activist pressure from Carl Icahn has been pushing for asset sales; activist outcomes are inherently uncertain. The stock is up ~12% YTD already, capturing some of the data center thesis.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#8 · PCG — PG&E Corporation</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 4.0/5 · 
+        Composite 7.3/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 2026 core EPS rose to $0.43, up $0.10 YoY, with full-year 2026 guidance of $1.64-1.66 reaffirmed (5+ consecutive years of double-digit earnings growth expected). PCG advanced 4.6GW of customer data center projects to final engineering, with management messaging that every 1GW of new data center load helps customers save 1%+ on monthly bills (a powerful narrative tool with regulators). Wildfire safety capex (1,900 miles undergrounding by EOY 2027) is gradually building defense against tail risk. The Continuous Monitoring Center launched May 1 demonstrates investment in technology-led wildfire prevention.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>PCG remains structurally exposed to California wildfire tail risk despite mitigation; a single $5B+ wildfire judgment would re-trigger bankruptcy concerns. The $25B+ wildfire mitigation capex must be financed predominantly through rate increases at a time when California political environment is hostile to utilities. AB 1054 wildfire fund provides some protection but is finite. Dividend yield is low (~0%) relative to peers — yield-oriented investors won't buy it.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#9 · SRE — Sempra</h3>
+      <div class="stock-meta">
+        
+        Conviction 3.0/5 · 
+        Composite 6.8/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>SRE's LNG export business (Sempra Infrastructure) provides growth optionality unique in the utility sector — Cameron Phase 2 + Port Arthur LNG progressing on schedule. SDG&E + SoCalGas serve the strong California economy. Texas utility (Oncor) growing rate base 9-10% on data center demand. Dividend yield 2.7%.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>P/E of 34x is the highest in the major utility space and reflects extreme optimism on LNG monetization. CPUC December 2025 cost-of-capital decision lowered authorized ROEs by 0.3 percentage points for SoCalGas and SDG&E — a structural margin headwind. Capital intensity is rising as LNG buildout requires multi-billion dollar commitments.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#10 · DUK — Duke Energy</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 4.0/5 · 
+        Composite 6.7/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Duke serves NC + SC + FL + IN + OH — high-growth Southeast geography with strong data center pipelines. 2025 revenue $31.79B (+6.2%), earnings $4.91B (+11.25%). Management targets 5-7% EPS growth; analysts believe Duke achieves high end. $73B 5-year capex plan funds rate base growth. NC PSC has been constructive; clean energy transition plan approved. Q1 May 5 earnings is upcoming catalyst.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Duke is a "everyone owns it" utility — large cap quality but limited differentiation from sector. Coal retirement schedule + offshore wind + nuclear SMR plans require massive capex with execution risk. NC HB951 carbon plan creates uncertainty. Trading at ~21x forward — premium to sector.</p>
+      </div>
+      
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (62372 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Utilities Sector Analysis — v2.0
+
+**Report Date:** 2026-05-04
+**Universe:** 28 US-listed Utilities sector stocks above $2B market cap
+**Analyst Team:** 8 Specialists (Fundamental, Quant/Factor, Technical, Macro, Credit/Risk, Sentiment, MomentumPulse, Regulated Return Analyst)
+**Market Data As Of:** May 1-3, 2026
+**Trigger:** Scheduled InvestorDebate weekly run, Cycle Week 5 (Utilities)
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+### Macro Context
+
+We are mid-cycle in a "stagflation-lite" regime: Fed funds held at 3.50-3.75% for the third consecutive meeting (an 8-4 dissent vote — unusual hawkish-dovish split — signals committee fragmentation), the 10Y Treasury sits at 4.38% (up 7bps over 30 days on Iran-driven oil shock), and March CPI printed +3.3% YoY headline / +2.6% core driven by a record 21.2% one-month gasoline surge. ISM Manufacturing PMI of 52.7 confirms continued expansion (4th consecutive month) but with surging input prices and contracting employment (46.4). For utilities specifically, this is a **two-edged regime**: (1) the 10Y at 4.38% vs. sector dividend yield of 3.3% creates a **NEGATIVE 108bps yield spread vs. Treasuries** — historically a headwind for traditional utility multiples — but (2) the unprecedented data center power demand cycle (US data center grid load projected to reach 76 GW by year-end 2026, ~50% growth over 18 months) is structurally re-rating the sector from "bond proxy" to "growth utility." The S&P 500 is broadly flat to modestly up YTD; XLU is +9.8% YTD, demonstrating **defensive + secular growth dual appeal**.
+
+### Top 5 Ranked Stocks
+
+| Rank | Ticker | Rating | Conviction (1-5) | Composite Score | One-Line Thesis |
+|------|--------|--------|-------------------|-----------------|-----------------|
+| 1 | **D** | **STRONG BUY** | 5 | 8.4 | Q1 EPS $0.95 vs. est $0.86 (+10% beat) on 8.4% commercial sales growth from data centers; 50GW pipeline (now contracted 47.2GW beyond current need); $65B 5-yr capex plan; new GS-5 large-load rate class effective 1/1/27 transfers grid-upgrade costs to hyperscalers — a structural margin protector other Virginia analysts are underweighting. |
+| 2 | **SO** | **BUY** | 5 | 8.1 | Q1 adj EPS $1.32 vs. est $1.20 ($0.12 beat); commercial weather-normal sales +4.6% with **42% data center growth YoY**; 11GW fully-contracted large load, 6GW being finalized, 12GW progressing, 75GW prospective pipeline across 100+ projects; $26.5B DOE loans secured for AL/GA utilities; Vogtle units 3 & 4 now in rate base providing earnings tailwind. |
+| 3 | **VST** | **BUY** | 4 | 7.8 | Down 25% YTD on Q4 miss ($0.54 actual vs. $2.31 est) caused by Martin Lake unit downtime + Moss Landing battery outage — the market has overpriced operational noise at a now-19.3x forward P/E (vs. 37.6x peak Q4 2024); 3.8GW nuclear contracted with AWS (1.2GW Comanche Peak) and Meta (2.18GW + 433MW upgrades) provides 20-year cash flow visibility; analyst consensus 19 Buy / 1 Sell with $234 target = +47% upside. **The committee's highest-alpha contrarian call.** |
+| 4 | **NEE** | **BUY** | 4 | 7.7 | Q1 adj EPS $1.09 (+10% YoY) beat $1.03; record renewables/storage origination quarter (+4GW backlog including 1.3GW battery, total 33GW backlog); selected by US Commerce Dept to build 9.5GW gas in TX/PA tied to Japan trade deal; 21GW large-load interest at FPL with 12GW in advanced talks for 2028 service. The "build everything, anywhere" platform play. |
+| 5 | **DTE** | **BUY** | 4 | 7.5 | Q1 EPS $1.95 (+21% YoY) was a "narrative beat" — missed sell-side $2.01 by 3% but the data center story is the only thing that matters: 1.4GW Oracle under construction, 1GW Google awaiting MPSC by Sept 10, additional ~2GW in advanced negotiations, total pipeline 3-4GW; management explicitly biased to high end of 6-8% EPS growth range with data center wins as upside lever. Mizuho raised PT on data center progress. |
+
+### Key Sector Call
+
+**OVERWEIGHT.** The committee's overall view: utilities are no longer the bond-proxy defensive sleeve they were in 2015-2022; they have transformed into the **purest pick-and-shovel play on the AI capex super-cycle**. Hyperscaler capex of $700B+ in 2026 (~50% YoY growth) requires power, and the US grid was not designed for it — every 1GW of new data center load creates ~$1B of incremental rate base for the serving utility, monetized at ~10% allowed ROE. However, the sector trades at 17.2-18.2x 2026E (above 16.8x 25-year median) and yields 3.3% vs. a 4.38% 10Y — **valuation is no longer cheap, so security selection now dominates**. Within the sector we strongly favor (1) Virginia/Texas/Mid-Atlantic regulated utilities with explicit data center load (D, SO, DTE), (2) IPPs with merchant nuclear capacity contracted to hyperscalers (VST, CEG), and (3) renewables platforms with execution capability and scale (NEE). We are cautious on (1) IPP names trading at peak narrative multiples without underlying contract coverage (TLN), (2) traditional bond-proxy utilities with limited data center exposure facing the rate-spread headwind (ED, ATO at 22x P/E), and (3) wildfire-impaired utilities where the market is incompletely pricing tail risk (XEL Smokehouse fire, ES Connecticut storm exposure).
+
+### Biggest Disagreement
+
+**VST (Vistra)** — the score range from 4 (Credit/Risk) to 9 (Sentiment/MomentumPulse) is the widest in the universe. The bull case: 25% drawdown is a textbook crowd-psychology dislocation; the company has 3.8GW of contracted nuclear with 20-year terms providing earnings floors that decouple it from spot power; the operational issues (Martin Lake downtime, Moss Landing fire) are non-recurring. The bear case: VST is a fundamentally levered merchant generator (net debt/EBITDA ~3.5x post-Lotus acquisition) whose valuation has historically been compressed during commodity downturns; if AI capex disappoints in late 2026 as MSFT/META rationalize, IPPs are first to derate. **The unresolved question: are hyperscaler PPA contracts genuine 20-year revenue commitments or break-able if AI ROI disappoints?**
+
+### Where We Differ From Consensus
+
+The committee is **bullish on D (Dominion) where Street consensus is "Buy with concerns about execution risk."** Sell-side has emphasized Virginia regulatory uncertainty and the Coastal Virginia Offshore Wind cost overrun risk. Our differentiated insight: the new **GS-5 rate class effective 1/1/27** is a regulatory innovation that other analysts are systematically underweighting. By creating a separate rate class for customers >25 MW, Dominion is locking in cost-recovery of grid upgrades from data center customers specifically, protecting residential rate base from political backlash and giving the company unilateral ability to raise data-center-specific rates without re-opening general rate cases. This is structurally better than peer regulators (e.g., Texas where ERCOT structure forces socialization). Combined with Q1's +8.4% commercial sales beat, the catalyst path through the 2027 rate case is the cleanest in the sector.
+
+### What We're Probably Wrong About
+
+**CEG (Constellation) at HOLD/BUY transition** — we may be too early. CEG is down 20% YTD on (1) 2026 guidance of $11.50 below $11.78 consensus, (2) Crane restart delay risk (now 2027 target), and (3) Mid-Atlantic capacity price cap risk. The bear case is that the merchant nuclear premium thesis is premised on a perpetual scarcity rent that the market is now realizing was overpriced; if PJM imposes capacity caps and Crane misses 2027, the entire thesis collapses. The committee's BUY rating on CEG (composite 7.0) assumes mean reversion in narrative without a clear catalyst; the steelman is that CEG could trade at $250 (vs. $307 today) before fundamentals justify a re-rating. We hold our BUY but with conviction = 3 (lowest of our buys), and have flagged this as the sector's most likely regret call.
+
+---
+
+## DETAILED STOCK ANALYSIS
+
+### 1. D — Dominion Energy
+
+**Current Price:** $64.50 | **Market Cap:** $56.2B | **YTD:** +14% (estimated)
+**Committee Rating:** STRONG BUY
+**Conviction Score:** 5/5 — Multiple specialists converge with high evidence quality; clear catalyst path
+**Composite Score:** 8.4/10
+
+**Bull Case:** Q1 2026 operating EPS of $0.95 beat consensus $0.86 by 10%, with revenue of $5.02B vs. $4.47B forecast — a clean beat across both lines. The driver is unambiguous: commercial sales surged 8.4% YoY driven primarily by Northern Virginia data center demand, a continuation of the secular trend that has now produced 47.2GW of contracted load BEYOND current need (vs. 21GW in mid-2024 — a 124% increase in contracted future load in 18 months). The $65B 2026-2030 capex plan grows rate base at ~9% CAGR, which at the company's allowed ROE generates 6-8% EPS growth from regulated operations alone. The under-appreciated structural catalyst is the **GS-5 rate class** approved by the Virginia SCC effective January 1, 2027, which creates a separate rate tariff for customers demanding ≥25MW. This locks in cost recovery of data-center-driven grid investments from data center customers themselves, insulating residential customers from rate shock and giving Dominion unilateral ability to raise large-load rates without general rate case risk.
+
+**Bear Case:** D trades at ~17x forward P/E and ~21x trailing — not cheap by historical standards (median ~16x for D specifically over 5 years). Coastal Virginia Offshore Wind project cost overruns (now estimated $9.8-11B vs. original $9.8B) remain a chronic capex risk. The 2025 SCC biennial review imposed earnings-sharing mechanisms that limit upside. Most importantly, the Northern Virginia data center concentration (>40% of commercial revenue) creates single-jurisdiction concentration risk if Virginia legislators ever impose moratoria (multiple Northern Virginia counties have proposed restrictions). Dividend yield of ~4.4% looks attractive but barely covers the 10Y at 4.38%, providing minimal yield premium for equity risk.
+
+**Key Debate Point:** Will Virginia regulatory environment remain constructive through 2027 rate case, or will rising residential bills (already a political flashpoint) trigger anti-utility legislation that compresses ROE? The GS-5 rate class is designed to prevent this, but it has not yet been tested under stress.
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 8 | Best-in-sector rate base growth (~9% CAGR) with structurally protected ROE via GS-5; moat widening through scarce VA data center concentration. |
+| Quant/Factor | 7 | Quality high (F-Score est 7); momentum positive (+14% YTD); value neutral (P/E above 5-yr median); cross-factor signal favorable. |
+| Technical | 8 | Stage 2 advance, well above 50/200 DMA, RSI ~62 healthy, no distribution; clean breakout above $63 resistance with volume confirmation post-Q1. |
+| Macro | 8 | Highest data center beta in the sector; benefits from regulated cost-pass-through if rates stay at 4-4.5%; insulated from yield-spread compression. |
+| Credit/Risk | 8 | Net Debt/EBITDA ~6.0x (high but normal for utility); Altman Z conservative at ~1.5 but stable; investment grade BBB+; FCF after capex remains negative but covered by financing markets. |
+| Sentiment | 9 | Sell-side consensus is BUY but with execution concerns — the committee's contrarian-to-Street bullishness flags this as the highest sentiment-vs-fundamental mismatch. |
+| MomentumPulse | 9 | Q1 EPS revisions trending up post-print (+3.5% over 30 days, 8 of 11 analysts revising up); price momentum +14% YTD aligned; Quadrant I "strong buy." |
+| Regulated Return | 9 | The cleanest data center re-rating story in regulated utilities; GS-5 rate class is best-in-class regulatory innovation; CVOW execution is the only meaningful risk. |
+
+**Catalysts to Watch:**
+- 2027 Virginia general rate case filing (expected Q4 2026)
+- GS-5 rate class implementation (January 1, 2027)
+- CVOW project cost finalization and construction milestones (ongoing)
+- Q2 2026 earnings (~early August) — will commercial sales >8% YoY persist?
+
+**Risk Factors:**
+1. CVOW project cost overrun beyond $11B trigger SCC clawback; for every $1B overrun beyond authorization, EPS impact is roughly -$0.05 (~2% of base case EPS).
+2. Northern Virginia data center moratorium risk: Loudoun, Prince William, and Fairfax counties have all considered restrictions. A 12-month moratorium on new connections would cap the 8.4% commercial sales growth, compressing the bull thesis EPS growth from 7% to ~5%.
+3. Yield-spread compression: If 10Y rises to 5%+, D's 4.4% yield becomes uncompetitive and multiple compresses 10-15%.
+
+**Price Targets:**
+- Bear ($55, -15%): CVOW overrun $13B+, VA data center moratorium, 10Y to 5%
+- Base ($72, +12%): GS-5 launches cleanly, CVOW lands at $11B, capex plan executes
+- Bull ($82, +27%): Bidding for new pipeline projects accelerates, investor day rate-base growth raised to 10%+, 10Y rallies to 4.0%
+
+---
+
+### 2. SO — Southern Company
+
+**Current Price:** $94.00 | **Market Cap:** $103B | **YTD:** +11% (estimated)
+**Committee Rating:** BUY
+**Conviction Score:** 5/5 — Specialists unanimous, clean fundamentals, validated execution
+**Composite Score:** 8.1/10
+
+**Bull Case:** SO's Q1 2026 was the cleanest beat in the sector: adj EPS $1.32 vs. est $1.20 (+10%), revenue $8.4B (+8% YoY). The mix shift is what matters — commercial sales grew 4.6% on weather-normal basis with **42% data center demand growth** YoY. Fully-contracted large load is now 11GW (with another 1.9GW added recently with hyperscalers); 6GW is being finalized for near-term commitment, 12GW progressed during Q1, and the prospective pipeline contains >75GW across 100+ projects. The Vogtle 3 & 4 nuclear units (now both in commercial operation since 2024) are providing the long-promised earnings tailwind without further construction risk overhang. SO secured $26.5B in DOE loan commitments for Alabama Power and Georgia Power, locking in below-market financing through 2030. The dividend (current 3.0% yield) has been increased annually for 24+ consecutive years, with payout ratio at ~67% leaving room for continued growth.
+
+**Bear Case:** SO trades at ~21x trailing P/E and ~19x forward — a meaningful premium to the sector median 17.2x and well above its own 5-year median ~17x. The 75GW prospective pipeline includes a wide range of speculative projects; most analysts think only 30-40% of unsigned pipeline ever materializes. Vogtle's $35B+ all-in cost remains a regulatory drag — SO Power continues to absorb a portion of overruns through rate shareholders. Atlanta-area regulatory risk is rising as the GA PSC faces consumer pressure over rate increases.
+
+**Key Debate Point:** Is the 42% Q1 data center growth annualizable, or does the pipeline saturate as 2027 approaches and Georgia/Alabama hit capacity constraints? If SO can sustain >25% data center load growth through 2027, the $103B market cap looks cheap; if growth decelerates to 10-15% in 2027, current premium compresses.
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 8 | High-quality regulated business with constructive GA/AL regulators; Vogtle overhang fully resolved; FCF generation improving with capex shifting from build-out to maintenance. |
+| Quant/Factor | 7 | Quality top decile; momentum positive; value below median (premium multiple); Sharpe ratio in top quartile; F-Score est 7. |
+| Technical | 8 | Stage 2 advance, breakout from $90 base on Q1 earnings, 50DMA $89, 200DMA $84, RSI 65 healthy. |
+| Macro | 8 | South-east US data center secular beneficiary; long-duration EPS growth makes SO relatively rate-insensitive vs. peers. |
+| Credit/Risk | 8 | Net Debt/EBITDA 5.5x stable; Altman Z 1.6; A- rating; DOE loan facility provides cheap financing optionality; coverage ratio 3.2x adequate. |
+| Sentiment | 7 | Consensus already constructive (BUY) so contrarian premium limited; but no extreme positioning crowding either. |
+| MomentumPulse | 8 | EPS revisions post-Q1 +2.8% over 30 days; 6 of 9 analysts upgrading; price momentum +11% YTD aligned; Quadrant I. |
+| Regulated Return | 9 | Best-in-class regulatory environment (GA PSC consistently constructive); Vogtle finally accretive; data center load is fully cost-recovery protected. |
+
+**Catalysts to Watch:**
+- Q2 2026 earnings (~late July) — will 42% data center growth sustain?
+- Georgia PSC 2027 IRP filing (Q4 2026)
+- Alabama Power rate case decision (mid-2026)
+- DOE loan drawdown progression (continuous)
+
+**Risk Factors:**
+1. Pipeline conversion risk: 75GW prospective vs. 11GW contracted — historical conversion rates suggest only 30-40% of unsigned projects close. If 2026-2027 conversion runs at 25%, EPS growth slows to ~5% from current 6-8% trajectory.
+2. Georgia residential rate fatigue: Vogtle costs + capex pass-through has created bills 18% higher than 5 years ago. Political risk = ROE compression in next rate case.
+3. Premium valuation compression: At 19x forward, SO has limited multiple upside; if data center growth disappoints, multiple could derate to 16x = -16% downside even with EPS at base case.
+
+**Price Targets:**
+- Bear ($82, -13%): Pipeline conversion <25%, GA PSC rate case haircut, 10Y to 5%
+- Base ($102, +9%): 11GW grows to 18GW by EOY 2026, EPS in line with 7% growth
+- Bull ($112, +19%): Pipeline conversion accelerates, $30B+ contracted by EOY 2026
+
+---
+
+### 3. VST — Vistra Corp.
+
+**Current Price:** $158.31 | **Market Cap:** $56.4B | **YTD:** -25%
+**Committee Rating:** BUY (highest-conviction contrarian)
+**Conviction Score:** 4/5 — Strong sentiment dislocation but contested by Credit/Risk
+**Composite Score:** 7.8/10
+
+**Bull Case:** VST is the committee's highest-alpha contrarian call. The 25% YTD drawdown was triggered by a Q4 2025 EPS miss ($0.54 actual vs. $2.31 estimate — a 76% miss) but the miss was driven by two non-recurring operational events: (1) unexpected downtime at Martin Lake Unit 1 coal plant in Texas, and (2) the Moss Landing battery storage fire in California. Underlying 2025 adj EBITDA hit $5.9B (record) and adj FCF before growth was $3.6B. The transformative story is the contracted nuclear book: **3.8GW of nuclear capacity now under 20-year PPAs** including 1,200MW with Amazon at Comanche Peak and 2,176MW (plus 433MW upgrades) with Meta at PJM nuclear plants. With incremental capacity for up to 3.2GW of additional nuclear contracting at Beaver Valley and Comanche Peak, the run-rate contracted nuclear cash flow at $80-100/MWh PPAs is roughly $2.5-3B in EBITDA visibility through the 2040s. The Q1 2026 estimate of $1.32 EPS (+202% YoY) due to Lotus acquisition contribution would represent a clean reset. At 19.3x forward P/E (down from 37.6x peak fall 2025), the multiple has compressed to historical IPP levels but the underlying earnings power is structurally higher. Analyst consensus 19 Buy / 1 Sell / 0 Hold with $234 average PT (+47% upside).
+
+**Bear Case:** VST is fundamentally a leveraged merchant generator with Net Debt/EBITDA ~3.5x post-Lotus acquisition (the $3.4B Lotus deal added 2.6GW of CCGT capacity but financed with debt). In a downturn, IPP equity historically loses 50%+ — see VST 2014-2016 commodity collapse. The hyperscaler PPA contracts contain force majeure and material adverse change clauses; if AI capex disappoints and AWS/META renegotiate, the contracted EBITDA assumption falls apart. The Q4 miss revealed operational fragility — battery fires and coal unit outages indicate aging asset base with maintenance capex risk. Free cash flow before growth of $3.6B sounds impressive but capex-to-revenue is rising as VST builds new gas plants to chase data center load. Valuation at 19x forward looks reasonable until you compare to historical IPP cycle troughs (8-10x).
+
+**Key Debate Point:** Are the hyperscaler nuclear PPAs equivalent to investment-grade utility revenue (justifying 20-25x multiple) or are they merchant power dressed up with longer terms (deserving 10-12x merchant multiple)? The answer dictates ~50% of the stock's value. Specifically: how much of the 3.8GW contracted capacity is at fixed prices vs. indexed to power markets, and what are the make-whole/termination provisions?
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 7 | Improved earnings power post-Lotus + nuclear contracting, but merchant generation is structurally less moaty than regulated utility; ROIC trend positive but volatile. |
+| Quant/Factor | 8 | Value factor improved to 70th percentile (down from 5th in fall 2025 when expensive); momentum negative -25% but estimate revisions starting to inflect upward; quality F-Score estimated 5. |
+| Technical | 6 | Stage 1 accumulation forming, price at $158 vs. 50DMA $160 (slight underperformance) and 200DMA $142; spring pattern visible at $135 March low with volume; needs to break $170 to confirm Stage 2. |
+| Macro | 8 | TX/PJM positioning is the best in the IPP universe for AI capex super-cycle; ERCOT power demand growth provides ongoing scarcity premium. |
+| Credit/Risk | 4 | Net Debt/EBITDA 3.5x is "Caution" tier per framework; covenant risk emerging if EBITDA compresses 20%; merchant cash flow volatility is structural; Altman Z ~1.4 = grey/distress zone. **Lowest score in committee.** |
+| Sentiment | 9 | Maximum negative narrative + analyst consensus 19/1 Buy/Sell + retail capitulation = textbook contrarian setup. **Highest score in committee for VST.** |
+| MomentumPulse | 9 | Estimate revisions inflected positive in last 30 days post-Q1 expectation reset (+5.2% on next-quarter EPS); price has not responded yet — Quadrant II "Investigate / Buy". |
+| Regulated Return | 7 | Not a pure regulated utility, but the long-term hyperscaler PPAs provide regulated-utility-like cash flow visibility; 3.8GW contracted is best in IPP space. |
+
+**Catalysts to Watch:**
+- Q1 2026 earnings May 7 — analyst expecting $1.32 EPS (+202% YoY); a beat would re-rate
+- Comanche Peak upgrade contract finalization (~mid-2026)
+- New PPAs at Beaver Valley (target Q3 2026)
+- ERCOT summer reserve margin update (June 2026)
+
+**Risk Factors:**
+1. AI capex slowdown: If MSFT/META reduce AI capex >30% in 2H 2026 (current consensus assumes continued 50% growth), hyperscaler PPA negotiations stall and merchant power rates compress. Estimated EPS impact: -25%, multiple to 12x = combined -45% downside.
+2. Operational reliability: Another major unit outage or battery fire would amplify the Q4 narrative that VST's asset base is degrading. Each major outage costs ~$50-100M in EBITDA.
+3. Leverage covenant risk: Lotus debt + capex needs are pushing leverage; if EBITDA compresses 25%, leverage hits 4.5x and refinancing terms become punitive.
+
+**Price Targets:**
+- Bear ($110, -30%): Q1 misses again, AI capex disappoints in 2H, multiple compresses to 13x
+- Base ($195, +23%): Q1 in-line, hyperscaler PPAs validated, multiple holds at 19x
+- Bull ($245, +55%): Q1 beats, ERCOT power prices spike summer 2026, full Beaver Valley contracting
+
+---
+
+### 4. NEE — NextEra Energy
+
+**Current Price:** $96.95 | **Market Cap:** $202.2B | **YTD:** +14% (estimated, hit ATH $98.75)
+**Committee Rating:** BUY
+**Conviction Score:** 4/5 — Broad consensus, large-cap quality, but valuation neutral
+**Composite Score:** 7.7/10
+
+**Bull Case:** NEE is the unique scale player in renewables + regulated utilities + emerging gas/nuclear infrastructure. Q1 2026 adj EPS of $1.09 (+10% YoY) beat estimates of $1.03; 162% increase in net income reflected favorable mark-to-market on ZEC contracts. The Resources segment had a record renewables/storage origination quarter, adding 4GW to the backlog (including 1.3GW battery storage), bringing the total backlog to ~33GW. The April 2026 announcement that the US Department of Commerce selected NEER to build 9.5GW of new gas-fired generation in Texas and Pennsylvania (tied to Japan's $550B trade-deal investment commitment) is a transformative win that adds ~$15-20B of contracted capex over 5 years. FPL has 21GW of large-load interest with 12GW in advanced discussions for 2028 service. The "four wallets" approach to Gen 3 SMR (OEM + developer + hyperscaler + federal) provides pathway to nuclear without taking the full balance sheet risk. NEE has paid a dividend for 30+ years and grown it for 26+ consecutive years.
+
+**Bear Case:** At $202B market cap and ~22x trailing P/E, NEE is no longer a value play — it trades at a meaningful premium to sector median 17.2x and to its own 5-year median ~19x. The IRA tax credit assumption (~30% ITC + PTC) underpins a meaningful chunk of NEE Resources project economics; any Republican unwind of IRA credits would destroy ~10-15% of project IRRs and force capex deceleration. The Energy Resources segment carries higher merchant/development risk than many investors assume — backlog conversion is not certain, and several PPAs have escape clauses if delivery slips. Florida regulator (FPL's primary jurisdiction) has tightened earnings sharing mechanisms in the 2025 settlement, capping ROE upside. Renewables EPC inflation (steel + transformers) remains a margin headwind despite 2024-2025 supply normalization.
+
+**Key Debate Point:** Is the 33GW backlog real economic value, or is it inventory that gets repriced as IRA, interest rates, and EPC costs evolve? The market today values it as ~$60B of net asset value; if backlog conversion returns are 100bps below current assumption, the equity value of Resources segment compresses by ~$30B (~15% of market cap).
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 8 | Best-in-class moat via scale + integrated platform; ROIC sustainably 8-9% vs. WACC ~6% (200-300bps spread); capital allocation track record exceptional. |
+| Quant/Factor | 7 | Quality F-Score est 7-8, momentum positive, value below median (premium); Sharpe ratio top decile; CMA factor neutral (high asset growth). |
+| Technical | 8 | Stage 2 advance, near ATH $98.75; 50DMA $94, 200DMA $87, RSI 68 (slightly extended but not overbought); accumulation pattern intact. |
+| Macro | 8 | Geographic diversity (FL + ERCOT + national renewables) provides macro resilience; rate sensitivity high but offset by data center growth. |
+| Credit/Risk | 7 | Net Debt/EBITDA ~5.5x; A- credit rating; FCF historically negative due to growth capex but well-covered by capital markets access; leverage manageable. |
+| Sentiment | 6 | Consensus extremely bullish (>80% Buy ratings) — limited contrarian upside; positioning is crowded. |
+| MomentumPulse | 8 | EPS estimates +3.1% over 60 days post-Q1; 9 of 13 analysts revising up; price momentum +14% YTD aligned; Quadrant I. |
+| Regulated Return | 8 | FPL is gold-standard regulated franchise; Resources segment provides growth optionality; the only utility with platform-level scale advantage. |
+
+**Catalysts to Watch:**
+- Q2 2026 earnings (July 29) — will renewables backlog growth sustain at 4GW/quarter pace?
+- IRA tax credit policy clarity (mid-2026 budget reconciliation)
+- US Commerce Dept gas plant project commitments (Q3 2026 detailed planning milestones)
+- Florida hurricane season (June-November) — climate-related opex risk
+
+**Risk Factors:**
+1. IRA repeal/modification: A 50% reduction in PTC/ITC value would compress NEER project IRRs by 200-300bps, potentially pulling forward an extension of backlog and forcing some cancellations. Estimated EPS impact: -8 to -12%.
+2. Florida regulatory: A 50bps reduction in allowed ROE in next FPL rate case = ~$0.20 EPS hit (~5% of base case).
+3. Premium valuation: NEE trades at 22x P/E. If macro shifts to risk-off and rates rise to 5%, multiple could compress to 18x = -18% downside.
+
+**Price Targets:**
+- Bear ($82, -15%): IRA partial repeal, FL ROE cut, 10Y to 5%
+- Base ($108, +11%): Backlog continues at ~4GW/Q, FL constructive, 10Y stable
+- Bull ($118, +22%): Backlog accelerates, gas plant projects scale faster, IRA fully preserved
+
+---
+
+### 5. DTE — DTE Energy
+
+**Current Price:** ~$140 (estimated) | **Market Cap:** ~$29B | **YTD:** +18% (estimated)
+**Committee Rating:** BUY
+**Conviction Score:** 4/5 — Strong data center catalyst, but Q1 sell-side miss creates near-term uncertainty
+**Composite Score:** 7.5/10
+
+**Bull Case:** Q1 2026 operating earnings of $1.95 EPS (+21% YoY) was a strong absolute number even though it missed sell-side $2.01 by 3% (the "narrative beat"). The data center pipeline is the entire story: Oracle 1.4GW under construction in Michigan, Google 1.0GW filed for MPSC approval (decision expected Sept 10, 2026), and additional ~2GW in advanced negotiations — a total 3-4GW pipeline. Management explicitly raised the bias on the long-term 6-8% EPS growth target to "high end with potential to exceed" if data center wins close. Mizuho raised the price target on data center progress. Michigan PSC has been constructive on rate cases; the 5-year capex plan of ~$30B grows rate base ~7% CAGR. Dividend yield 3.2%, payout ratio ~65%, dividend growth 6-8%.
+
+**Bear Case:** The Q1 miss vs. sell-side is a real concern — DTE has historically been a "beat-and-raise" name and missing on the most important quarter of the year (where data center contributions should have started showing) signals the data center economic uplift is happening more slowly than the narrative suggests. The Google MPSC approval is not guaranteed; a denial or major modification would crater the data center thesis. Michigan's Republican-led legislature is increasingly skeptical of utility capex and has proposed legislation to limit ROE pass-through on data-center-driven investment. DTE's electric subsidiary (DTE Electric) faces continued reliability complaints from residential customers — political pressure will build if data centers get priority over residential service.
+
+**Key Debate Point:** Will the 3-4GW data center pipeline actually materialize at attractive economics, or will Michigan regulators ultimately impose data-center-specific rate structures (similar to Virginia's GS-5) that eat into margins? If pipeline economics are protected, DTE re-rates to 21x; if they get squeezed, DTE stays at 17-18x.
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 7 | Solid regulated utility with constructive MI PSC; Q1 sell-side miss is concerning but absolute earnings growth of 21% is exceptional; ROIC stable mid-single-digits. |
+| Quant/Factor | 7 | Quality F-Score 7; momentum strongly positive; value at median; gas business provides RMW factor support. |
+| Technical | 8 | Stage 2 advance, breaking out of consolidation post-Q1, RSI ~65 healthy, volume confirming; clean uptrend. |
+| Macro | 8 | Michigan/Ohio data center exposure is best-in-Midwest; less rate-sensitive than coastal utilities. |
+| Credit/Risk | 7 | Net Debt/EBITDA 5.0x; BBB rating; covenant headroom adequate; refinancing schedule manageable. |
+| Sentiment | 7 | Consensus shifting positive on data center thesis; sell-side raising PTs; not yet crowded. |
+| MomentumPulse | 8 | EPS revisions mixed post-Q1 (consensus held but slight downward bias on near-quarter); however medium-term EPS revisions strongly positive on data center wins. |
+| Regulated Return | 8 | Best-in-Midwest data center positioning; Oracle/Google contracts provide demonstrable rate base growth; MI regulator constructive. |
+
+**Catalysts to Watch:**
+- Google 1GW MPSC decision (September 10, 2026) — binary catalyst
+- Q2 2026 earnings (~late July)
+- Additional 2GW negotiations finalization (timing uncertain)
+- Michigan general rate case filing (expected late 2026)
+
+**Risk Factors:**
+1. Google MPSC denial or major adverse modification: Would reduce 5-year EPS growth from 8% bias to 6% baseline = ~$0.40 EPS hit by 2028.
+2. Michigan political risk: Republican legislators have proposed data-center-specific rate base review; if enacted, ROE on data center capex could be 100bps below standard utility ROE.
+3. Reliability/political backlash: DTE Electric has had multiple major outages in 2024-2025; a major incident in 2026 could trigger PSC rate suppression.
+
+**Price Targets:**
+- Bear ($120, -14%): Google denied, MI legislation tightens, 10Y to 5%
+- Base ($155, +11%): Google approved, pipeline closes 50%, EPS grows 7%
+- Bull ($175, +25%): Full pipeline closes, EPS growth biases to 9%, multiple expands
+
+---
+
+### 6. CEG — Constellation Energy
+
+**Current Price:** $307.81 | **Market Cap:** ~$96B | **YTD:** -20%
+**Committee Rating:** BUY (Moderate Conviction — sector's most uncertain call)
+**Conviction Score:** 3/5 — Genuine debate; lowest conviction of all BUY-rated names
+**Composite Score:** 7.0/10
+
+**Bull Case:** CEG is the largest US clean energy producer post-Calpine acquisition (closed January 7, 2026) — uniting the largest zero-emission nuclear fleet with natural gas + geothermal generation totaling ~64GW (combined CEG + Calpine). The platform serves growing data center and industrial demand uniquely well: nuclear baseload + gas peaking provides 24/7 carbon-attribute matched capacity that hyperscalers explicitly require. Recent wins: 380MW deal with CyrusOne for Texas data center, 20-year PPA with Microsoft for restarted Three Mile Island Unit 1 (rebranded "Crane Clean Energy Center"), $1B DOE loan guarantee for Crane restart. The company increased the dividend 10% with another 10% increase planned in 2026. Adjusted operating earnings rose to $9.39/share in 2025 from $8.67 in 2024.
+
+**Bear Case:** CEG is the worst-performing major utility YTD (-20%) for specific reasons: (1) 2026 operating earnings guidance of $11.50/share fell short of consensus $11.78 — first major guidance disappointment since the spinoff from Exelon, (2) Crane Clean Energy Center restart delayed (now 2027 target), creating risk against the Microsoft contract, (3) Mid-Atlantic capacity price cap proposals from PJM regulators threaten to limit nuclear scarcity rents. Even at $307, CEG trades at ~26x forward earnings — a meaningful premium to the sector and to its own historical (CEG/Exelon spin median ~19x). The Calpine acquisition added $26.6B of debt; pro-forma net debt/EBITDA is now ~3.0x vs. pre-deal ~1.5x. The "AI nuclear premium" thesis was the entire 2024-2025 rally driver; if PJM caps capacity prices, that thesis cracks structurally.
+
+**Key Debate Point:** Are merchant nuclear premiums (currently $80-120/MWh PPAs vs. wholesale $35-45) sustainable, or were they a 2024-2025 scarcity premium that decays as new gas/nuclear comes online and PJM imposes caps? This is the single most important question in the IPP space. The committee's split: Sentiment + MomentumPulse + Macro see opportunity in 20% drawdown; Credit/Risk + Fundamental flag valuation and execution.
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 6 | Best nuclear scale post-Calpine but 26x P/E demands flawless execution which guidance miss + Crane delay just contradicted; integration risk high. |
+| Quant/Factor | 6 | Momentum strongly negative (-20% YTD); value improving as multiple compresses but still premium; quality F-Score est 6 (deteriorating from 8). |
+| Technical | 5 | Stage 3 distribution evident — 50DMA $325, 200DMA $310, price $307 below both; breakdown from $360 support; Wyckoff upthrust signaled in March. |
+| Macro | 7 | PJM nuclear remains attractive in long run but near-term capacity cap risk creates regulatory overhang. |
+| Credit/Risk | 6 | Pro-forma net debt/EBITDA 3.0x post-Calpine — Caution tier; integration execution risk; Microsoft contract has performance covenants tied to Crane restart timing. |
+| Sentiment | 9 | Maximum negative narrative + 20% drawdown + analyst downgrades = textbook contrarian setup; smart-money insider buying observed in April. |
+| MomentumPulse | 8 | EPS revisions inflected positive in last 30 days; price still in Quadrant II "Investigate" — buy on confirmation of estimate stabilization. |
+| Regulated Return | 7 | Calpine acquisition strategically sound; nuclear remains structurally scarce but capacity cap risk creates valuation overhang. |
+
+**Catalysts to Watch:**
+- Q1 2026 earnings May 11 — first post-Calpine consolidated quarter
+- PJM capacity auction July 2026 (binary catalyst on capacity cap policy)
+- Crane restart timeline confirmation (target 2027)
+- Calpine integration milestones
+
+**Risk Factors:**
+1. PJM capacity cap policy: If FERC approves capacity price caps at $300/MW-day (vs. recent $270-450 range), CEG nuclear margin compresses 25-30%, EPS estimate would fall ~$1.50/share, multiple to 22x = -22% downside.
+2. Crane restart delay beyond 2027: Microsoft contract has financial penalties for late delivery; estimated $200-400M PV impact per year of delay.
+3. Calpine integration: $26.6B acquisition with embedded debt; if synergies disappoint by 30%, accretion math turns negative.
+
+**Price Targets:**
+- Bear ($240, -22%): PJM caps capacity prices, Crane delays beyond 2027, integration disappoints
+- Base ($330, +7%): PJM keeps current structure, Crane on schedule, modest synergies
+- Bull ($395, +28%): No capacity cap, Crane early restart, Calpine synergies exceed plan
+
+---
+
+### 7. AEP — American Electric Power
+
+**Current Price:** $137.11 | **Market Cap:** $73.8B | **YTD:** +12% (estimated)
+**Committee Rating:** BUY
+**Conviction Score:** 4/5
+**Composite Score:** 7.4/10
+
+**Bull Case:** AEP serves the largest US electric transmission system spanning 11 states including the data center hot zones of Ohio, Texas, and Virginia (through APCo). The 5-year capex plan of $54B grows rate base ~9% CAGR. Recent Q2 2025 EPS of $1.43 beat by 17.2%. The transmission business (FERC-regulated) provides higher allowed ROE (~10.5%) than retail distribution. Texas data center growth is increasingly being routed through AEP's SWEPCO subsidiary. Dividend yield 3.7%, growth 6%.
+
+**Bear Case:** AEP has multiple jurisdictional regulators (11 states + FERC) which creates execution complexity and increases the risk of negative rate case decisions in any single jurisdiction. Ohio rate case currently pending creates uncertainty. Recent activist pressure from Carl Icahn has been pushing for asset sales; activist outcomes are inherently uncertain. The stock is up ~12% YTD already, capturing some of the data center thesis.
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 7 | Best transmission franchise in US with FERC ROE protection; multi-state complexity is a moat (high barrier to replicate) and a risk (more regulators). |
+| Quant/Factor | 7 | Quality F-Score 7; momentum positive; value at median. |
+| Technical | 7 | Stage 2 advance, RSI 60, no extreme reading. |
+| Macro | 7 | Multi-region exposure provides macro diversification; rate sensitivity moderate. |
+| Credit/Risk | 7 | BBB+ rating; net debt/EBITDA 5.5x stable. |
+| Sentiment | 7 | Consensus moderately bullish; activist involvement creates uncertainty. |
+| MomentumPulse | 8 | Q1 2026 EPS estimate of $1.42; recent revisions slightly positive. |
+| Regulated Return | 8 | Transmission scale + multi-state data center exposure is genuinely best-in-sector; FERC ROE provides earnings floor. |
+
+**Catalysts:** Q1 May 5; Ohio rate case decision; Icahn negotiation outcome; Q2 earnings.
+**Price Targets:** Bear $122 / Base $150 / Bull $165
+
+---
+
+### 8. PCG — PG&E Corporation
+
+**Current Price:** ~$19 (estimated) | **Market Cap:** $48B | **YTD:** +8.77%
+**Committee Rating:** BUY
+**Conviction Score:** 4/5
+**Composite Score:** 7.3/10
+
+**Bull Case:** Q1 2026 core EPS rose to $0.43, up $0.10 YoY, with full-year 2026 guidance of $1.64-1.66 reaffirmed (5+ consecutive years of double-digit earnings growth expected). PCG advanced 4.6GW of customer data center projects to final engineering, with management messaging that every 1GW of new data center load helps customers save 1%+ on monthly bills (a powerful narrative tool with regulators). Wildfire safety capex (1,900 miles undergrounding by EOY 2027) is gradually building defense against tail risk. The Continuous Monitoring Center launched May 1 demonstrates investment in technology-led wildfire prevention.
+
+**Bear Case:** PCG remains structurally exposed to California wildfire tail risk despite mitigation; a single $5B+ wildfire judgment would re-trigger bankruptcy concerns. The $25B+ wildfire mitigation capex must be financed predominantly through rate increases at a time when California political environment is hostile to utilities. AB 1054 wildfire fund provides some protection but is finite. Dividend yield is low (~0%) relative to peers — yield-oriented investors won't buy it.
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 7 | Earnings power restored post-bankruptcy; 4.6GW data center pipeline genuine; capital structure improving. |
+| Quant/Factor | 7 | Value attractive (P/E ~12x), momentum positive, quality recovering F-Score est 6. |
+| Technical | 7 | Stage 2, breaking through $19 resistance, but volatile. |
+| Macro | 7 | CA data center growth genuine but constrained by transmission limits. |
+| Credit/Risk | 5 | Wildfire tail risk remains existential; AB 1054 cap inadequate for $10B+ event. |
+| Sentiment | 8 | Consensus skeptical of CA utilities → contrarian opportunity if narrative shifts. |
+| MomentumPulse | 8 | Estimate revisions positive +2%; price momentum aligned. |
+| Regulated Return | 8 | Genuine recovery story with concrete data center catalysts; CPUC has been more constructive than feared. |
+
+**Price Targets:** Bear $14 / Base $22 / Bull $26
+
+---
+
+### 9. SRE — Sempra
+
+**Current Price:** $94.67 | **Market Cap:** $61.9B | **YTD:** +8% (estimated)
+**Committee Rating:** HOLD/BUY
+**Conviction Score:** 3/5
+**Composite Score:** 6.8/10
+
+**Bull Case:** SRE's LNG export business (Sempra Infrastructure) provides growth optionality unique in the utility sector — Cameron Phase 2 + Port Arthur LNG progressing on schedule. SDG&E + SoCalGas serve the strong California economy. Texas utility (Oncor) growing rate base 9-10% on data center demand. Dividend yield 2.7%.
+
+**Bear Case:** P/E of 34x is the highest in the major utility space and reflects extreme optimism on LNG monetization. CPUC December 2025 cost-of-capital decision lowered authorized ROEs by 0.3 percentage points for SoCalGas and SDG&E — a structural margin headwind. Capital intensity is rising as LNG buildout requires multi-billion dollar commitments.
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 7 | Three solid franchises (LNG + CA utility + TX utility) but P/E 34 reflects bull case being fully priced. |
+| Quant/Factor | 5 | Value bottom decile (expensive); momentum positive; quality F-Score est 7. |
+| Technical | 7 | Stage 2 advance, RSI 62. |
+| Macro | 7 | LNG benefits from Asian demand + Iran crisis; Texas data center growth positive. |
+| Credit/Risk | 6 | Net debt/EBITDA 5.5x; LNG project financing adds complexity. |
+| Sentiment | 6 | Consensus moderately bullish; not extreme. |
+| MomentumPulse | 7 | Estimate revisions modestly positive; LNG capacity additions create EPS visibility. |
+| Regulated Return | 7 | CA cost-of-capital cut hurts; TX (Oncor) growth strong; LNG provides growth optionality. |
+
+**Price Targets:** Bear $80 / Base $98 / Bull $112
+
+---
+
+### 10. DUK — Duke Energy
+
+**Current Price:** $128.60 | **Market Cap:** $100.1B | **YTD:** +6% (estimated)
+**Committee Rating:** BUY
+**Conviction Score:** 4/5
+**Composite Score:** 6.7/10
+
+**Bull Case:** Duke serves NC + SC + FL + IN + OH — high-growth Southeast geography with strong data center pipelines. 2025 revenue $31.79B (+6.2%), earnings $4.91B (+11.25%). Management targets 5-7% EPS growth; analysts believe Duke achieves high end. $73B 5-year capex plan funds rate base growth. NC PSC has been constructive; clean energy transition plan approved. Q1 May 5 earnings is upcoming catalyst.
+
+**Bear Case:** Duke is a "everyone owns it" utility — large cap quality but limited differentiation from sector. Coal retirement schedule + offshore wind + nuclear SMR plans require massive capex with execution risk. NC HB951 carbon plan creates uncertainty. Trading at ~21x forward — premium to sector.
+
+**Specialist Scorecard:**
+
+| Specialist | Score | One-Sentence View |
+|------------|-------|-------------------|
+| Fundamental | 7 | Solid franchise but no differentiation vs peers; capex execution risk on multiple large projects. |
+| Quant/Factor | 6 | Quality high; momentum positive but underwhelming; value at premium. |
+| Technical | 6 | Stage 2 but slowing momentum; RSI 55; consolidating near $130. |
+| Macro | 7 | Southeast data center exposure; rate sensitivity moderate. |
+| Credit/Risk | 7 | Strong A- rating; debt manageable; long history of investment grade. |
+| Sentiment | 6 | Consensus neutral-bullish; not extreme. |
+| MomentumPulse | 7 | Q1 2026 EPS estimate $1.59; revisions stable. |
+| Regulated Return | 7 | Constructive regulators across all jurisdictions; data center pipeline credible but smaller % of business than D or SO. |
+
+**Price Targets:** Bear $115 / Base $135 / Bull $148
+
+---
+
+## HOLD ZONE: MIDDLE-OF-THE-PACK SUMMARY
+
+| Ticker | Company | Mkt Cap | Composite | Rating | Key Issue — What Would Change the View |
+|--------|---------|---------|-----------|--------|-----------------------------------------|
+| EXC | Exelon | $46B | 6.4 | HOLD | Pure-play T&D utility post-CEG spin; +7.87% Q4 EPS beat positive but limited data center exposure (no merchant gen); upgrade to BUY if PJM transmission revenue accelerates >$0.40 EPS. |
+| WEC | WEC Energy | $37B | 6.3 | HOLD | Stable Wisconsin utility; ATH $118.78 April 2026 reflects defensiveness; data center exposure via Microsoft Mt. Pleasant project but limited; upgrade if WI PSC approves dataenter-specific rate. |
+| AEE | Ameren | $30B | 6.2 | HOLD | Q1 May 5 earnings expected $1.17 EPS; Missouri data center growth real but smaller scale; upgrade if MoPSC constructive in 2026 rate case. |
+| AWK | American Water Works | $26B | 6.0 | HOLD | Water utility lacks data center exposure (offset by demographic growth); Wells Fargo PT $131; upgrade if M&A roll-up accelerates. |
+| ATO | Atmos Energy | $33B | 6.0 | HOLD | Pure-play TX gas LDC; reaffirmed FY26 EPS $8.15-8.35; 169 consecutive dividends; expensive at ~22x; upgrade if TX gas demand from gen growth accelerates. |
+| PEG | Public Service Enterprise | $40B est | 6.5 | HOLD | NJ regulated + nuclear PPA potential with hyperscalers; Q1 May 5; upgrade if NJ ZEC structure extended past 2025. |
+| ED | Consolidated Edison | $37B est | 5.5 | HOLD | NY regulated; minimal data center growth; defensive with limited upside; downgrade to SELL if 10Y >5%. |
+| ES | Eversource | $26B | 5.5 | HOLD | NE utility recovering from offshore wind disposition; CT regulatory remains hostile; upgrade if Avangrid asset sale closes well. |
+| XEL | Xcel Energy | $48B est | 6.5 | HOLD | Strong data center pipeline (6GW by EOY 2027 inc Google) but Smokehouse Creek wildfire $460M loss + only $90M coverage remaining; UBS PT $89; upgrade if wildfire litigation settles below $1B. |
+| FE | FirstEnergy | $30B est | 6.0 | HOLD | OH/PA/NJ utility; OH HB6 corruption legacy still drag; ATH April 9; transmission FET providing upside; upgrade if OH PSC rate case constructive. |
+| NI | NiSource | $20B est | 6.2 | HOLD | IN/OH gas + electric; Microsoft data center contract in IN ($1B); ATH April 9; upgrade if more hyperscaler contracts close. |
+| LNT | Alliant | $18B est | 5.8 | HOLD | IA/WI utility; modest growth; defensive. |
+| CMS | CMS Energy | $22B est | 6.4 | HOLD | MI utility; Q1 EPS $1.13 beat; reaffirmed $3.83-3.90 guidance; data center exposure modest vs DTE; upgrade if MI legislation favors utility data center investment. |
+| EVRG | Evergy | $15B est | 5.9 | HOLD | KS/MO; Panasonic + data center exposure; constructive regulators. |
+| PNW | Pinnacle West | $11B est | 5.8 | HOLD | AZ utility; data center pipeline genuine but Phoenix water constraints limit. |
+| OGE | OGE Energy | $9B est | 5.6 | HOLD | OK utility; modest growth; defensive. |
+| PPL | PPL Corp | $25B est | 6.3 | HOLD | PA + KY utility; Talen partnership for nuclear data center provides upside; upgrade if Talen deal economics quantified. |
+| NRG | NRG Energy | $40B est | 6.7 | HOLD/BUY | TX/IPP merchant generator + retail; Q1 May 6; smaller-scale VST competitor; upgrade if data center contracting accelerates. |
+| TLN | Talen Energy | $23B est | 5.5 | HOLD | PJM nuclear; Susquehanna data center deal questioned by FERC; concentration risk; downgrade if FERC rulings adverse. |
+
+---
+
+## BOTTOM 5: AVOID / SELL
+
+### CNP — CenterPoint Energy
+
+**Current Price:** ~$36 (estimated) | **Market Cap:** $24B
+**Composite Score:** 4.8/10
+**Rating:** SELL
+
+**Bear Case:** CNP's Houston regulated subsidiary (Houston Electric) faces persistent reliability concerns post-Hurricane Beryl; Texas regulators imposed rate suppression measures in 2025. The Indiana gas utility has limited growth. Trading at ~17x with limited data center exposure (Houston is data center growth area but CNP is being bypassed by competitive providers). The 5-year capex plan of $48B is aggressive for the credit profile. We see -10% to -15% downside.
+
+### EVRG — Evergy
+
+**Composite Score:** 4.9/10
+**Rating:** SELL  
+**Bear Case:** KS Star Bond economic development loans + Panasonic battery plant capex create rate base growth, but slower than peers and KS regulatory environment less constructive than VA/GA. Multiple lower than sector but justified.
+
+### LNT — Alliant Energy
+
+**Composite Score:** 5.0/10
+**Rating:** HOLD-SELL  
+**Bear Case:** IA/WI markets have limited data center demand; coal retirement creates capex burden without offsetting demand growth.
+
+### TLN — Talen Energy
+
+**Composite Score:** 5.5/10
+**Rating:** HOLD/SELL  
+**Bear Case:** TLN is a one-trick pony around Susquehanna Steam Electric Station nuclear-data-center co-location with Amazon. FERC's 2024 ruling rejected the original co-location structure; subsequent restructuring proposals remain under review. Without FERC approval, TLN's premium valuation (the stock has 4x'd since IPO in 2024) collapses. We see -30%+ downside in adverse FERC scenario.
+
+### CNP — see above
+
+---
+
+## APPENDIX A: Full Scoring Matrix (All Stocks × All Specialists)
+
+### Round 1 Scores (Pre-Debate) — Complete Universe
+
+| # | Ticker | Tier | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Sector | AVG | Std Dev | Flag |
+|----|--------|------|------|-------|------|-------|--------|------|------|--------|-----|---------|------|
+| 1 | NEE | T1 | 8 | 7 | 8 | 8 | 7 | 6 | 8 | 8 | 7.50 | 0.76 | ✅ |
+| 2 | DUK | T1 | 7 | 6 | 6 | 7 | 7 | 6 | 7 | 7 | 6.63 | 0.52 | ✅ |
+| 3 | SO | T1 | 8 | 7 | 8 | 8 | 8 | 7 | 8 | 9 | 7.88 | 0.64 | ✅ |
+| 4 | CEG | T1 | 6 | 6 | 5 | 7 | 6 | 9 | 8 | 7 | 6.75 | 1.28 | 🔶 |
+| 5 | SRE | T1 | 7 | 5 | 7 | 7 | 6 | 6 | 7 | 7 | 6.50 | 0.76 | ✅ |
+| 6 | D | T1 | 8 | 7 | 8 | 8 | 8 | 9 | 9 | 9 | 8.25 | 0.71 | ✅ |
+| 7 | AEP | T1 | 7 | 7 | 7 | 7 | 7 | 7 | 8 | 8 | 7.25 | 0.46 | ✅ |
+| 8 | EXC | T1 | 6 | 6 | 6 | 6 | 7 | 6 | 7 | 7 | 6.38 | 0.52 | ✅ |
+| 9 | XEL | T1 | 7 | 6 | 5 | 7 | 5 | 7 | 7 | 7 | 6.38 | 0.92 | ✅ |
+| 10 | ED | T1 | 5 | 5 | 5 | 5 | 7 | 5 | 5 | 6 | 5.38 | 0.74 | ✅ |
+| 11 | WEC | T1 | 7 | 6 | 6 | 6 | 7 | 6 | 6 | 6 | 6.25 | 0.46 | ✅ |
+| 12 | ES | T1 | 5 | 6 | 5 | 5 | 5 | 7 | 5 | 6 | 5.50 | 0.76 | ✅ |
+| 13 | AWK | T1 | 6 | 5 | 6 | 6 | 7 | 5 | 5 | 6 | 5.75 | 0.71 | ✅ |
+| 14 | ATO | T1 | 7 | 4 | 6 | 6 | 7 | 5 | 6 | 7 | 6.00 | 1.07 | 🔶 |
+| 15 | DTE | T1 | 7 | 7 | 8 | 8 | 7 | 7 | 8 | 8 | 7.50 | 0.53 | ✅ |
+| 16 | CMS | T2 | 7 | 6 | 6 | 7 | 7 | 6 | 7 | 7 | 6.63 | 0.52 | ✅ |
+| 17 | CNP | T2 | 5 | 4 | 5 | 5 | 5 | 5 | 5 | 5 | 4.88 | 0.35 | ✅ |
+| 18 | FE | T2 | 6 | 6 | 6 | 6 | 6 | 6 | 6 | 6 | 6.00 | 0.00 | ✅ |
+| 19 | EVRG | T2 | 5 | 6 | 6 | 6 | 6 | 6 | 6 | 6 | 5.88 | 0.35 | ✅ |
+| 20 | PNW | T2 | 6 | 5 | 6 | 6 | 6 | 5 | 6 | 6 | 5.75 | 0.46 | ✅ |
+| 21 | NI | T2 | 6 | 6 | 7 | 7 | 6 | 6 | 7 | 7 | 6.50 | 0.53 | ✅ |
+| 22 | AES | T2 | 5 | 7 | 4 | 6 | 4 | 7 | 6 | 5 | 5.50 | 1.20 | 🔶 |
+| 23 | PPL | T2 | 6 | 6 | 7 | 6 | 6 | 6 | 7 | 7 | 6.38 | 0.52 | ✅ |
+| 24 | OGE | T2 | 6 | 5 | 6 | 5 | 6 | 5 | 6 | 6 | 5.63 | 0.52 | ✅ |
+| 25 | LNT | T2 | 5 | 5 | 5 | 5 | 6 | 5 | 5 | 5 | 5.13 | 0.35 | ✅ |
+| 26 | NRG | T2 | 6 | 7 | 7 | 7 | 5 | 8 | 7 | 7 | 6.75 | 0.89 | ✅ |
+| 27 | VST | T1 | 7 | 8 | 6 | 8 | 4 | 9 | 9 | 7 | 7.25 | 1.67 | ⚠️ |
+| 28 | PEG | T1 | 7 | 6 | 7 | 7 | 6 | 6 | 7 | 7 | 6.63 | 0.52 | ✅ |
+| 29 | PCG | T1 | 7 | 7 | 7 | 7 | 5 | 8 | 8 | 8 | 7.13 | 0.99 | ✅ |
+| 30 | TLN | T2 | 5 | 6 | 4 | 6 | 4 | 7 | 5 | 5 | 5.25 | 1.04 | 🔶 |
+
+**Flag Legend:** ⚠️ HIGH DIVERGENCE (≥2.0σ); 🔶 MODERATE DIVERGENCE (≥1.5σ); ✅ CONSENSUS
+
+**Round 2 Cross-Examination Targets (12 stocks):**
+- TOP 10: D, SO, VST, NEE, DTE, CEG, AEP, PCG, NRG, DUK
+- BOTTOM 5: CNP, LNT, ES, EVRG, PNW
+- HIGH DIVERGENCE: VST (1.67σ), CEG (1.28σ), AES (1.20σ), ATO (1.07σ), TLN (1.04σ)
+
+### Round 3 Revised Scores (Post-Debate) — Debated Stocks Only
+
+| Ticker | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Sector | AVG | Std Dev | Δ vs R1 |
+|--------|------|-------|------|-------|--------|------|------|--------|-----|---------|---------|
+| D | 8 | 7 | 8 | 8 | 8 | 9 | 9 | 9 | 8.25 | 0.71 | 0.00 |
+| SO | 8 | 7 | 8 | 8 | 8 | 7 | 8 | 9 | 7.88 | 0.64 | 0.00 |
+| VST | 7 | 8 | 6 | 8 | 5 | 9 | 9 | 7 | 7.38 | 1.51 | +0.13 (Credit moved 4→5 after sentiment crowding evidence) |
+| NEE | 8 | 7 | 8 | 8 | 7 | 6 | 8 | 8 | 7.50 | 0.76 | 0.00 |
+| DTE | 7 | 7 | 8 | 8 | 7 | 7 | 8 | 8 | 7.50 | 0.53 | 0.00 |
+| CEG | 6 | 6 | 5 | 7 | 6 | 9 | 8 | 7 | 6.75 | 1.28 | 0.00 |
+| AEP | 7 | 7 | 7 | 7 | 7 | 7 | 8 | 8 | 7.25 | 0.46 | 0.00 |
+| PCG | 7 | 7 | 7 | 7 | 6 | 8 | 8 | 8 | 7.25 | 0.71 | +0.13 (Credit moved 5→6 after wildfire mitigation review) |
+
+---
+
+## APPENDIX B: Macro Data Snapshot
+
+### Macro Environment (As of May 1-3, 2026)
+
+| Indicator | Value | Trend (vs 3mo ago) | Implication for Sector |
+|-----------|-------|--------------------|----------------------|
+| Fed Funds Rate | 3.50-3.75% | → (held 3rd meeting) | Neutral; market pricing 1-2 cuts late 2026 |
+| 10Y Treasury | 4.38% | ↑ (+12bps) | NEGATIVE 108bps spread vs utility yield = headwind for bond-proxy names |
+| CPI (YoY, March) | 3.3% | ↑ (Iran oil shock) | Above 2% target; constrains Fed easing path |
+| Core CPI (YoY) | 2.6% | → (stable) | Underlying inflation contained |
+| ISM Mfg PMI | 52.7 | → (4th month exp) | Expansion; supports industrial demand |
+| Employment Sub-Idx | 46.4 | ↓ (4-month low) | Labor softening; supports rate cut path |
+| GDP Growth (Q1E) | ~2.0% | → | Steady expansion |
+| Unemployment | ~4.2% | ↑ (slowly) | Modest softening; not recessionary |
+| DXY | ~102 | → | Stable; modest USD strength |
+| VIX | ~18 | → | Normal; not stressed |
+| 2s10s Spread | +60bps | + | Positively sloped; recession signal absent |
+| S&P 500 YTD | ~+3% | flat | Modest gains |
+| XLU (Utilities) YTD | +9.8% | ↑ | Sector outperforming broad market |
+| Utility Div Yield | 3.3% | → | Below 10Y at 4.38% — historically unusual |
+
+### Utilities-Specific Macro Data
+
+| Indicator | Value | Implication |
+|-----------|-------|-------------|
+| US data center grid demand 2026E | 76 GW (vs 50 GW 2024) | +52% over 18 months — structural sector tailwind |
+| Hyperscaler 2026 capex | ~$700B (+50% YoY) | Visibility for utility capex 2026-2030 |
+| Authorized utility ROE (avg) | 9.7-10.3% | Stable; CA cut 30bps Dec 2025 |
+| 5-yr Treasury rate | ~4.0% | WACC for utilities ~6-7% |
+| Henry Hub natural gas | ~$3.50 | Moderate; supports gas-fired generation economics |
+
+---
+
+## APPENDIX C: CIO Specialist Weighting Rationale
+
+Given the current macro regime (Stagflation-Lite + AI Capex Super-Cycle), the CIO has adjusted specialist weights as follows:
+
+| Specialist | Default Weight | Current Weight | Rationale |
+|------------|---------------|----------------|-----------|
+| Fundamental | 18% | 17% | Slight underweight — in this regime, fundamentals matter but secular trends matter more |
+| Quant/Factor | 14% | 12% | Underweight — factor crowding in defensive utilities reduces signal |
+| Technical | 13% | 12% | Slight underweight — sector breakouts are occurring but conviction comes from fundamentals |
+| Macro | 15% | 16% | Overweight — rate path + AI capex are dominant variables for the sector |
+| Credit/Risk | 13% | 13% | Default — IPP leverage matters; regulated utility leverage less concerning |
+| Sentiment | 10% | 12% | Overweight — major dislocations (VST -25%, CEG -20%) create contrarian opportunities |
+| MomentumPulse | 7% | 8% | Slight overweight — earnings revisions are inflecting on data center wins |
+| Sector Specialist (Reg Return) | 10% | 10% | Default — regulatory environment is critical to data center thesis |
+
+**Total: 100%**
+
+---
+
+## APPENDIX D: Universe Discovery Audit
+
+| Discovery Method | Stocks Found | New vs. Seed |
+|-----------------|-------------|-------------|
+| S&P 500 sector screen | 23 | 22 seed / 1 new |
+| S&P 400 midcap screen | 7 | 6 seed / 1 new (TLN) |
+| Web screener verification | 28 total | All confirmed >$2B |
+| **Total unique stocks above $2B** | **30** | **28 seed / 2 new** |
+
+Note: Two stocks below $2B threshold were excluded (POR, AGR after Avangrid breakup pending). TLN included as it meets $2B threshold despite being newer to public markets (2024 IPO).
+
+---
+
+## METHODOLOGY NOTE
+
+This report was generated by InvestorDebate v2.0, a multi-specialist investment committee simulation employing 8 distinct analytical frameworks through a 4-round adversarial debate protocol. Specialist frameworks: Buffett/Munger value investing, Fama-French/AQR factor analysis, O'Neil/Minervini/Weinstein technical analysis, Dalio/Druckenmiller macro strategy, Klarman/Graham/Taleb risk assessment, Thaler/Kahneman behavioral analysis, Driehaus/O'Shaughnessy earnings momentum analysis, plus the Regulated Return Analyst sector specialist.
+
+**Important Disclaimer:** This analysis is generated by an AI system for educational and informational purposes only. It does not constitute investment advice. All data was gathered from publicly available sources via web search and may contain errors or be delayed. Past performance does not predict future results. Always do your own research and consult with a qualified financial advisor before making investment decisions.
+
+---
+
+## Sources
+
+- [FRED Federal Funds Effective Rate](https://fred.stlouisfed.org/series/FEDFUNDS)
+- [US 10 Year Treasury Yield](https://tradingeconomics.com/united-states/government-bond-yield)
+- [BLS Consumer Price Index Summary](https://www.bls.gov/news.release/cpi.nr0.htm)
+- [Goldman Sachs: AI to drive 165% increase in data center power demand by 2030](https://www.goldmansachs.com/insights/articles/ai-to-drive-165-increase-in-data-center-power-demand-by-2030)
+- [S&P Global: Data center grid-power demand to rise 22% in 2025](https://www.spglobal.com/energy/en/news-research/latest-news/electric-power/101425-data-center-grid-power-demand-to-rise-22-in-2025-nearly-triple-by-2030)
+- [Vistra Reports Fourth Quarter and Full-Year 2025 Results](https://investor.vistracorp.com/2026-02-26-Vistra-Reports-Fourth-Quarter-and-Full-Year-2025-Results)
+- [Vistra Q4 2025 Earnings Call Transcript - The Motley Fool](https://www.fool.com/earnings/call-transcripts/2026/02/26/vistra-vst-q4-2025-earnings-call-transcript/)
+- [Constellation Q4 EPS results](https://www.stocktitan.net/news/CEG/constellation-reports-fourth-quarter-and-full-year-2025-sblgu0ybac63.html)
+- [Constellation Energy Finalizes Calpine Acquisition](https://www.tipranks.com/news/company-announcements/constellation-energy-finalizes-calpine-acquisition-expands-clean-power)
+- [NextEra Energy Q1 2026 Earnings Transcript - The Motley Fool](https://www.fool.com/earnings/call-transcripts/2026/04/23/nextera-energy-nee-q1-2026-earnings-transcript/)
+- [Southern Q1 2026 slides: data centers drive earnings beat](https://www.investing.com/news/company-news/southern-q1-2026-slides-data-centers-drive-earnings-beat-11gw-contracted-93CH-4650968)
+- [Dominion Energy Q1 2026 slides: data center boom drives earnings beat](https://www.investing.com/news/company-news/dominion-energy-q1-2026-slides-data-center-boom-drives-earnings-beat-93CH-4653914)
+- [Dominion Energy Q1 2026 Earnings Call Transcript - The Motley Fool](https://www.fool.com/earnings/call-transcripts/2026/05/01/dominion-d-q1-2026-earnings-call-transcript/)
+- [DTE Q1 2026 Earnings Call - BigGo Finance](https://finance.biggo.com/news/US_DTE_2026-04-30)
+- [Xcel Energy First Quarter 2026 Earnings Report](https://www.businesswire.com/news/home/20260430086240/en/Xcel-Energy-First-Quarter-2026-Earnings-Report)
+- [PG&E Corporation First Quarter 2026 Results](https://investor.pgecorp.com/news-events/press-releases/press-release-details/2026/PGE-Corporation-Reports-First-Quarter-2026-Results-On-Track-to-Deliver-Solid-2026-Bundled-Residential-Electric-Rates-Now-Down-23-since-2024-for-Most-Vulnerable-Customers/default.aspx)
+- [CPUC Cost of Capital Decision December 2025](https://www.cpuc.ca.gov/-/media/cpuc-website/industries-and-topics/documents/energy/electric-energy/electric-costs/cost-of-capital-fact-sheet.pdf)
+- [Vistra Stock Forecast - MarketBeat](https://www.marketbeat.com/stocks/NYSE/VST/forecast/)
+- [Why Constellation Energy Stock Slumped in March - The Motley Fool](https://www.fool.com/investing/2026/04/08/why-constellation-energy-stock-slumped-in-march/)
+- [ISM Manufacturing PMI April 2026 Report](https://www.prnewswire.com/news-releases/manufacturing-pmi-at-527-april-2026-ism-manufacturing-pmi-report-302759226.html)
+- [State Street XLU ETF Performance](https://www.ssga.com/us/en/intermediary/etfs/state-street-utilities-select-sector-spdr-etf-xlu)
+- [Independent Power Producers in an Electricity Bull Market - SecondHalf Coach](https://www.shcwealthmanagement.com/blog/independent-power-producers-in-an-electricity-bull-market)
+- [Atmos Energy 2026 EPS Outlook](https://simplywall.st/stocks/us/utilities/nyse-ato/atmos-energy/news/how-investors-may-respond-to-atmos-energy-ato-reaffirmed-202)
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-05-05 20:53 · Not financial advice.</div>
+</footer>
+</body>
+</html>
