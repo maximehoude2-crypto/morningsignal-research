@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 """
-Generate and manage earnings briefs in state/earnings/ using OpenAI.
+Generate and manage earnings briefs in state/earnings/ using Claude.
 """
 
 import json
@@ -16,8 +16,8 @@ import pandas as pd
 import requests
 import yfinance as yf
 
+from scanner.claude_client import claude_enabled, complete_text
 from scanner.market_brief import fallback_narrative
-from scanner.openai_client import complete_text, openai_enabled
 from scanner.thematic_scanner import _scrape_catalyst_calendar
 
 BASE_DIR = Path(__file__).parent.parent
@@ -694,8 +694,8 @@ def generate_earnings_brief(target_date: str | None = None, session: str = "AM")
             f"No >$2B {session_label.lower()} earnings companies found for {target_date}; refusing to generate empty brief."
         )
 
-    if not openai_enabled():
-        raise RuntimeError("OPENAI_API_KEY is not configured for earnings brief generation.")
+    if not claude_enabled():
+        raise RuntimeError("ANTHROPIC_API_KEY is not configured for earnings brief generation.")
 
     evidence_count = sum(1 for c in companies if (c.get("earnings_evidence") or {}).get("has_actual_result"))
     call_count = sum(1 for c in companies if (c.get("earnings_evidence") or {}).get("has_conference_call"))
@@ -754,7 +754,7 @@ Short note describing that this brief was generated from Nasdaq calendar data, y
 
 Every company in PRIMARY COMPANIES must appear at least once, either in Company-by-Company Analysis, Awaiting Reliable Post-Call Source, or Full Reporter Tape. Keep it analytical and publication-ready. Return markdown only."""
 
-    print(f"  Generating {session_label.lower()} earnings brief via OpenAI GPT-5.4...")
+    print(f"  Generating {session_label.lower()} earnings brief via Claude...")
     text = complete_text(prompt, max_output_tokens=16000)
 
     out_path = STATE_DIR / f"earnings_{target_date}_{session}.md"
@@ -802,8 +802,8 @@ def sync_earnings(
             print(f"  [dry-run] Would {action} earnings brief {out_path.name}")
             continue
 
-        if not openai_enabled():
-            print("  OPENAI_API_KEY not set, skipping new earnings brief generation")
+        if not claude_enabled():
+            print("  ANTHROPIC_API_KEY not set, skipping new earnings brief generation")
             break
 
         try:
