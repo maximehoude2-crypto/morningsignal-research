@@ -6,6 +6,7 @@ Generate and manage earnings briefs in state/earnings/ using OpenAI.
 
 import json
 import re
+import time
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -28,6 +29,28 @@ MIN_EARNINGS_MARKET_CAP = 2_000_000_000
 MAX_SNAPSHOTS = 35
 MAX_EVIDENCE_COMPANIES = 30
 MAX_EVIDENCE_CHARS = 4500
+# Cap on how many fallback-calendar tickers we resolve market caps for, to bound
+# runtime when the primary (Nasdaq) source is down and we lean on the scraper.
+MAX_FALLBACK_CAP_LOOKUPS = 60
+
+NASDAQ_PAGE_URL = "https://www.nasdaq.com/market-activity/earnings"
+_BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Origin": "https://www.nasdaq.com",
+    "Referer": NASDAQ_PAGE_URL,
+    "Connection": "keep-alive",
+}
+
+
+class EarningsDataError(RuntimeError):
+    """Raised when the earnings calendar source is unavailable and no brief can be
+    trusted to be complete. Distinct from a legitimately empty session so the
+    pipeline can surface infrastructure failures loudly instead of skipping them."""
 
 
 def _is_weekday(d: date) -> bool:
@@ -83,21 +106,46 @@ def _session_label_from_time(time_text: str) -> str:
     return "UNSPECIFIED"
 
 
+def _nasdaq_session() -> requests.Session:
+    """Build a browser-like session and prime cookies by visiting the public
+    earnings page first. api.nasdaq.com now 403s requests that arrive without a
+    prior page visit / cookies, so this priming step is what keeps the feed alive."""
+    session = requests.Session()
+    session.headers.update(_BROWSER_HEADERS)
+    try:
+        session.get(NASDAQ_PAGE_URL, timeout=15)
+    except Exception:
+        # Priming is best-effort; the API call below still gets a fair attempt.
+        pass
+    return session
+
+
 def _fetch_nasdaq_earnings_calendar(target_date: str) -> list[dict]:
-    """Fetch Nasdaq earnings calendar rows for a date."""
+    """Fetch Nasdaq earnings calendar rows for a date.
+
+    Uses a cookie-primed browser-like session and retries with backoff because
+    api.nasdaq.com intermittently returns 403 for un-primed / rate-limited
+    requests. Raises on persistent failure so callers can fall back."""
     url = f"https://api.nasdaq.com/api/calendar/earnings?date={target_date}"
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/json, text/plain, */*",
-        "Origin": "https://www.nasdaq.com",
-        "Referer": "https://www.nasdaq.com/market-activity/earnings",
-    }
-    response = requests.get(url, headers=headers, timeout=20)
-    response.raise_for_status()
-    payload = response.json()
+    session = _nasdaq_session()
+
+    last_exc: Exception | None = None
+    payload: dict | None = None
+    for attempt in range(3):
+        try:
+            response = session.get(url, timeout=20)
+            response.raise_for_status()
+            payload = response.json()
+            break
+        except Exception as exc:
+            last_exc = exc
+            if attempt < 2:
+                # Re-prime cookies and back off before retrying a blocked request.
+                time.sleep(1.5 * (attempt + 1))
+                session = _nasdaq_session()
+    if payload is None:
+        raise RuntimeError(f"Nasdaq earnings API unavailable: {last_exc}")
+
     rows = ((payload.get("data") or {}).get("rows") or [])
     out: list[dict] = []
     for row in rows:
@@ -123,8 +171,29 @@ def _fetch_nasdaq_earnings_calendar(target_date: str) -> list[dict]:
     return out
 
 
+def _resolve_market_cap(ticker: str) -> int:
+    """Best-effort market cap from yfinance, used to enrich fallback-calendar rows
+    that arrive without a market cap (otherwise the >$2B filter drops them all)."""
+    try:
+        fast = yf.Ticker(ticker).fast_info
+        cap = getattr(fast, "market_cap", None)
+        if cap:
+            return int(cap)
+    except Exception:
+        pass
+    try:
+        info = yf.Ticker(ticker).info or {}
+        return _parse_market_cap(info.get("marketCap"))
+    except Exception:
+        return 0
+
+
 def _fallback_earnings_calendar(target_date: str) -> list[dict]:
-    """Fallback to the existing catalyst scraper if Nasdaq is unavailable."""
+    """Fallback to the existing catalyst scraper if Nasdaq is unavailable.
+
+    The scraper does not provide market caps, so we resolve them via yfinance for
+    a bounded number of tickers — without this, every fallback row has cap 0 and
+    is silently filtered out by MIN_EARNINGS_MARKET_CAP."""
     target_dt = datetime.strptime(target_date, "%Y-%m-%d").date()
     target_label = _format_short(target_dt)
     out = []
@@ -134,13 +203,16 @@ def _fallback_earnings_calendar(target_date: str) -> list[dict]:
         ticker = str(event.get("ticker") or "").upper().strip()
         if not ticker:
             continue
+        market_cap = 0
+        if len(out) < MAX_FALLBACK_CAP_LOOKUPS:
+            market_cap = _resolve_market_cap(ticker)
         out.append({
             "ticker": ticker,
             "name": ticker,
             "date": target_date,
             "time": event.get("time", ""),
             "session": _session_label_from_time(event.get("time", "")),
-            "market_cap": 0,
+            "market_cap": market_cap,
             "market_cap_text": "",
             "fiscal_quarter": "",
             "eps_forecast": "",
@@ -152,10 +224,15 @@ def _fallback_earnings_calendar(target_date: str) -> list[dict]:
     return out
 
 
-def _load_earnings_calendar(target_date: str) -> list[dict]:
+def _load_earnings_calendar(target_date: str) -> tuple[list[dict], bool]:
+    """Return (rows, primary_ok). primary_ok is False when the authoritative
+    Nasdaq feed failed and we fell back to the scraper — callers use this to tell
+    "genuinely no earnings today" apart from "the data source is broken"."""
+    primary_ok = True
     try:
         rows = _fetch_nasdaq_earnings_calendar(target_date)
     except Exception as exc:
+        primary_ok = False
         print(f"  Warning: Nasdaq earnings calendar failed ({exc}); using fallback calendar.")
         rows = _fallback_earnings_calendar(target_date)
 
@@ -163,10 +240,11 @@ def _load_earnings_calendar(target_date: str) -> list[dict]:
     cache_path.write_text(json.dumps({
         "date": target_date,
         "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "primary_source_ok": primary_ok,
         "count": len(rows),
         "rows": rows,
     }, indent=2), encoding="utf-8")
-    return rows
+    return rows, primary_ok
 
 
 def _market_context(target_date: str) -> dict:
@@ -513,8 +591,9 @@ def _fetch_company_evidence(ticker: str, calendar_row: dict | None = None) -> di
     }
 
 
-def _build_company_set(target_date: str, session: str) -> tuple[list[dict], list[dict]]:
-    calendar = _load_earnings_calendar(target_date)
+def _build_company_set(target_date: str, session: str) -> tuple[list[dict], list[dict], dict]:
+    calendar, primary_ok = _load_earnings_calendar(target_date)
+    calendar_meta = {"primary_ok": primary_ok, "row_count": len(calendar)}
 
     primary_events = []
     seen: set[str] = set()
@@ -592,16 +671,25 @@ def _build_company_set(target_date: str, session: str) -> tuple[list[dict], list
         })
 
     watchlist.sort(key=lambda item: item.get("market_cap", 0), reverse=True)
-    return snapshots, watchlist[:25]
+    return snapshots, watchlist[:25], calendar_meta
 
 
 def generate_earnings_brief(target_date: str | None = None, session: str = "AM") -> Path:
     target_date = target_date or date.today().isoformat()
-    companies, watchlist = _build_company_set(target_date, session)
+    companies, watchlist, calendar_meta = _build_company_set(target_date, session)
     market_context = _market_context(target_date)
     session_label = "Pre-Market" if session == "AM" else "Post-Close"
 
     if not companies:
+        # Distinguish a broken data source from a genuinely quiet session. If the
+        # authoritative Nasdaq feed failed, an empty result is untrustworthy and
+        # must surface loudly rather than masquerading as "no earnings today".
+        if not calendar_meta.get("primary_ok"):
+            raise EarningsDataError(
+                f"Earnings calendar source unavailable for {target_date} {session_label} "
+                f"(Nasdaq feed failed and fallback yielded no >$2B companies); "
+                f"cannot generate a trustworthy brief."
+            )
         raise RuntimeError(
             f"No >$2B {session_label.lower()} earnings companies found for {target_date}; refusing to generate empty brief."
         )
@@ -699,6 +787,8 @@ def sync_earnings(
 ) -> list[dict]:
     target_date = target_date or date.today().isoformat()
 
+    data_failures: list[str] = []  # degraded-source failures we must surface loudly
+
     for session in sessions:
         out_path = STATE_DIR / f"earnings_{target_date}_{session}.md"
         if out_path.exists() and not regenerate:
@@ -718,11 +808,26 @@ def sync_earnings(
 
         try:
             generate_earnings_brief(target_date, session)
+        except EarningsDataError as exc:
+            # The calendar source is broken — do NOT swallow this. We collect and
+            # re-raise after attempting all sessions so the pipeline step fails
+            # visibly instead of silently producing zero briefs (as happened when
+            # Nasdaq started returning 403).
+            print(f"  ✗ {out_path.name}: {exc}")
+            data_failures.append(f"{session}: {exc}")
         except Exception as exc:  # pragma: no cover - provider/network dependent
+            # Benign cases (quiet session, transient provider hiccup) stay soft.
             print(f"  Warning: failed to generate {out_path.name}: {exc}")
 
     briefs = get_earnings_list()
     print(f"  Earnings library ready: {len(briefs)} briefs")
+
+    if data_failures:
+        raise EarningsDataError(
+            "Earnings calendar data unavailable; no trustworthy briefs generated for "
+            + ", ".join(data_failures)
+        )
+
     return briefs
 
 
