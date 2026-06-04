@@ -760,6 +760,16 @@ Every company in PRIMARY COMPANIES must appear at least once, either in Company-
     out_path = STATE_DIR / f"earnings_{target_date}_{session}.md"
     out_path.write_text(text.strip() + "\n", encoding="utf-8")
     print(f"  Saved earnings brief → {out_path}")
+
+    from scanner.obsidian_export import write_earnings_note
+
+    note_path = write_earnings_note(
+        target_date,
+        session,
+        text,
+        tickers=[c.get("ticker") for c in companies[:12] if c.get("ticker")],
+    )
+    print(f"  Wrote Obsidian note → {note_path}")
     return out_path
 
 
