@@ -11,7 +11,7 @@ from io import StringIO
 import pandas as pd
 import requests
 
-from scanner.openai_client import complete_text, extract_json, openai_enabled
+from scanner.claude_client import claude_enabled, complete_text, extract_json
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
@@ -142,7 +142,7 @@ def _scrape_news_headlines() -> str:
 
 def _generate_narrative(brief: dict) -> dict:
     """
-    Scrape today's financial news, then call OpenAI Responses API
+    Scrape today's financial news, then call the Claude Messages API
     to produce a comprehensive institutional-grade narrative package.
     """
     print("  Scraping today's financial news headlines...")
@@ -150,8 +150,8 @@ def _generate_narrative(brief: dict) -> dict:
     n_headlines = len(news.strip().splitlines()) if news.strip() else 0
     print(f"  Found {n_headlines} headlines")
 
-    if not openai_enabled():
-        print("  OPENAI_API_KEY not set, skipping GPT-5.4 narrative generation")
+    if not claude_enabled():
+        print("  ANTHROPIC_API_KEY not set, skipping Claude narrative generation")
         return _empty_narrative()
 
     try:
@@ -377,7 +377,7 @@ Produce a JSON object with exactly this structure. Return ONLY raw JSON — no m
 
 Return ONLY the JSON object."""
 
-        print("  Calling OpenAI GPT-5.4 via Responses API...")
+        print("  Calling Claude via Messages API...")
         raw = complete_text(prompt, max_output_tokens=5000)
         result = extract_json(raw)
 
@@ -1321,7 +1321,7 @@ def run_market_brief(
         "top_losers": top_losers,
     }
 
-    # Generate AI market narrative via OpenAI GPT-5.4
+    # Generate AI market narrative via Claude
     print("Generating AI market narrative...")
     narrative = _generate_narrative(brief)
 
