@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Semiconductors & Semiconductor Equipment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-06-22 08:00</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Semiconductors & Semiconductor Equipment</div>
+        <div class="hero-title">Semiconductors & Semiconductor Equipment — Committee Report</div>
+        <div class="hero-summary">
+          Semiconductors are in a strong but late-feeling AI infrastructure tape. The group has dramatically outperformed: SMH is up roughly 76.8% YTD and 154.3% over twelve months versus SPY up 9.9% YTD and 27.0% over twelve months. The market is paying for direct participation in accelerated compute, HBM, n
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-06-21</span>
+          <span class="pill">20 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Semiconductors & Semiconductor Equipment yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-06-21</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">NVDA</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.5/5</td>
+            <td>8.55/10</td>
+            <td class="thesis-cell">Best AI compute economics, exceptional margins, and still the cleanest revision engine, though size and digestion risk cap conviction.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">AVGO</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.2/10</td>
+            <td class="thesis-cell">Custom AI silicon and connectivity exposure plus software cash flow give Broadcom a more diversified AI compounder profile.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">ADI</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.5/5</td>
+            <td>7.55/10</td>
+            <td class="thesis-cell">Higher-quality analog recovery with strong margins, cleaner balance sheet than TXN, and less extreme valuation than equipment/memory momentum leaders.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">QCOM</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.5/5</td>
+            <td>7.4/10</td>
+            <td class="thesis-cell">Reasonable valuation, edge AI/auto optionality, strong FCF, and lower AI-crowding risk offset weak current revenue growth.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">MU</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.0/5</td>
+            <td>7.3/10</td>
+            <td class="thesis-cell">HBM/memory cycle is powerful and valuation is optically cheap, but peak-cycle risk makes this a controlled-size trade.</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">The largest disagreement is Micron. MomentumPulse and the Compute Supply Chain specialist view HBM scarcity as an earnings-revision engine. The Risk Guardian argues memory is the classic place where investors confuse low forward P/E with low risk near peak estimates. CIO ruling: top-five, but explicitly speculative.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--blue);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Where We Differ from Consensus</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">The report is more cautious on AMD, Marvell, Intel, KLA, Lam, and Applied Materials than momentum investors. It is more constructive on Qualcomm and Analog Devices because valuation and balance-sheet support matter more after the group has rerated.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--red);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">What We're Probably Wrong About</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">We may be too conservative on wafer-fab equipment if AI capex remains supply-constrained through 2027 without a digestion period. We may also be too skeptical on Intel if foundry economics, government support, or a large captive AI customer reset the FCF trajectory faster than expected.</div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 5 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · NVDA — NVIDIA</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 4.5/5 · 
+        Composite 8.55/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>NVIDIA is still the dominant monetization point in AI infrastructure. It has the strongest gross margin, operating margin, net margin, and FCF profile in the group. Its moat includes chips, systems, software, networking, developer ecosystem, and supply-chain coordination.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>The equity is no longer early. At $5T, a capex pause, custom ASIC substitution, China/export pressure, or margin normalization can cause a large drawdown even if the company remains dominant.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Is NVIDIA still an earnings-revision story, or has the market already capitalized the next several years of AI demand?</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#2 · AVGO — Broadcom</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 4.0/5 · 
+        Composite 8.2/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Broadcom combines custom AI silicon, networking/connectivity, and infrastructure software cash flow. Custom silicon programs can become sticky once embedded in hyperscaler roadmaps.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>The valuation is demanding, customer concentration is real, and the software leverage profile needs continued execution. The stock is less cheap than earnings multiples imply because sales multiple and EV/EBITDA remain high.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Are AI ASIC programs durable platform relationships or project-based revenue that the market is overcapitalizing?</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#3 · ADI — Analog Devices</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 3.5/5 · 
+        Composite 7.55/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>ADI offers high-quality analog exposure with 64% gross margin, 38% operating margin, good FCF, and broad industrial/auto optionality. It is not as crowded as pure AI names and has better financial quality than many catch-up cyclicals.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>It is not a pure AI bottleneck. If investor appetite remains concentrated in compute/HBM/equipment momentum, ADI may lag despite good fundamentals.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Does the market start rewarding quality analog recovery, or does it continue to chase only direct AI infrastructure beta?</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#4 · QCOM — Qualcomm</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 3.5/5 · 
+        Composite 7.4/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Qualcomm is reasonably valued relative to the group, generates strong FCF, and has edge AI, handset recovery, auto, IoT, and licensing optionality. It is less crowded than AI accelerator and equipment names.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Current revenue growth is negative, the company has less strategic control of the AI data-center bottleneck, and handset cyclicality remains a drag.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Can edge AI and auto content offset handset maturity and rerate the stock?</p>
+      </div>
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#5 · MU — Micron</h3>
+      <div class="stock-meta">
+        <span class="id-rating-pill rating-buy">BUY</span> · 
+        Conviction 3.0/5 · 
+        Composite 7.3/10
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Micron is the most direct US-listed HBM/memory scarcity play. Revenue growth and earnings growth are explosive, and the forward P/E looks low if memory pricing holds.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Memory is cyclical. The stock is up more than 800% over twelve months and forward earnings may be close to peak-cycle assumptions. This is the highest-risk top-five recommendation.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--accent);">Key Debate Point</div>
+        <p>Is HBM scarcity a structural multi-year margin reset or just the current memory upcycle in a new narrative wrapper?</p>
+      </div>
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (31013 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Semiconductors & Semiconductor Equipment Industry Group Analysis - v2.1
+
+**Report Date:** 2026-06-21  
+**GICS Level:** Level 2 - Industry Group  
+**GICS Code:** 4530  
+**Parent Sector:** Information Technology  
+**Universe:** 20 US-listed semiconductor and semiconductor-equipment stocks above $2B market cap  
+**Analyst Team:** 8 Specialists: Fundamental, Quant/Factor, Technical, Macro, Credit/Risk, Sentiment, MomentumPulse, Compute Supply Chain / Node Economics  
+**Market Data As Of:** 2026-06-18 close; yfinance pull at 2026-06-21 07:18 America/Toronto  
+**Run Type:** Test run requested by user, forced industry-group override  
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+### Macro Context
+
+Semiconductors are in a strong but late-feeling AI infrastructure tape. The group has dramatically outperformed: SMH is up roughly 76.8% YTD and 154.3% over twelve months versus SPY up 9.9% YTD and 27.0% over twelve months. The market is paying for direct participation in accelerated compute, HBM, networking silicon, advanced packaging, wafer-fab equipment, and test intensity.
+
+The macro backdrop is supportive for real demand but not forgiving on valuation. The 10Y Treasury is around 4.45%, VIX is near 16.4, and the Fed funds target range remains 3.50%-3.75%. This means the right long candidates need visible earnings revision power, not simply exposure to AI narratives.
+
+The industry-group call is: own the scarce AI bottlenecks, avoid peak-cycle extrapolation where valuation is already discounting perfection, and be highly skeptical of "catch-up" stories with weak FCF or negative margin structure.
+
+### Top 5 Ranked Stocks
+
+| Rank | Ticker | Rating | Conviction (1-5) | Composite Score | One-Line Thesis |
+|---:|---|---|---:|---:|---|
+| 1 | NVDA | BUY | 4.5 | 8.55 | Best AI compute economics, exceptional margins, and still the cleanest revision engine, though size and digestion risk cap conviction. |
+| 2 | AVGO | BUY | 4.0 | 8.20 | Custom AI silicon and connectivity exposure plus software cash flow give Broadcom a more diversified AI compounder profile. |
+| 3 | ADI | BUY | 3.5 | 7.55 | Higher-quality analog recovery with strong margins, cleaner balance sheet than TXN, and less extreme valuation than equipment/memory momentum leaders. |
+| 4 | QCOM | BUY | 3.5 | 7.40 | Reasonable valuation, edge AI/auto optionality, strong FCF, and lower AI-crowding risk offset weak current revenue growth. |
+| 5 | MU | SPECULATIVE BUY | 3.0 | 7.30 | HBM/memory cycle is powerful and valuation is optically cheap, but peak-cycle risk makes this a controlled-size trade. |
+
+### Key Industry-Group Call
+
+The best risk-adjusted longs are not the stocks with the most explosive 12-month returns. The committee prefers direct AI control points with visible profitability, then selectively adds analog/edge optionality where valuation is still defensible. It is more cautious on equipment names after 100%-300% rallies and on Intel/Marvell/Lattice where the market is paying ahead of proof.
+
+### Biggest Disagreement
+
+The largest disagreement is Micron. MomentumPulse and the Compute Supply Chain specialist view HBM scarcity as an earnings-revision engine. The Risk Guardian argues memory is the classic place where investors confuse low forward P/E with low risk near peak estimates. CIO ruling: top-five, but explicitly speculative.
+
+### Where We Differ From Consensus
+
+The report is more cautious on AMD, Marvell, Intel, KLA, Lam, and Applied Materials than momentum investors. It is more constructive on Qualcomm and Analog Devices because valuation and balance-sheet support matter more after the group has rerated.
+
+### What We're Probably Wrong About
+
+We may be too conservative on wafer-fab equipment if AI capex remains supply-constrained through 2027 without a digestion period. We may also be too skeptical on Intel if foundry economics, government support, or a large captive AI customer reset the FCF trajectory faster than expected.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT - SEMICONDUCTORS & SEMICONDUCTOR EQUIPMENT
+
+| Indicator | Latest Read | Relevance |
+|---|---:|---|
+| Fed funds target range | 3.50%-3.75% | High enough to punish long-duration semiconductor stories without near-term earnings power. |
+| 10Y Treasury yield | ~4.45% | Keeps valuation discipline relevant despite AI enthusiasm. |
+| VIX | ~16.4 | Risk appetite is constructive; market is rewarding high-beta winners. |
+| SMH YTD / 12M | +76.8% / +154.3% | Semiconductor tape is extremely strong and already discounts major AI-cycle upside. |
+| SPY YTD / 12M | +9.9% / +27.0% | Semis are materially outperforming broad equities. |
+| ISM Manufacturing | Expansionary in latest checked macro context | Supports cyclical recovery, analog, industrial semis, and equipment demand. |
+| CPI / core CPI | Inflation still above target in latest checked macro context | Keeps Fed cautious and limits sector-wide multiple expansion. |
+
+### Industry-Group-Specific Macro Data
+
+The key semis variables are not broad GDP. They are hyperscaler AI capex, HBM supply, advanced packaging capacity, Ethernet/optical networking demand, wafer-fab equipment ordering, memory pricing, China/export controls, and whether customers pause after accelerated 2025-2026 AI infrastructure deployment.
+
+The group is bifurcated:
+
+- **AI compute and custom silicon:** NVIDIA, Broadcom, AMD, Marvell.
+- **Memory / HBM:** Micron.
+- **Wafer-fab equipment / process control / test:** Applied Materials, Lam, KLA, Teradyne.
+- **Analog and industrial / auto semis:** Analog Devices, Texas Instruments, ON Semi, Microchip, Monolithic Power.
+- **Mobile / RF / edge:** Qualcomm, Qorvo, Skyworks.
+- **Foundry / turnaround:** Intel, GlobalFoundries.
+- **Small FPGA / specialty logic:** Lattice.
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+| Discovery Method | Stocks Found | Notes |
+|---|---:|---|
+| Prior Information Technology test run | 9 | Included NVDA, AVGO, AMD, MU, QCOM, TXN, AMAT, LRCX, KLAC. |
+| Semiconductor and equipment peer expansion | 11 | Added analog, RF, foundry, test, FPGA and power names. |
+| ETF / industry proxy cross-check | 2 proxies | SMH as industry proxy; SPY as broad benchmark. |
+| Exclusions | N/A | ADRs and non-US primary listings excluded for this test. |
+| Total unique stocks analyzed | 20 | All are US-listed and above $2B market cap. |
+
+### STOCK UNIVERSE - SEMICONDUCTORS & SEMICONDUCTOR EQUIPMENT
+
+| Ticker | Company | Sub-Industry | Market Cap | Price | YTD | 12M | Fwd P/E | EV/EBITDA | Sales |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|
+| NVDA | NVIDIA | Accelerated compute | $5.10T | $210.69 | +11.7% | +46.7% | 16.6x | 30.6x | 20.1x |
+| AVGO | Broadcom | Custom silicon / connectivity | $1.96T | $411.35 | +18.6% | +65.5% | 21.2x | 47.6x | 25.9x |
+| MU | Micron | Memory / HBM | $1.28T | $1133.99 | +259.7% | +819.7% | 9.6x | 34.6x | 22.0x |
+| AMD | Advanced Micro Devices | CPU/GPU/AI accelerators | $876B | $537.37 | +140.5% | +319.0% | 41.0x | 116.8x | 23.4x |
+| INTC | Intel | IDM / foundry turnaround | $673B | $133.99 | +240.2% | +535.6% | 86.7x | 49.3x | 12.5x |
+| AMAT | Applied Materials | Wafer-fab equipment | $490B | $617.11 | +130.1% | +266.8% | 37.9x | 52.7x | 16.9x |
+| LRCX | Lam Research | Wafer-fab equipment | $487B | $389.04 | +110.6% | +332.3% | 48.6x | 61.9x | 22.4x |
+| KLAC | KLA | Process control | $339B | $259.56 | +104.2% | +207.3% | 51.3x | 58.2x | 25.9x |
+| TXN | Texas Instruments | Analog | $294B | $322.86 | +84.0% | +67.5% | 34.3x | 34.9x | 15.9x |
+| MRVL | Marvell | Data infrastructure silicon | $272B | $310.58 | +247.9% | +323.6% | 50.3x | 100.7x | 31.2x |
+| QCOM | Qualcomm | Mobile / edge / auto | $238B | $226.11 | +32.0% | +52.6% | 21.2x | 18.8x | 5.4x |
+| ADI | Analog Devices | Analog / industrial | $212B | $434.46 | +59.6% | +92.8% | 29.4x | 35.3x | 16.6x |
+| MPWR | Monolithic Power | Power semis | $77B | $1563.70 | +67.3% | +129.7% | 51.8x | 88.1x | 26.0x |
+| TER | Teradyne | Test equipment | $69B | $437.92 | +111.2% | +408.8% | 46.2x | 58.9x | 18.1x |
+| MCHP | Microchip | Microcontrollers / analog | $54B | $99.77 | +55.1% | +48.6% | 24.3x | 48.8x | 11.5x |
+| ON | ON Semiconductor | Auto/industrial/power | $47B | $121.62 | +114.5% | +130.3% | 28.2x | 23.7x | 7.8x |
+| GFS | GlobalFoundries | Foundry | $47B | $85.83 | +132.8% | +129.1% | 34.1x | 22.6x | 6.9x |
+| LSCC | Lattice | Low-power FPGA | $21B | $153.72 | +95.4% | +204.9% | 66.5x | 298.8x | 36.7x |
+| SWKS | Skyworks | RF semis | $10.9B | $72.45 | +14.8% | +4.7% | 14.1x | 11.7x | 2.7x |
+| QRVO | Qorvo | RF semis | $8.7B | $98.42 | +14.1% | +23.2% | 12.6x | 11.1x | 2.4x |
+
+---
+
+## APPENDIX C: DARWINIAN ANALYST LEDGER + CIO SPECIALIST WEIGHTING
+
+### Analyst Performance Ledger
+
+There is not yet enough same-industry-group history to run a statistically meaningful Darwinian regression. Prior files are broad Information Technology or Utilities, not the new GICS 4530 group. The analyst-performance system is therefore in **observation mode** for this semiconductor run.
+
+| Specialist | Prior Weight | Track Record Rank | Evidence | Multiplier | Current Weight | Change |
+|---|---:|---:|---|---:|---:|---:|
+| Fundamental / Value Architect | 18% | N/A | No usable GICS 4530 history yet. | 1.00x | 16% | -2 pts |
+| Quant / Factor Machinist | 14% | N/A | No usable GICS 4530 history yet. | 1.00x | 13% | -1 pt |
+| Technical / Chart Surgeon | 13% | N/A | No usable GICS 4530 history yet. | 1.00x | 12% | -1 pt |
+| Macro / Global Chessmaster | 15% | N/A | No usable GICS 4530 history yet. | 1.00x | 14% | -1 pt |
+| Credit / Risk Guardian | 13% | N/A | No usable GICS 4530 history yet. | 1.00x | 12% | -1 pt |
+| Sentiment / Crowd Psychologist | 10% | N/A | No usable GICS 4530 history yet. | 1.00x | 9% | -1 pt |
+| MomentumPulse | 7% | N/A | AI-capex tape rewards revision/momentum but no history yet. | 1.00x | 12% | +5 pts |
+| Compute Supply Chain / Node Economics | 10% | N/A | Industry mechanics are unusually important in semis. | 1.00x | 12% | +2 pts |
+
+**Weighting conclusion:** No analyst gained weight because of historical performance. MomentumPulse and the industry specialist gain regime weight because AI capex, HBM scarcity, process control, and equipment ordering dominate the current debate. This should reverse if same-industry-group history shows that momentum is chasing peak estimates.
+
+---
+
+## THE DEBATE - FULL PROTOCOL
+
+### ROUND 1: Independent Specialist Analysis
+
+#### Fundamental / Value Architect
+
+The fundamental lens favors companies with high gross margin, high operating margin, FCF conversion, and durable ecosystem control. NVIDIA leads on this basis: 74% gross margin, 66% operating margin, 63% net margin, and more than $46B FCF. Broadcom is second because it combines semiconductor economics with infrastructure software durability.
+
+Analog Devices and Qualcomm rank better than their stock momentum implies because valuation and FCF support are still present. Intel screens poorly: the stock is up massively, yet profit margins remain negative and FCF is deeply negative. AMD and Marvell have attractive secular exposure but already capitalize a large portion of future success.
+
+#### Quant / Factor Machinist
+
+The factor model sees two groups. The first is high-momentum winners with stretched valuation: MU, MRVL, AMD, AMAT, LRCX, KLAC, TER, INTC. The second is more balanced factor exposure: NVDA, AVGO, QCOM, ADI, MCHP, ON, QRVO, SWKS.
+
+Momentum remains a powerful positive signal, but valuation dispersion is extreme. The best factor compromise is NVDA, AVGO, ADI, QCOM, and ON. The most dangerous high-momentum/high-valuation cluster is LSCC, MRVL, KLAC, LRCX, and INTC.
+
+#### Technical / Chart Surgeon
+
+The technical tape is broadly strong. SMH is at a 52-week high and up more than 67% over three months. AMAT, LRCX, KLAC, MU, TER, and INTC are at or near highs. That confirms institutional sponsorship but also raises the risk of late-cycle entries.
+
+The cleanest technical setups with less extreme blow-off behavior are NVDA, AVGO, ADI, QCOM, and MCHP. Micron and Teradyne have the strongest charts but require more tactical stop discipline.
+
+#### Macro / Global Chessmaster
+
+Semiconductors are levered to the strongest capex cycle in the market: AI data centers. But they also sit at the center of export controls, Taiwan risk, China demand, subsidy politics, and rates. The macro lens favors companies with US enterprise/hyperscaler demand, broad end-market optionality, and less dependence on China unit cycles.
+
+NVIDIA, Broadcom, ADI, Qualcomm, and KLA score well. Intel receives policy support but the equity still has to prove economic returns. Equipment names are structurally important but increasingly vulnerable if capex timing gets pulled forward.
+
+#### Credit / Risk Guardian
+
+The credit lens penalizes high capex, negative FCF, and cyclical earnings. NVIDIA, Qualcomm, ADI, Broadcom, and Monolithic Power have stronger balance-sheet or cash-flow support. Intel is the main red flag because free cash flow is negative and the foundry turnaround is capital-intensive.
+
+Memory and equipment are classic cyclical risk zones. Micron's balance sheet is manageable, but investors should not confuse forward P/E with downside protection. KLA, Lam, and Applied Materials are high-quality, but the stocks now embed a long period of strong ordering.
+
+#### Sentiment / Crowd Psychologist
+
+The crowd is heavily committed to AI semis. This benefits NVIDIA, Broadcom, Micron, AMD, Marvell, and the equipment complex while the story is working, but it raises unwind risk if hyperscaler capex language weakens.
+
+Qualcomm, ADI, Qorvo, and Skyworks are less crowded. That does not make them automatic buys, but it improves asymmetric setup if edge AI, auto, or mobile demand surprises.
+
+#### MomentumPulse
+
+MomentumPulse ranks MU, MRVL, AMD, TER, INTC, AMAT, LRCX, and KLAC highly because price momentum, revenue growth, and earnings-growth signals are extremely strong. However, MomentumPulse flags that these are not all equal: Micron's earnings acceleration is real; Intel's price action is far ahead of FCF proof.
+
+For near-term performance, the momentum lens wants MU, AMD, MRVL, TER, AMAT, and LRCX. For risk-adjusted performance, it accepts NVDA and AVGO even with less dramatic YTD moves because the fundamental revision base remains larger and more visible.
+
+#### Compute Supply Chain / Node Economics Specialist
+
+The industry specialist ranks based on control of bottlenecks: accelerated compute, custom silicon, memory bandwidth, advanced packaging, process control, etch/deposition, test intensity, analog/power content, and foundry capacity.
+
+NVIDIA is the primary bottleneck. Broadcom owns custom silicon and connectivity. Micron controls HBM/memory exposure. KLA, Lam, and Applied Materials sit in critical process-control/equipment positions, but equity timing is less attractive after huge stock moves. Teradyne benefits from AI test complexity. Qualcomm/ADI are less pure AI bottlenecks but have better valuation support and broad edge/industrial optionality.
+
+### ROUND 1 CONSENSUS & DIVERGENCE TABLE
+
+| Ticker | Tier | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Industry | AVG | STD | Flag |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| NVDA | T1 | 10.0 | 8.0 | 8.0 | 9.0 | 8.0 | 7.5 | 8.5 | 10.0 | 8.63 | 0.89 | OK |
+| AVGO | T1 | 9.0 | 8.0 | 8.0 | 8.5 | 7.5 | 7.0 | 8.0 | 9.0 | 8.13 | 0.74 | OK |
+| ADI | T1 | 8.0 | 7.5 | 7.5 | 7.5 | 8.0 | 7.0 | 7.0 | 7.5 | 7.50 | 0.35 | OK |
+| QCOM | T1 | 7.5 | 7.5 | 7.0 | 7.0 | 8.0 | 7.0 | 7.0 | 7.0 | 7.25 | 0.35 | OK |
+| MU | T1 | 6.5 | 8.0 | 9.0 | 7.0 | 5.5 | 6.0 | 9.5 | 8.5 | 7.50 | 1.41 | DIVERGENCE |
+| AMD | T1 | 6.5 | 7.5 | 9.0 | 7.5 | 6.0 | 7.0 | 9.0 | 8.0 | 7.56 | 1.09 | DIVERGENCE |
+| AMAT | T1 | 8.0 | 7.0 | 9.0 | 7.5 | 6.0 | 6.5 | 8.5 | 8.5 | 7.63 | 1.00 | WATCH |
+| LRCX | T1 | 8.0 | 7.0 | 9.0 | 7.5 | 6.0 | 6.5 | 8.5 | 8.5 | 7.63 | 1.00 | WATCH |
+| KLAC | T1 | 8.5 | 6.5 | 9.0 | 8.0 | 6.0 | 6.5 | 8.0 | 9.0 | 7.69 | 1.15 | WATCH |
+| TXN | T1 | 7.5 | 6.5 | 8.0 | 6.5 | 7.0 | 6.5 | 7.5 | 7.0 | 7.06 | 0.53 | OK |
+| MRVL | T1 | 6.5 | 7.0 | 9.0 | 7.5 | 5.5 | 7.0 | 9.0 | 8.0 | 7.44 | 1.24 | DIVERGENCE |
+| ON | T2 | 6.5 | 7.0 | 8.0 | 6.5 | 6.5 | 6.5 | 8.0 | 6.5 | 6.94 | 0.62 | OK |
+| MCHP | T2 | 6.5 | 7.0 | 7.5 | 6.5 | 6.0 | 6.5 | 7.0 | 6.5 | 6.69 | 0.46 | OK |
+| MPWR | T2 | 8.0 | 6.5 | 7.5 | 7.0 | 8.0 | 6.5 | 7.0 | 7.5 | 7.25 | 0.60 | OK |
+| TER | T2 | 7.0 | 7.0 | 9.0 | 7.5 | 7.0 | 6.5 | 9.0 | 8.0 | 7.63 | 0.92 | WATCH |
+| INTC | T2 | 4.5 | 6.0 | 10.0 | 7.0 | 3.5 | 8.0 | 9.0 | 6.0 | 6.75 | 2.21 | HIGH DIVERGENCE |
+| GFS | T2 | 5.5 | 6.5 | 8.0 | 6.5 | 6.0 | 6.5 | 7.5 | 6.0 | 6.56 | 0.75 | OK |
+| LSCC | T2 | 6.0 | 5.5 | 8.5 | 6.5 | 5.5 | 6.0 | 8.0 | 6.5 | 6.56 | 1.11 | WATCH |
+| QRVO | T2 | 5.5 | 6.5 | 6.0 | 5.5 | 6.0 | 5.5 | 5.5 | 5.5 | 5.75 | 0.35 | OK |
+| SWKS | T2 | 5.5 | 6.0 | 5.5 | 5.0 | 6.0 | 5.5 | 5.0 | 5.0 | 5.44 | 0.42 | OK |
+
+### ROUND 2: ADVERSARIAL CROSS-EXAMINATION
+
+#### Cross-Examination #1: NVIDIA (NVDA)
+
+**Score Range:** 7.5 to 10.0  
+**Spread:** 2.5 points - key debate: whether business quality can still overcome market-cap gravity.
+
+**Bull Case:** NVIDIA is the cleanest AI bottleneck in public equities. It has extraordinary margins, visible data-center demand, strong FCF, and ecosystem lock-in that competitors have not matched.
+
+**Bear Case:** At $5T market cap, the equity is sensitive to any pause in hyperscaler AI capex, custom ASIC substitution, export controls, or margin normalization. The company can remain dominant while the stock delivers mediocre forward returns.
+
+**What To Watch:** Data-center growth, gross margin, networking attach, supply constraints, hyperscaler capex language, custom ASIC adoption.
+
+#### Cross-Examination #2: Micron (MU)
+
+**Score Range:** 5.5 to 9.5  
+**Spread:** 4.0 points - key debate: HBM scarcity versus memory-cycle peak risk.
+
+**Bull Case:** Revenue growth of nearly 200% and earnings growth above 700% reflect a real memory cycle inflection. HBM is strategically scarce and benefits directly from AI accelerator demand.
+
+**Bear Case:** Memory always looks cheapest near peak estimates. The 9.6x forward P/E is not a full margin of safety if DRAM/HBM pricing rolls over or supply additions arrive faster than expected.
+
+**What To Watch:** HBM contract pricing, DRAM/NAND spot and contract pricing, capex discipline, inventory days, gross margin trajectory.
+
+#### Cross-Examination #3: Equipment Basket (AMAT/LRCX/KLAC/TER)
+
+**Score Range:** 6.0 to 9.0  
+**Spread:** 3.0 points - key debate: structural bottleneck versus priced-for-perfect cycle.
+
+**Bull Case:** AI requires advanced nodes, packaging, process control, etch/deposition, and test complexity. These companies are critical supply-chain choke points.
+
+**Bear Case:** The stocks have already repriced aggressively. KLA, Lam, Applied Materials, and Teradyne are excellent businesses, but new money is exposed to order digestion and multiple compression.
+
+**What To Watch:** Semi-cap equipment order books, China restrictions, memory capex, advanced packaging capacity, foundry capex revisions.
+
+#### Cross-Examination #4: Intel (INTC)
+
+**Score Range:** 3.5 to 10.0  
+**Spread:** 6.5 points - key debate: turnaround optionality versus economic reality.
+
+**Bull Case:** Intel has strategic value, US policy support, foundry optionality, and a stock chart that says investors believe something materially changed.
+
+**Bear Case:** Negative profit margin, negative FCF, and a capital-intensive foundry model make this the lowest-quality large-cap in the group. The rally has moved far ahead of financial proof.
+
+**What To Watch:** Foundry external customer wins, gross margin recovery, capex intensity, FCF inflection, government funding, process-node milestones.
+
+### ROUND 3: POSITION UPDATES POST-CROSS-EXAMINATION
+
+| Specialist | Ticker | R1 | R3 | Delta | Reasoning |
+|---|---|---:|---:|---:|---|
+| Risk Guardian | MU | 5.5 | 5.0 | -0.5 | HBM scarcity is real, but cycle downside is not reflected in the stock after an 820% 12M move. |
+| MomentumPulse | INTC | 9.0 | 8.0 | -1.0 | Price action remains strong, but FCF and margin evidence do not support a top-tier score. |
+| Value Architect | ADI | 8.0 | 8.2 | +0.2 | More attractive after comparing risk/reward against equipment and memory cyclicality. |
+| Industry Specialist | TER | 8.0 | 8.2 | +0.2 | Test intensity is a real AI derivative, but valuation keeps it below top five. |
+| CIO Overlay | QCOM | 7.25 avg | 7.40 composite | +0.15 | Lower crowding and valuation support make it a useful portfolio diversifier. |
+
+### ROUND 4: CIO SYNTHESIS
+
+| Rank | Ticker | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Industry | Composite | Rating | Conviction |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
+| 1 | NVDA | 10.0 | 8.0 | 8.0 | 9.0 | 8.0 | 7.5 | 8.5 | 10.0 | 8.55 | BUY | 4.5 |
+| 2 | AVGO | 9.0 | 8.0 | 8.0 | 8.5 | 7.5 | 7.0 | 8.0 | 9.0 | 8.20 | BUY | 4.0 |
+| 3 | ADI | 8.2 | 7.5 | 7.5 | 7.5 | 8.0 | 7.0 | 7.0 | 7.5 | 7.55 | BUY | 3.5 |
+| 4 | QCOM | 7.5 | 7.5 | 7.0 | 7.0 | 8.0 | 7.0 | 7.0 | 7.0 | 7.40 | BUY | 3.5 |
+| 5 | MU | 6.5 | 8.0 | 9.0 | 7.0 | 5.0 | 6.0 | 9.5 | 8.5 | 7.30 | SPEC BUY | 3.0 |
+| 6 | TER | 7.0 | 7.0 | 9.0 | 7.5 | 7.0 | 6.5 | 9.0 | 8.2 | 7.28 | BUY | 3.0 |
+| 7 | AMAT | 8.0 | 7.0 | 9.0 | 7.5 | 6.0 | 6.5 | 8.5 | 8.5 | 7.22 | HOLD/BUY | 3.0 |
+| 8 | LRCX | 8.0 | 7.0 | 9.0 | 7.5 | 6.0 | 6.5 | 8.5 | 8.5 | 7.22 | HOLD/BUY | 3.0 |
+| 9 | KLAC | 8.5 | 6.5 | 9.0 | 8.0 | 6.0 | 6.5 | 8.0 | 9.0 | 7.21 | HOLD/BUY | 3.0 |
+| 10 | AMD | 6.5 | 7.5 | 9.0 | 7.5 | 6.0 | 7.0 | 9.0 | 8.0 | 7.18 | HOLD/BUY | 3.0 |
+| 11 | MRVL | 6.5 | 7.0 | 9.0 | 7.5 | 5.5 | 7.0 | 9.0 | 8.0 | 7.07 | HOLD/BUY | 2.5 |
+| 12 | MPWR | 8.0 | 6.5 | 7.5 | 7.0 | 8.0 | 6.5 | 7.0 | 7.5 | 7.06 | HOLD/BUY | 2.5 |
+| 13 | TXN | 7.5 | 6.5 | 8.0 | 6.5 | 7.0 | 6.5 | 7.5 | 7.0 | 6.98 | HOLD | 2.5 |
+| 14 | ON | 6.5 | 7.0 | 8.0 | 6.5 | 6.5 | 6.5 | 8.0 | 6.5 | 6.86 | HOLD | 2.5 |
+| 15 | MCHP | 6.5 | 7.0 | 7.5 | 6.5 | 6.0 | 6.5 | 7.0 | 6.5 | 6.67 | HOLD | 2.0 |
+| 16 | GFS | 5.5 | 6.5 | 8.0 | 6.5 | 6.0 | 6.5 | 7.5 | 6.0 | 6.50 | HOLD | 2.0 |
+| 17 | LSCC | 6.0 | 5.5 | 8.5 | 6.5 | 5.5 | 6.0 | 8.0 | 6.5 | 6.36 | HOLD | 2.0 |
+| 18 | INTC | 4.5 | 6.0 | 10.0 | 7.0 | 3.5 | 8.0 | 8.0 | 6.0 | 6.22 | HOLD/AVOID | 1.5 |
+| 19 | QRVO | 5.5 | 6.5 | 6.0 | 5.5 | 6.0 | 5.5 | 5.5 | 5.5 | 5.77 | HOLD | 1.5 |
+| 20 | SWKS | 5.5 | 6.0 | 5.5 | 5.0 | 6.0 | 5.5 | 5.0 | 5.0 | 5.43 | HOLD/AVOID | 1.5 |
+
+#### CIO Alpha Opportunity Analysis
+
+**Most attractive core long:** NVIDIA. The business still has the best combination of demand visibility, margin structure, and ecosystem control.
+
+**Best diversified AI long:** Broadcom. It has custom silicon and connectivity exposure without being only one product cycle.
+
+**Best non-obvious long:** Analog Devices. It is not the flashiest AI name, but it gives analog/industrial recovery plus quality and less extreme crowding.
+
+**Best speculative long:** Micron. HBM can keep working, but sizing must respect memory-cycle risk.
+
+**Most important avoid:** Intel. The stock has recovered far faster than economics. It needs FCF proof, not narrative support.
+
+---
+
+## DETAILED STOCK ANALYSIS
+
+### 1. NVDA - NVIDIA
+
+**Current Price:** $210.69  
+**Market Cap:** $5.10T  
+**Committee Rating:** BUY  
+**Conviction Score:** 4.5/5  
+**Composite Score:** 8.55/10  
+
+**Bull Case:** NVIDIA is still the dominant monetization point in AI infrastructure. It has the strongest gross margin, operating margin, net margin, and FCF profile in the group. Its moat includes chips, systems, software, networking, developer ecosystem, and supply-chain coordination.
+
+**Bear Case:** The equity is no longer early. At $5T, a capex pause, custom ASIC substitution, China/export pressure, or margin normalization can cause a large drawdown even if the company remains dominant.
+
+**Key Debate Point:** Is NVIDIA still an earnings-revision story, or has the market already capitalized the next several years of AI demand?
+
+**Catalysts to Watch:** Data-center revenue, gross margin, networking attach, hyperscaler capex, custom ASIC commentary, export-control updates.
+
+**Price Targets:** Bear $170 / Base $240 / Bull $300.
+
+### 2. AVGO - Broadcom
+
+**Current Price:** $411.35  
+**Market Cap:** $1.96T  
+**Committee Rating:** BUY  
+**Conviction Score:** 4/5  
+**Composite Score:** 8.20/10  
+
+**Bull Case:** Broadcom combines custom AI silicon, networking/connectivity, and infrastructure software cash flow. Custom silicon programs can become sticky once embedded in hyperscaler roadmaps.
+
+**Bear Case:** The valuation is demanding, customer concentration is real, and the software leverage profile needs continued execution. The stock is less cheap than earnings multiples imply because sales multiple and EV/EBITDA remain high.
+
+**Key Debate Point:** Are AI ASIC programs durable platform relationships or project-based revenue that the market is overcapitalizing?
+
+**Catalysts to Watch:** AI semiconductor revenue, custom ASIC wins, networking growth, VMware cash flow, leverage reduction.
+
+**Price Targets:** Bear $330 / Base $480 / Bull $560.
+
+### 3. ADI - Analog Devices
+
+**Current Price:** $434.46  
+**Market Cap:** $212B  
+**Committee Rating:** BUY  
+**Conviction Score:** 3.5/5  
+**Composite Score:** 7.55/10  
+
+**Bull Case:** ADI offers high-quality analog exposure with 64% gross margin, 38% operating margin, good FCF, and broad industrial/auto optionality. It is not as crowded as pure AI names and has better financial quality than many catch-up cyclicals.
+
+**Bear Case:** It is not a pure AI bottleneck. If investor appetite remains concentrated in compute/HBM/equipment momentum, ADI may lag despite good fundamentals.
+
+**Key Debate Point:** Does the market start rewarding quality analog recovery, or does it continue to chase only direct AI infrastructure beta?
+
+**Catalysts to Watch:** Industrial orders, auto content, margin recovery, book-to-bill, inventory normalization.
+
+**Price Targets:** Bear $360 / Base $475 / Bull $530.
+
+### 4. QCOM - Qualcomm
+
+**Current Price:** $226.11  
+**Market Cap:** $238B  
+**Committee Rating:** BUY  
+**Conviction Score:** 3.5/5  
+**Composite Score:** 7.40/10  
+
+**Bull Case:** Qualcomm is reasonably valued relative to the group, generates strong FCF, and has edge AI, handset recovery, auto, IoT, and licensing optionality. It is less crowded than AI accelerator and equipment names.
+
+**Bear Case:** Current revenue growth is negative, the company has less strategic control of the AI data-center bottleneck, and handset cyclicality remains a drag.
+
+**Key Debate Point:** Can edge AI and auto content offset handset maturity and rerate the stock?
+
+**Catalysts to Watch:** Handset demand, auto pipeline, edge AI attach, licensing stability, Android flagship content.
+
+**Price Targets:** Bear $180 / Base $255 / Bull $300.
+
+### 5. MU - Micron
+
+**Current Price:** $1133.99  
+**Market Cap:** $1.28T  
+**Committee Rating:** SPECULATIVE BUY  
+**Conviction Score:** 3/5  
+**Composite Score:** 7.30/10  
+
+**Bull Case:** Micron is the most direct US-listed HBM/memory scarcity play. Revenue growth and earnings growth are explosive, and the forward P/E looks low if memory pricing holds.
+
+**Bear Case:** Memory is cyclical. The stock is up more than 800% over twelve months and forward earnings may be close to peak-cycle assumptions. This is the highest-risk top-five recommendation.
+
+**Key Debate Point:** Is HBM scarcity a structural multi-year margin reset or just the current memory upcycle in a new narrative wrapper?
+
+**Catalysts to Watch:** HBM pricing, DRAM/NAND contract pricing, capex discipline, inventory days, gross margin.
+
+**Price Targets:** Bear $760 / Base $1250 / Bull $1500.
+
+---
+
+## HOLD ZONE: MIDDLE-OF-THE-PACK SUMMARY
+
+| Ticker | Verdict | Why Not Top 5 | What Would Change the View |
+|---|---|---|---|
+| TER | Hold/Buy | Excellent AI test derivative, but stock has already moved sharply. | Pullback or evidence test intensity is structurally under-modeled. |
+| AMAT | Hold/Buy | High-quality equipment name, valuation now discounts strong orders. | Capex cycle extends without digestion and estimate revisions continue. |
+| LRCX | Hold/Buy | Strong etch/deposition exposure but expensive after huge move. | Memory capex durability and HBM-driven tool intensity. |
+| KLAC | Hold/Buy | Best process-control moat but valuation is full. | Pullback or sustained process-control order acceleration. |
+| AMD | Hold/Buy | AI accelerator upside but valuation and competition with NVIDIA are demanding. | Evidence of sustained AI share gain and margin expansion. |
+| MRVL | Hold/Buy | AI data-infrastructure story is strong but valuation is extreme. | Larger proof of AI revenue durability and FCF conversion. |
+| MPWR | Hold/Buy | Excellent power franchise, but multiple is high. | Margin/FCF acceleration or pullback. |
+| TXN | Hold | Analog quality but valuation already reflects recovery. | Better FCF yield or industrial demand inflection. |
+| ON | Hold | Good auto/industrial power exposure, less strategic AI leverage. | Stronger SiC/power demand and margin recovery. |
+| MCHP | Hold | Reasonable valuation but lower quality of recent earnings. | Inventory normalization and cleaner growth. |
+
+---
+
+## BOTTOM RATINGS: HOLD / AVOID
+
+### Intel (INTC)
+
+Intel is the most controversial stock in the group. Momentum is powerful, but the financial evidence is weak: negative profit margin, negative FCF, and a capital-intensive foundry strategy. The stock may work tactically, but it is not a high-quality committee long until economics catch up.
+
+### Lattice (LSCC)
+
+Lattice has a valid low-power FPGA story, but valuation is too high relative to earnings and cash flow. At 66x forward earnings and roughly 37x sales, the stock needs flawless execution.
+
+### Qorvo / Skyworks
+
+Qorvo and Skyworks are cheaper, but they lack the same AI infrastructure relevance and still face handset/RF cyclicality. They are not shorts, but they do not deserve capital over Qualcomm or ADI.
+
+---
+
+## APPENDIX A: FULL SCORING MATRIX - COMPLETE UNIVERSE
+
+See Round 1 Consensus table and Round 4 CIO Synthesis table above. For the next production version, this appendix should be expanded to include specialist-level one-sentence rationales for every score.
+
+---
+
+## METHODOLOGY NOTE
+
+This test run used the InvestorDebate v2.1 GICS level 2 framework for Semiconductors & Semiconductor Equipment. Market data came from yfinance/Yahoo Finance as of the 2026-06-18 market close. Macro context was checked against current public information available on 2026-06-21. The analysis is source-aware but not yet fully primary-source complete.
+
+**Known limitations for this test:** no automated transcript ingestion, no verified consensus estimate-revision time series, no primary-source 10-Q segment bridge, no live analyst-note triangulation, and no automated Darwinian regression because this is the first same-industry-group run.
+
+**Investment disclaimer:** This is research workflow testing, not investment advice.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-06-22 08:00 · Not financial advice.</div>
+</footer>
+</body>
+</html>
