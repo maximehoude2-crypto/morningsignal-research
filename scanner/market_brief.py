@@ -3,15 +3,16 @@ Daily Market Brief — fetches index, sector, and macro data via yfinance.
 Saves to state/market_brief_YYYY-MM-DD.json.
 """
 
-import json
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from io import StringIO
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
 
-from scanner.openai_client import complete_text, extract_json, openai_enabled
+from scanner.common import USER_AGENT, resolve_target_date, save_json
+from scanner.openai_client import DEFAULT_MODEL, complete_text, extract_json, openai_enabled
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
@@ -41,55 +42,67 @@ SECTORS = {
 MACRO = {
     "^VIX": "VIX",
     "^TNX": "10Y Yield",
-    "^IRX": "2Y Yield",
+    "^IRX": "3M Yield",  # ^IRX is the 13-week T-bill, not the 2-year
 }
 
 
-def _pct_change(series: pd.Series, periods: int = 1) -> float:
+def _pct_change(series: pd.Series, periods: int = 1) -> float | None:
+    """Percent change over `periods`. Returns None (not 0.0) when the data
+    is missing or too short, so a failed fetch never publishes as flat."""
     if len(series) <= periods:
-        return 0.0
+        return None
     prev = series.iloc[-(periods + 1)]
     curr = series.iloc[-1]
-    if prev == 0 or pd.isna(prev):
-        return 0.0
+    if prev == 0 or pd.isna(prev) or pd.isna(curr):
+        return None
     return round((curr / prev - 1) * 100, 2)
 
 
-def _ytd_change(series: pd.Series) -> float:
-    """YTD return: current price vs first trading day of the current year."""
+def _ytd_change(series: pd.Series, target: date | None = None) -> float | None:
+    """YTD return: last close vs the prior year's final close.
+    Uses the target date's year (not the wall-clock year) so backfill runs
+    measure the right period. Returns None when the data is missing."""
     if len(series) < 2:
-        return 0.0
-    current_year = date.today().year
+        return None
+    year = (target or date.today()).year
     # Build a tz-aware or tz-naive timestamp to match the series index
-    jan1 = pd.Timestamp(f"{current_year}-01-01")
+    jan1 = pd.Timestamp(f"{year}-01-01")
     if series.index.tz is not None:
         jan1 = jan1.tz_localize(series.index.tz)
+    prior = series.loc[series.index < jan1]
     ytd_data = series.loc[series.index >= jan1]
-    if len(ytd_data) < 2:
-        return 0.0
-    start_val = float(ytd_data.iloc[0])
+    if prior.empty or ytd_data.empty:
+        return None
+    start_val = float(prior.iloc[-1])
     end_val = float(ytd_data.iloc[-1])
     if start_val == 0 or pd.isna(start_val):
-        return 0.0
+        return None
     return round((end_val / start_val - 1) * 100, 2)
 
 
-def _mock_ticker(symbol: str, base_price: float, day_chg: float, ytd_chg: float) -> dict:
-    return {
-        "symbol": symbol,
-        "price": base_price,
-        "day_change": day_chg,
-        "ytd_change": ytd_chg,
-    }
+def _fmt(value, spec: str = "+.2f", missing: str = "n/a") -> str:
+    """Format a possibly-missing number; None renders as `missing`."""
+    if value is None:
+        return missing
+    return format(value, spec)
+
+
+def _theme_etf(brief: dict, symbol: str) -> dict:
+    """Look up a thematic ETF record in the brief by symbol."""
+    for e in brief.get("thematic_etfs", []):
+        if e.get("symbol") == symbol:
+            return e
+    return {}
 
 
 def _scrape_news_headlines() -> str:
     """Scrape today's financial news headlines from multiple sources."""
     from bs4 import BeautifulSoup
 
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'}
+    headers = {'User-Agent': USER_AGENT}
     all_headlines = []
-    today_str = date.today().strftime("%Y/%m/%d")
+    # Article URLs are dated in US/Eastern (exchange time), not machine-local time
+    today_str = datetime.now(ZoneInfo("America/New_York")).strftime("%Y/%m/%d")
 
     sources = [
         ("https://www.cnbc.com/market-insider/", "CNBC"),
@@ -108,9 +121,11 @@ def _scrape_news_headlines() -> str:
     ]
 
     for url, source in sources:
+        before = len(all_headlines)
         try:
             r = requests.get(url, headers=headers, timeout=10)
             if r.status_code != 200:
+                print(f"  Warning: [{source}] {url} returned HTTP {r.status_code}")
                 continue
             soup = BeautifulSoup(r.text, 'html.parser')
 
@@ -125,8 +140,10 @@ def _scrape_news_headlines() -> str:
                 # General headlines filtered by keywords
                 elif any(kw in t.lower() for kw in kw_filter):
                     all_headlines.append(f"[{source}] {t}")
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"  Warning: [{source}] scrape failed for {url}: {exc}")
+            continue
+        print(f"  [{source}] {url}: {len(all_headlines) - before} headlines")
 
     # Deduplicate
     seen = set()
@@ -151,7 +168,7 @@ def _generate_narrative(brief: dict) -> dict:
     print(f"  Found {n_headlines} headlines")
 
     if not openai_enabled():
-        print("  OPENAI_API_KEY not set, skipping GPT-5.4 narrative generation")
+        print(f"  OPENAI_API_KEY not set, skipping {DEFAULT_MODEL} narrative generation")
         return _empty_narrative()
 
     try:
@@ -166,7 +183,7 @@ def _generate_narrative(brief: dict) -> dict:
         iwm = indices.get("IWM", {})
 
         sector_str = "\n".join(
-            f"  - {s['name']} ({s['symbol']}): {s['day_change']:+.2f}%" for s in sectors
+            f"  - {s['name']} ({s['symbol']}): {_fmt(s.get('day_change'))}%" for s in sectors
         )
 
         gainers_str = ", ".join(
@@ -177,10 +194,13 @@ def _generate_narrative(brief: dict) -> dict:
             f"{m['ticker']} {m['day_change']:+.2f}%" for m in top_losers
         ) or "N/A"
 
-        vix_level = macro.get("vix", {}).get("level", 0)
-        vix_5d = macro.get("vix", {}).get("5d_change", 0)
-        tnx = macro.get("tnx", {}).get("level", 0)
-        spread = macro.get("spread_2s10s", 0)
+        vix_level = macro.get("vix", {}).get("level")
+        vix_5d = macro.get("vix", {}).get("5d_change")
+        tnx = macro.get("tnx", {}).get("level")
+        # 'spread_2s10s' is a legacy key name — the value is the 3M/10Y spread
+        # (^IRX is the 13-week bill), so it is labelled 3M/10Y below.
+        spread = macro.get("spread_2s10s")
+        spread_bps = None if spread is None else spread * 100
 
         thematic_str = ""
         for e in brief.get("thematic_etfs", []):
@@ -289,12 +309,12 @@ def _generate_narrative(brief: dict) -> dict:
         prompt = f"""You are a senior portfolio strategist at a top-tier prime brokerage writing the morning intelligence note. Today is {brief.get('date', 'today')}.
 
 ## TODAY'S MARKET DATA
-- S&P 500 (SPY): {spx.get('day_change', 0):+.2f}% | Nasdaq 100 (QQQ): {qqq.get('day_change', 0):+.2f}% | Russell 2000 (IWM): {iwm.get('day_change', 0):+.2f}%
+- S&P 500 (SPY): {_fmt(spx.get('day_change'))}% | Nasdaq 100 (QQQ): {_fmt(qqq.get('day_change'))}% | Russell 2000 (IWM): {_fmt(iwm.get('day_change'))}%
 - Sector returns:
 {sector_str}
 - Top S&P 500 gainers: {gainers_str}
 - Top S&P 500 losers: {losers_str}
-- VIX: {vix_level:.2f} ({vix_5d:+.1f}% 5d) | 10Y: {tnx:.2f}% | 2s/10s: {spread*100:+.0f}bps
+- VIX: {_fmt(vix_level, '.2f')} ({_fmt(vix_5d, '+.1f')}% 5d) | 10Y: {_fmt(tnx, '.2f')}% | 3M/10Y: {_fmt(spread_bps, '+.0f')}bps
 
 ## THEMATIC ETF MOVES
 {thematic_str}
@@ -377,7 +397,7 @@ Produce a JSON object with exactly this structure. Return ONLY raw JSON — no m
 
 Return ONLY the JSON object."""
 
-        print("  Calling OpenAI GPT-5.4 via Responses API...")
+        print(f"  Calling OpenAI {DEFAULT_MODEL} via Responses API...")
         raw = complete_text(prompt, max_output_tokens=5000)
         result = extract_json(raw)
 
@@ -432,20 +452,19 @@ def compute_cross_sector_dynamics(brief: dict) -> tuple[list[dict], str]:
     Each item in structured_list is:
         {label, observation, implication, signal: 'risk-on'|'risk-off'|'neutral'|'mixed'}
     """
-    sectors = {s["name"]: s for s in brief.get("sectors", [])}
+    # Sectors with a missing day_change are excluded — missing is not flat
+    sectors = {
+        s["name"]: s
+        for s in brief.get("sectors", [])
+        if s.get("day_change") is not None
+    }
     indices = brief.get("indices", {})
     macro = brief.get("macro", {})
     factors = {f["name"]: f for f in brief.get("factors", {}).get("performance", [])}
 
-    def _theme_local(symbol: str) -> dict:
-        for e in brief.get("thematic_etfs", []):
-            if e.get("symbol") == symbol:
-                return e
-        return {}
-
-    spx = indices.get("SPY", {}).get("day_change", 0)
-    qqq = indices.get("QQQ", {}).get("day_change", 0)
-    iwm = indices.get("IWM", {}).get("day_change", 0)
+    spx = indices.get("SPY", {}).get("day_change") or 0
+    qqq = indices.get("QQQ", {}).get("day_change") or 0
+    iwm = indices.get("IWM", {}).get("day_change") or 0
 
     dynamics: list[dict] = []
 
@@ -501,8 +520,8 @@ def compute_cross_sector_dynamics(brief: dict) -> tuple[list[dict], str]:
             })
 
     # 3. Semis vs Software → AI capex theme
-    smh = _theme_local("SMH")
-    igv = _theme_local("IGV")
+    smh = _theme_etf(brief, "SMH")
+    igv = _theme_etf(brief, "IGV")
     if smh and igv:
         s = smh.get("1d", 0); g = igv.get("1d", 0)
         spread = s - g
@@ -557,7 +576,7 @@ def compute_cross_sector_dynamics(brief: dict) -> tuple[list[dict], str]:
             })
 
     # 6. Bonds vs Stocks → Correlation regime
-    tlt = _theme_local("TLT")
+    tlt = _theme_etf(brief, "TLT")
     if tlt:
         t = tlt.get("1d", 0)
         if abs(spx) > 0.10 or abs(t) > 0.10:
@@ -588,7 +607,7 @@ def compute_cross_sector_dynamics(brief: dict) -> tuple[list[dict], str]:
             })
 
     # 7. Dollar vs Equities
-    uup = _theme_local("UUP")
+    uup = _theme_etf(brief, "UUP")
     if uup:
         u = uup.get("1d", 0)
         if abs(u) > 0.10 or abs(spx) > 0.10:
@@ -609,7 +628,7 @@ def compute_cross_sector_dynamics(brief: dict) -> tuple[list[dict], str]:
             })
 
     # 8. Gold vs Equities
-    gld = _theme_local("GLD")
+    gld = _theme_etf(brief, "GLD")
     if gld:
         g = gld.get("1d", 0)
         if abs(g) > 0.20 and abs(spx) > 0.10:
@@ -633,7 +652,7 @@ def compute_cross_sector_dynamics(brief: dict) -> tuple[list[dict], str]:
             })
 
     # 9. Credit (HYG/IEF spread) → Risk premia
-    hyg = _theme_local("HYG"); ief = _theme_local("IEF")
+    hyg = _theme_etf(brief, "HYG"); ief = _theme_etf(brief, "IEF")
     if hyg and ief:
         h = hyg.get("5d", 0); i = ief.get("5d", 0)
         spread = h - i
@@ -731,8 +750,8 @@ def fallback_narrative(brief: dict) -> dict:
     signal = brief.get("market_signal", {})
     macro = brief.get("macro", {})
 
-    leaders = sorted(sectors, key=lambda item: item.get("day_change", 0), reverse=True)
-    laggards = sorted(sectors, key=lambda item: item.get("day_change", 0))
+    leaders = sorted(sectors, key=lambda item: item.get("day_change") or 0, reverse=True)
+    laggards = sorted(sectors, key=lambda item: item.get("day_change") or 0)
     leader = leaders[0] if leaders else None
     laggard = laggards[0] if laggards else None
 
@@ -747,21 +766,27 @@ def fallback_narrative(brief: dict) -> dict:
     top_factor = factors[0] if factors else None
     low_factor = factors[-1] if factors else None
     vix = macro.get("vix", {})
-    spread_bps = macro.get("spread_2s10s", 0) * 100
+    # 'spread_2s10s' is a legacy key name — the value is the 3M/10Y spread
+    # (^IRX is the 13-week bill), so it is labelled 3M/10Y below.
+    spread = macro.get("spread_2s10s")
+    spread_bps = None if spread is None else spread * 100
+
+    leader_chg = _fmt(leader.get("day_change")) if leader else "n/a"
+    laggard_chg = _fmt(laggard.get("day_change")) if laggard else "n/a"
 
     if leader and laggard and top_theme and laggard["name"] != leader["name"]:
         summary = (
-            f"{leader['name']} led the session at {leader['day_change']:+.2f}%, "
-            f"while {laggard['name']} lagged at {laggard['day_change']:+.2f}%, "
-            f"with {top_theme['symbol']} {top_theme['1d']:+.2f}% setting the thematic tone."
+            f"{leader['name']} led the session at {leader_chg}%, "
+            f"while {laggard['name']} lagged at {laggard_chg}%, "
+            f"with {top_theme.get('symbol', 'N/A')} {top_theme.get('1d') or 0:+.2f}% setting the thematic tone."
         )
     elif leader and laggard and laggard["name"] != leader["name"]:
         summary = (
-            f"{leader['name']} led the session at {leader['day_change']:+.2f}%, "
-            f"while {laggard['name']} lagged at {laggard['day_change']:+.2f}%."
+            f"{leader['name']} led the session at {leader_chg}%, "
+            f"while {laggard['name']} lagged at {laggard_chg}%."
         )
     elif leader:
-        summary = f"{leader['name']} led the session at {leader['day_change']:+.2f}%."
+        summary = f"{leader['name']} led the session at {leader_chg}%."
     else:
         summary = "Market data was available, but the AI narrative step failed, so this fallback summary was generated from the tape."
 
@@ -769,32 +794,32 @@ def fallback_narrative(brief: dict) -> dict:
     if leader:
         bullets.append({
             "sector": leader["name"],
-            "change": leader["day_change"],
+            "change": leader.get("day_change") or 0,
             "narrative": (
-                f"{leader['name']} led the sector leaderboard at {leader['day_change']:+.2f}% "
+                f"{leader['name']} led the sector leaderboard at {leader_chg}% "
                 f"as the strongest large-cap gainers were {ticker_string(gainers)}."
                 if gainers else
-                f"{leader['name']} led the sector leaderboard at {leader['day_change']:+.2f}%."
+                f"{leader['name']} led the sector leaderboard at {leader_chg}%."
             ),
         })
     if laggard and (not leader or laggard["name"] != leader["name"]):
         bullets.append({
             "sector": laggard["name"],
-            "change": laggard["day_change"],
+            "change": laggard.get("day_change") or 0,
             "narrative": (
-                f"{laggard['name']} was the weakest major group at {laggard['day_change']:+.2f}% "
+                f"{laggard['name']} was the weakest major group at {laggard_chg}% "
                 f"with pressure concentrated in {ticker_string(losers)}."
                 if losers else
-                f"{laggard['name']} was the weakest major group at {laggard['day_change']:+.2f}%."
+                f"{laggard['name']} was the weakest major group at {laggard_chg}%."
             ),
         })
     if top_theme:
         bullets.append({
-            "sector": f"{top_theme['category']} — {top_theme['name']}",
-            "change": top_theme["1d"],
+            "sector": f"{top_theme.get('category', 'Thematic')} — {top_theme.get('name', top_theme.get('symbol', 'N/A'))}",
+            "change": top_theme.get("1d") or 0,
             "narrative": (
-                f"{top_theme['symbol']} moved {top_theme['1d']:+.2f}% on the day and "
-                f"{top_theme.get('5d', 0):+.2f}% over 5 days, giving the market a clear read "
+                f"{top_theme.get('symbol', 'N/A')} moved {top_theme.get('1d') or 0:+.2f}% on the day and "
+                f"{top_theme.get('5d') or 0:+.2f}% over 5 days, giving the market a clear read "
                 f"on thematic leadership."
             ),
         })
@@ -838,9 +863,9 @@ def fallback_narrative(brief: dict) -> dict:
         )
 
     overnight = (
-        f"Fallback note from live macro data: VIX {vix.get('level', 0):.2f} "
-        f"({vix.get('5d_change', 0):+.2f}% over 5d), 10Y {macro.get('tnx', {}).get('level', 0):.2f}%, "
-        f"2s/10s {spread_bps:+.0f}bps."
+        f"Fallback note from live macro data: VIX {_fmt(vix.get('level'), '.2f')} "
+        f"({_fmt(vix.get('5d_change'))}% over 5d), 10Y {_fmt(macro.get('tnx', {}).get('level'), '.2f')}%, "
+        f"3M/10Y {_fmt(spread_bps, '+.0f')}bps."
     )
 
     # Real cross-sector dynamics (replaces the old placeholder string)
@@ -984,9 +1009,9 @@ def fallback_narrative(brief: dict) -> dict:
     spx = brief.get("indices", {}).get("SPY", {})
     qqq = brief.get("indices", {}).get("QQQ", {})
     iwm = brief.get("indices", {}).get("IWM", {})
-    spx_chg = spx.get("day_change", 0)
-    qqq_chg = qqq.get("day_change", 0)
-    iwm_chg = iwm.get("day_change", 0)
+    spx_chg = spx.get("day_change") or 0
+    qqq_chg = qqq.get("day_change") or 0
+    iwm_chg = iwm.get("day_change") or 0
 
     breadth = (industries_payload.get("stock_breadth", {})
                if industries_payload else {})
@@ -999,49 +1024,54 @@ def fallback_narrative(brief: dict) -> dict:
             f"The tape is trading {sig_label.lower()} (composite score {sig_score:+.2f}), with SPY {spx_chg:+.2f}%, "
             f"QQQ {qqq_chg:+.2f}% and IWM {iwm_chg:+.2f}% on the session. "
             f"Universe breadth sits at {pct_50:.0f}% above 50-day and {pct_200:.0f}% above 200-day, "
-            f"and VIX prints {vix.get('level', 0):.2f} ({vix.get('5d_change', 0):+.1f}% over five sessions)."
+            f"and VIX prints {_fmt(vix.get('level'), '.2f')} ({_fmt(vix.get('5d_change'), '+.1f')}% over five sessions)."
         )
     else:
         morning_note_parts.append(
             f"Equities closed with SPY {spx_chg:+.2f}%, QQQ {qqq_chg:+.2f}% and IWM {iwm_chg:+.2f}%. "
-            f"VIX is {vix.get('level', 0):.2f}, {vix.get('5d_change', 0):+.1f}% over five sessions."
+            f"VIX is {_fmt(vix.get('level'), '.2f')}, {_fmt(vix.get('5d_change'), '+.1f')}% over five sessions."
         )
 
-    # Industry leadership paragraph
+    # Industry leadership paragraph (self-contained: derives its own laggard
+    # and rotation views instead of leaning on variables from earlier blocks)
     if industries_payload:
-        ind_list = industries_payload.get("industries", [])
-        top4 = ind_list[:4]
+        note_ind_list = industries_payload.get("industries", [])
+        note_rotation = industries_payload.get("rotation", {})
+        top4 = note_ind_list[:4]
+        note_bottom = sorted(
+            note_ind_list, key=lambda x: x.get("performance", {}).get("1d", 0)
+        )[:3]
         if top4:
             top_str = ", ".join(
                 f"{i['industry']} ({i['performance']['1d']:+.2f}%)" for i in top4
             )
+            laggard_str = ""
+            if note_bottom:
+                laggard_str = (
+                    f"On the laggard side, {note_bottom[0]['industry']} "
+                    f"{note_bottom[0]['performance']['1d']:+.2f}% headed the weak list. "
+                )
             morning_note_parts.append(
                 f"At the GICS sub-industry level, leadership concentrated in {top_str}. "
-                f"On the laggard side, {bottom_three[0]['industry']} "
-                f"{bottom_three[0]['performance']['1d']:+.2f}% headed the weak list. "
-                f"{', '.join(rotation.get('rotation_breakout', [])) or 'No industries crossed into the Leading RRG quadrant in the last five sessions'}"
-                f"{', and ' + str(len(rotation.get('rotation_breakdown', []))) + ' broke down into Lagging' if rotation.get('rotation_breakdown') else ''}."
+                f"{laggard_str}"
+                f"{', '.join(note_rotation.get('rotation_breakout', [])) or 'No industries crossed into the Leading RRG quadrant in the last five sessions'}"
+                f"{', and ' + str(len(note_rotation.get('rotation_breakdown', []))) + ' broke down into Lagging' if note_rotation.get('rotation_breakdown') else ''}."
             )
 
     # Cross-asset paragraph
-    def _theme_local(symbol: str) -> dict:
-        for e in brief.get("thematic_etfs", []):
-            if e.get("symbol") == symbol:
-                return e
-        return {}
-    tlt = _theme_local("TLT"); hyg = _theme_local("HYG")
-    uup = _theme_local("UUP"); gld = _theme_local("GLD"); uso = _theme_local("USO"); bito = _theme_local("BITO")
+    tlt = _theme_etf(brief, "TLT"); hyg = _theme_etf(brief, "HYG")
+    uup = _theme_etf(brief, "UUP"); gld = _theme_etf(brief, "GLD"); uso = _theme_etf(brief, "USO"); bito = _theme_etf(brief, "BITO")
     macro_block = []
     if uup: macro_block.append(f"the dollar (UUP) {uup.get('1d', 0):+.2f}%")
     if tlt: macro_block.append(f"long bonds (TLT) {tlt.get('1d', 0):+.2f}%")
-    if hyg and tlt: macro_block.append(f"high yield (HYG) {hyg.get('1d', 0):+.2f}% — credit stress {'tightening' if hyg.get('5d', 0) > 0 else 'widening'}")
+    if hyg: macro_block.append(f"high yield (HYG) {hyg.get('1d', 0):+.2f}% — credit stress {'tightening' if hyg.get('5d', 0) > 0 else 'widening'}")
     if uso: macro_block.append(f"crude (USO) {uso.get('1d', 0):+.2f}%")
     if gld: macro_block.append(f"gold (GLD) {gld.get('1d', 0):+.2f}%")
     if bito: macro_block.append(f"bitcoin (BITO) {bito.get('1d', 0):+.2f}%")
     if macro_block:
         morning_note_parts.append(
             "Cross-asset color: " + "; ".join(macro_block) +
-            f". The 2s10s curve sits at {macro.get('spread_2s10s', 0)*100:+.0f}bps."
+            f". The 3M/10Y curve sits at {_fmt(spread_bps, '+.0f')}bps."
         )
 
     # Risk + positioning takeaway
@@ -1163,7 +1193,9 @@ def mock_market_brief() -> dict:
         "macro": {
             "vix": {"level": vix_level, "5d_change": rnd(-3, 3)},
             "tnx": {"level": tnx, "label": "10Y Yield"},
-            "irx": {"level": irx, "label": "2Y Yield"},
+            "irx": {"level": irx, "label": "3M Yield"},  # ^IRX is the 13-week T-bill
+            # Legacy key name (archived state + templates depend on it);
+            # the value is actually the 3M/10Y spread.
             "spread_2s10s": round(tnx - irx, 3),
         },
         "top_gainers": gainers,
@@ -1171,31 +1203,25 @@ def mock_market_brief() -> dict:
     }
 
 
-def _resolve_target_date(target_date: str | date | None) -> date:
-    if target_date is None:
-        return date.today()
-    if isinstance(target_date, date):
-        return target_date
-    return datetime.strptime(target_date, "%Y-%m-%d").date()
-
-
 def run_market_brief(
     dry_run: bool = False,
     target_date: str | date | None = None,
 ) -> dict:
-    target_dt = _resolve_target_date(target_date)
-    today = target_dt.isoformat()
+    if isinstance(target_date, date):
+        target_date = target_date.isoformat()
+    today = resolve_target_date(target_date)
+    target_dt = datetime.strptime(today, "%Y-%m-%d").date()
     out_path = STATE_DIR / f"market_brief_{today}.json"
 
     if dry_run:
         print("[DRY RUN] Generating mock market brief...")
         brief = mock_market_brief()
         brief["date"] = today
-        print("  Building fallback market narrative (no external API calls)")
-        brief["narrative"] = fallback_narrative(brief)
+        # Narrative is deferred to run_daily's single "Narrative" step, which
+        # runs after thematic / industry / news data has been merged in.
+        brief["narrative"] = _empty_narrative()
         out_path = STATE_DIR / "dry_run" / f"market_brief_{today}.json"
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(brief, indent=2))
+        save_json(out_path, brief)
         print(f"  Saved mock market brief → {out_path}")
         return brief
 
@@ -1219,8 +1245,6 @@ def run_market_brief(
 
     def get_close(sym: str) -> pd.Series:
         try:
-            if len(all_symbols) == 1:
-                return data["Close"].dropna()
             return data[sym]["Close"].dropna()
         except (KeyError, TypeError):
             return pd.Series(dtype=float)
@@ -1235,7 +1259,7 @@ def run_market_brief(
             "name": name,
             "price": round(float(close.iloc[-1]), 2),
             "day_change": _pct_change(close, 1),
-            "ytd_change": _ytd_change(close),
+            "ytd_change": _ytd_change(close, target_dt),
         }
 
     # Sectors
@@ -1248,26 +1272,40 @@ def run_market_brief(
             "symbol": sym,
             "name": name,
             "day_change": _pct_change(close, 1),
-            "ytd_change": _ytd_change(close),
+            "ytd_change": _ytd_change(close, target_dt),
         })
-    sectors_raw.sort(key=lambda x: x["day_change"], reverse=True)
+    sectors_raw.sort(
+        key=lambda x: x["day_change"] if x["day_change"] is not None else float("-inf"),
+        reverse=True,
+    )
 
-    # Macro
+    # Refuse to publish an empty (all-zeros) brief — fail loudly instead so
+    # the orchestrator can gate site generation and deploy on it.
+    if not indices or not sectors_raw:
+        raise RuntimeError(
+            f"Market data fetch came back empty (indices={len(indices)}, "
+            f"sectors={len(sectors_raw)}) — refusing to write a zeroed-out brief."
+        )
+
+    # Macro — missing values stay None (rendered as 'n/a'), never fake zeros
     vix_close = get_close("^VIX")
     tnx_close = get_close("^TNX")
     irx_close = get_close("^IRX")
 
-    tnx_val = round(float(tnx_close.iloc[-1]), 3) if not tnx_close.empty else 0
-    irx_val = round(float(irx_close.iloc[-1]), 3) if not irx_close.empty else 0
+    tnx_val = round(float(tnx_close.iloc[-1]), 3) if not tnx_close.empty else None
+    irx_val = round(float(irx_close.iloc[-1]), 3) if not irx_close.empty else None
 
     macro = {
         "vix": {
-            "level": round(float(vix_close.iloc[-1]), 2) if not vix_close.empty else 0,
-            "5d_change": _pct_change(vix_close, 5) if not vix_close.empty else 0,
+            "level": round(float(vix_close.iloc[-1]), 2) if not vix_close.empty else None,
+            "5d_change": _pct_change(vix_close, 5),
         },
         "tnx": {"level": tnx_val, "label": "10Y Yield"},
-        "irx": {"level": irx_val, "label": "2Y Yield"},
-        "spread_2s10s": round(tnx_val - irx_val, 3),
+        "irx": {"level": irx_val, "label": "3M Yield"},  # ^IRX is the 13-week T-bill
+        # Legacy key name (archived state + templates depend on it);
+        # the value is actually the 3M/10Y spread.
+        "spread_2s10s": round(tnx_val - irx_val, 3)
+        if tnx_val is not None and irx_val is not None else None,
     }
 
     # Top gainers / losers from top 100 liquid S&P 500 names
@@ -1280,7 +1318,7 @@ def run_market_brief(
         "SPGI","DE","ISRG","MDT","ADP","GILD","SYK","BKNG","VRTX","REGN",
         "ADI","LRCX","ZTS","SCHW","CB","CI","MO","SO","DUK","CME",
         "PLD","BDX","CL","APD","HUM","ANET","ICE","MCK","EW","SLB",
-        "EOG","PXD","MPC","PSX","VLO","CRWD","ZS","PANW","SNOW","NOW",
+        "EOG","MPC","PSX","VLO","CRWD","ZS","PANW","SNOW","NOW",
         "WDAY","DDOG","PLTR","COIN","MRVL","ARM","SMCI","ABNB","DASH","UBER",
     ]
     try:
@@ -1300,7 +1338,8 @@ def run_market_brief(
                 close = sp500_data[t]["Close"].dropna()
                 if len(close) >= 2:
                     chg = _pct_change(close, 1)
-                    moves.append({"ticker": t, "name": t, "day_change": chg})
+                    if chg is not None:
+                        moves.append({"ticker": t, "name": t, "day_change": chg})
             except Exception:
                 pass
         moves.sort(key=lambda x: x["day_change"], reverse=True)
@@ -1321,20 +1360,12 @@ def run_market_brief(
         "top_losers": top_losers,
     }
 
-    # Generate AI market narrative via OpenAI GPT-5.4
-    print("Generating AI market narrative...")
-    narrative = _generate_narrative(brief)
+    # Narrative generation is deferred to run_daily's single "Narrative" step,
+    # which runs after thematic / industry / news data has been merged in —
+    # one LLM call on the fully-enriched brief instead of three.
+    brief["narrative"] = _empty_narrative()
 
-    # Only use the new narrative if it has actual content. Otherwise rebuild
-    # the deterministic fallback from the current live brief so we never carry
-    # stale commentary forward from an older or dry-run render.
-    if narrative_has_content(narrative):
-        brief["narrative"] = narrative
-    else:
-        print("  Falling back to deterministic narrative")
-        brief["narrative"] = fallback_narrative(brief)
-
-    out_path.write_text(json.dumps(brief, indent=2, default=str))
+    save_json(out_path, brief)
     print(f"Saved market brief → {out_path}")
     return brief
 

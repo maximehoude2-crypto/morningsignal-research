@@ -9,8 +9,6 @@ Usage:
 
 import argparse
 import sys
-import time
-import traceback
 from datetime import date
 from pathlib import Path
 
@@ -20,23 +18,7 @@ sys.path.insert(0, str(BASE_DIR))
 # 'site' is a stdlib module; remove it so our local site/ package is found instead
 sys.modules.pop("site", None)
 
-
-def step(name: str, fn, *args, **kwargs):
-    """Run a step, print status. Returns (success, result)."""
-    print(f"\n{'─' * 50}")
-    print(f"▶  {name}")
-    print(f"{'─' * 50}")
-    t0 = time.time()
-    try:
-        result = fn(*args, **kwargs)
-        elapsed = time.time() - t0
-        print(f"✓  {name} completed in {elapsed:.1f}s")
-        return True, result
-    except Exception as exc:
-        elapsed = time.time() - t0
-        print(f"✗  {name} FAILED in {elapsed:.1f}s: {exc}")
-        traceback.print_exc()
-        return False, None
+from scanner.common import acquire_pipeline_lock, step
 
 
 def parse_args():
@@ -56,6 +38,8 @@ def parse_args():
 
 def main():
     args = parse_args()
+    # Held for the life of the process; prevents overlapping pipeline runs.
+    _lock = acquire_pipeline_lock()
     target_date = args.date or date.today().isoformat()
     mode = "[DRY RUN]" if args.dry_run else "[LIVE]"
 
@@ -90,10 +74,15 @@ def main():
     ok2, _ = step("Site Generation", run_site)
     results["site"] = ok2
 
-    from deploy.push_to_github import deploy
+    # Deploy is gated on site generation: never push a half-written docs/.
+    ok3 = None
+    if ok2:
+        from deploy.push_to_github import deploy
 
-    ok3, _ = step("Deploy to GitHub", deploy, dry_run=args.dry_run)
-    results["deploy"] = ok3
+        ok3, _ = step("Deploy to GitHub", deploy, dry_run=args.dry_run)
+        results["deploy"] = ok3
+    else:
+        print("\n  ⚠  Skipping Deploy — site generation failed")
 
     print(f"\n{'═' * 50}")
     print("  Morning refresh complete")
@@ -105,6 +94,18 @@ def main():
     if ok3 and not args.dry_run:
         print("  Live → https://research.morningsignal.xyz")
     print(f"{'═' * 50}\n")
+
+    # Consolidated failure alert (skipped in dry-run)
+    failed_steps = [name for name, ok in results.items() if not ok]
+    if failed_steps and not args.dry_run:
+        from scanner.alerts import send_failure_alert
+
+        send_failure_alert(
+            f"Morning refresh failure ({target_date}): {', '.join(failed_steps)}",
+            "The following morning refresh steps failed:\n"
+            + "\n".join(f"  - {name}" for name in failed_steps)
+            + f"\n\nRun date: {target_date}\nSee the run log for tracebacks.",
+        )
 
     return all(results.values())
 

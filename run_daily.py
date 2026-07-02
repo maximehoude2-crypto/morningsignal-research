@@ -9,10 +9,8 @@ Usage:
 """
 
 import argparse
-import json
 import sys
 import time
-import traceback
 from datetime import date, datetime
 from pathlib import Path
 
@@ -23,23 +21,7 @@ sys.path.insert(0, str(BASE_DIR))
 # 'site' is a stdlib module; remove it so our local site/ package is found instead
 sys.modules.pop("site", None)
 
-
-def step(name: str, fn, *args, **kwargs):
-    """Run a step, print status. Returns (success, result)."""
-    print(f"\n{'─' * 50}")
-    print(f"▶  {name}")
-    print(f"{'─' * 50}")
-    t0 = time.time()
-    try:
-        result = fn(*args, **kwargs)
-        elapsed = time.time() - t0
-        print(f"✓  {name} completed in {elapsed:.1f}s")
-        return True, result
-    except Exception as e:
-        elapsed = time.time() - t0
-        print(f"✗  {name} FAILED in {elapsed:.1f}s: {e}")
-        traceback.print_exc()
-        return False, None
+from scanner.common import acquire_pipeline_lock, save_json, step
 
 
 def parse_args():
@@ -69,6 +51,8 @@ def parse_args():
 
 def main():
     args = parse_args()
+    # Held for the life of the process; prevents overlapping pipeline runs.
+    _lock = acquire_pipeline_lock()
     start = time.time()
     today = args.date or date.today().isoformat()
     mode = "[DRY RUN]" if args.dry_run else "[LIVE]"
@@ -91,6 +75,7 @@ def main():
     results = {}
     write_state_dir = STATE_DIR / "dry_run" if args.dry_run else STATE_DIR
     write_state_dir.mkdir(parents=True, exist_ok=True)
+    brief_path = write_state_dir / f"market_brief_{today}.json"
 
     # ── Step 1: Market Brief ───────────────────────────────────────────────
     from scanner.market_brief import run_market_brief
@@ -103,8 +88,7 @@ def main():
     results["thematic"] = ok1b
     if ok1b and ok1 and brief and thematic:
         brief.update(thematic)
-        out_path = write_state_dir / f"market_brief_{today}.json"
-        out_path.write_text(json.dumps(brief, indent=2, default=str))
+        save_json(brief_path, brief)
 
     # ── Step 2: Breakout Scanner ───────────────────────────────────────────
     from scanner.breakout_scanner import run_scanner
@@ -123,34 +107,7 @@ def main():
     # Merge industry data into the brief so the narrative step can use it
     if ok2a and ok1 and brief and industries:
         brief["industries"] = industries
-        out_path = write_state_dir / f"market_brief_{today}.json"
-        out_path.write_text(json.dumps(brief, indent=2, default=str))
-        # Re-run the narrative now that we have richer context.
-        # If OpenAI is configured this regenerates a full LLM narrative; otherwise
-        # we rebuild the deterministic fallback so it now includes the industry
-        # rotation / MA-event bullets.
-        try:
-            from scanner.market_brief import (
-                _generate_narrative, fallback_narrative, narrative_has_content,
-            )
-            print("\n  Regenerating narrative with industry context...")
-            new_narr = None if args.dry_run else _generate_narrative(brief)
-            current = brief.get("narrative") or {}
-            current_is_fallback = (
-                isinstance(current, dict) and current.get("source") == "fallback"
-            )
-            if narrative_has_content(new_narr):
-                brief["narrative"] = new_narr
-                out_path.write_text(json.dumps(brief, indent=2, default=str))
-                print("  ✓ Narrative refreshed (LLM with industry data)")
-            elif current_is_fallback or not narrative_has_content(current):
-                brief["narrative"] = fallback_narrative(brief)
-                out_path.write_text(json.dumps(brief, indent=2, default=str))
-                print("  ✓ Fallback narrative rebuilt with industry data")
-            else:
-                print("  Narrative regen returned empty; keeping prior narrative.")
-        except Exception as exc:
-            print(f"  Narrative regen skipped: {exc}")
+        save_json(brief_path, brief)
 
     # ── Step 2b: Dashboard Data Aggregator ─────────────────────────────────
     # Computes 52w highs/lows, regime score, cross-asset grid, style box,
@@ -173,38 +130,45 @@ def main():
     results["news"] = ok2c
 
     # Merge news into the brief so narrative/templates can reference it
-    if ok2c and brief and news:
+    if ok2c and ok1 and brief and news:
         brief["news"] = news
-        out_path = write_state_dir / f"market_brief_{today}.json"
-        out_path.write_text(json.dumps(brief, indent=2, default=str))
-        # Refresh the fallback narrative now that we have news context
-        try:
-            from scanner.market_brief import (
-                _generate_narrative, fallback_narrative, narrative_has_content,
-            )
-            new_narr = None if args.dry_run else _generate_narrative(brief)
-            current = brief.get("narrative") or {}
-            current_is_fallback = (
-                isinstance(current, dict) and current.get("source") == "fallback"
-            )
-            if narrative_has_content(new_narr):
-                brief["narrative"] = new_narr
-                out_path.write_text(json.dumps(brief, indent=2, default=str))
-                print("  ✓ Narrative refreshed (LLM with news + industry context)")
-            elif current_is_fallback or not narrative_has_content(current):
-                brief["narrative"] = fallback_narrative(brief)
-                out_path.write_text(json.dumps(brief, indent=2, default=str))
-                print("  ✓ Fallback narrative rebuilt with news + industry data")
-        except Exception as exc:
-            print(f"  Narrative refresh skipped: {exc}")
+        save_json(brief_path, brief)
 
-    # ── Step 2b: Weekly Summary (Friday only) ──────────────────────────────
+    # ── Step 2d: Narrative ────────────────────────────────────────────────
+    # Single LLM call, deferred until thematic / industry / news data has
+    # been merged into the brief. Falls back to the deterministic narrative
+    # when the LLM is unavailable or returns nothing.
+    def build_narrative():
+        if not (ok1 and brief):
+            print("  Market brief unavailable — nothing to narrate")
+            return None
+        from scanner.market_brief import (
+            _generate_narrative, fallback_narrative, narrative_has_content,
+        )
+        narrative = None
+        if args.dry_run:
+            print("  [dry-run] Skipping LLM call; building deterministic fallback")
+        else:
+            narrative = _generate_narrative(brief)
+        if narrative_has_content(narrative):
+            print("  ✓ Narrative generated (LLM with thematic + industry + news context)")
+        else:
+            narrative = fallback_narrative(brief)
+            print("  ✓ Deterministic fallback narrative built")
+        brief["narrative"] = narrative
+        save_json(brief_path, brief)
+        return narrative
+
+    ok2d, _ = step("Narrative", build_narrative)
+    results["narrative"] = ok2d
+
+    # ── Step 2e: Weekly Summary (Friday only) ──────────────────────────────
     if datetime.strptime(today, "%Y-%m-%d").date().isoweekday() == 5:  # Friday
         from scanner.weekly_summary import run_weekly_summary
-        ok_weekly, _ = step("Weekly Summary", run_weekly_summary)
+        ok_weekly, _ = step("Weekly Summary", run_weekly_summary, target_date=today)
         results["weekly"] = ok_weekly
 
-    # ── Step 2c: Earnings Briefs ───────────────────────────────────────────
+    # ── Step 2f: Earnings Briefs ───────────────────────────────────────────
     from scanner.earnings_sync import sync_earnings
     ok_earnings, _ = step(
         "Earnings Briefs",
@@ -217,23 +181,37 @@ def main():
     results["earnings"] = ok_earnings
 
     # ── Step 3: Site Generation ────────────────────────────────────────────
-    # Use importlib to avoid shadowing by stdlib 'site' module
-    import importlib.util as _ilu
-    _spec = _ilu.spec_from_file_location("_site_gen", BASE_DIR / "site" / "generate_site.py")
-    _mod = _ilu.module_from_spec(_spec)
-    _spec.loader.exec_module(_mod)
-    generate_site = _mod.generate_site
-    ok3, _ = step("Site Generation", generate_site, today if (ok1 and ok2) else None)
-    results["site"] = ok3
+    # Gated on the critical steps: never republish the site from a failed
+    # brief or scanner run (that would stamp stale data with today's date).
+    ok3 = None
+    ok4 = None
+    failed_critical = [name for name in ("brief", "scanner") if not results[name]]
+    if failed_critical:
+        print(f"\n  ⚠  Skipping Site Generation and Deploy — "
+              f"critical step(s) failed: {', '.join(failed_critical)}")
+    else:
+        def run_site():
+            # Use importlib to avoid shadowing by stdlib 'site' module
+            import importlib.util as _ilu
+            _spec = _ilu.spec_from_file_location("_site_gen", BASE_DIR / "site" / "generate_site.py")
+            _mod = _ilu.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)
+            return _mod.generate_site(today)
 
-    # ── Step 4: Deploy to GitHub ───────────────────────────────────────────
-    from deploy.push_to_github import deploy
-    ok4, _ = step("Deploy to GitHub", deploy, dry_run=args.dry_run)
-    results["deploy"] = ok4
+        ok3, _ = step("Site Generation", run_site)
+        results["site"] = ok3
+
+        # ── Step 4: Deploy to GitHub ───────────────────────────────────────
+        if ok3:
+            from deploy.push_to_github import deploy
+            ok4, _ = step("Deploy to GitHub", deploy, dry_run=args.dry_run)
+            results["deploy"] = ok4
+        else:
+            print("\n  ⚠  Skipping Deploy — site generation failed")
 
     # ── Summary ───────────────────────────────────────────────────────────
     elapsed = time.time() - start
-    n_breakouts = len(breakouts) if breakouts else 0
+    n_breakouts = len(breakouts) if (ok2 and breakouts is not None) else 0
     print(f"\n{'═' * 50}")
     print(f"  MorningSignal update complete in {elapsed:.1f}s")
     print(f"  {n_breakouts} breakout setups found")
@@ -245,6 +223,17 @@ def main():
     if ok4 and not args.dry_run:
         print(f"  Live → https://research.morningsignal.xyz")
     print(f"{'═' * 50}\n")
+
+    # ── Consolidated failure alert ─────────────────────────────────────────
+    failed_steps = [name for name, ok in results.items() if not ok]
+    if failed_steps and not args.dry_run:
+        from scanner.alerts import send_failure_alert
+        send_failure_alert(
+            f"Daily pipeline failure ({today}): {', '.join(failed_steps)}",
+            "The following daily pipeline steps failed:\n"
+            + "\n".join(f"  - {name}" for name in failed_steps)
+            + f"\n\nRun date: {today}\nSee the run log for tracebacks.",
+        )
 
     return all(results.values())
 
