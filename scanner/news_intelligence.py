@@ -4,11 +4,9 @@ News Intelligence — pull, classify, and prioritise market-moving headlines.
 Sources (all run on the user's Mac via the existing requests-based scrape):
   • CNBC market-insider + markets + earnings
   • Yahoo Finance topic feeds (stock-market, earnings, energy, tech, healthcare)
-  • Reuters Business RSS
   • MarketWatch RSS (markets, top stories)
   • Investing.com RSS (markets, stock-market-news)
   • Seeking Alpha RSS (market currents)
-  • AP / Reuters geopolitics RSS (limited list)
 
 Each headline is tagged with:
   • themes:    ["Earnings", "AI/Tech", "Fed/Macro", "Geopolitics", "Energy/Oil",
@@ -23,25 +21,24 @@ Saves to state/news_YYYY-MM-DD.json.
 
 from __future__ import annotations
 
-import hashlib
-import json
-import re
 from datetime import date, datetime, timedelta
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
 import requests
 from bs4 import BeautifulSoup
 
+from scanner.common import USER_AGENT, resolve_target_date, save_json
+
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
 STATE_DIR.mkdir(exist_ok=True)
 
-UA = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-)
-HEADERS = {"User-Agent": UA, "Accept": "text/html,application/xml,application/rss+xml"}
+HEADERS = {"User-Agent": USER_AGENT, "Accept": "text/html,application/xml,application/rss+xml"}
+
+# Skip RSS items published more than this many days before the target date.
+MAX_RSS_AGE_DAYS = 3
 
 
 # ---------------------------------------------------------------------------
@@ -201,15 +198,13 @@ HTML_SOURCES = [
     {"label": "MarketWatch", "url": "https://www.marketwatch.com/economy-politics",       "selectors": ["h3 a", "a.link"]},
 ]
 
+# NOTE: feeds.reuters.com and the AP RSS feeds were decommissioned years ago
+# and were removed — do not re-add them.
 RSS_SOURCES = [
-    {"label": "Reuters Business",       "url": "https://feeds.reuters.com/reuters/businessNews"},
-    {"label": "Reuters Markets",        "url": "https://feeds.reuters.com/reuters/USmarketsNews"},
     {"label": "MarketWatch Top",        "url": "https://feeds.marketwatch.com/marketwatch/topstories/"},
     {"label": "Seeking Alpha Markets",  "url": "https://seekingalpha.com/market_currents.xml"},
     {"label": "Investing.com Markets",  "url": "https://www.investing.com/rss/news_25.rss"},
     {"label": "Investing.com Stocks",   "url": "https://www.investing.com/rss/news_301.rss"},
-    {"label": "AP Top",                 "url": "https://feeds.apnews.com/rss/apf-topnews"},
-    {"label": "AP Business",            "url": "https://feeds.apnews.com/rss/apf-business"},
 ]
 
 
@@ -217,18 +212,20 @@ RSS_SOURCES = [
 # Scraping helpers
 # ---------------------------------------------------------------------------
 
-def _safe_get(url: str, timeout: int = 8) -> str | None:
+def _safe_get(url: str, timeout: int = 8, label: str | None = None) -> str | None:
+    name = label or url
     try:
         r = requests.get(url, headers=HEADERS, timeout=timeout)
         if r.status_code == 200:
             return r.text
-    except Exception:
-        pass
+        print(f"  Warning: {name} returned HTTP {r.status_code}")
+    except Exception as exc:
+        print(f"  Warning: could not fetch {name}: {exc}")
     return None
 
 
 def _scrape_html(source: dict) -> list[dict]:
-    text = _safe_get(source["url"])
+    text = _safe_get(source["url"], label=f"{source['label']} ({source['url']})")
     if not text:
         return []
     soup = BeautifulSoup(text, "html.parser")
@@ -248,8 +245,22 @@ def _scrape_html(source: dict) -> list[dict]:
     return candidates
 
 
-def _scrape_rss(source: dict) -> list[dict]:
-    text = _safe_get(source["url"])
+def _parse_pub_date(pub: str) -> date | None:
+    """Best-effort parse of an RSS/Atom published date; None if unparseable."""
+    if not pub:
+        return None
+    try:
+        return parsedate_to_datetime(pub).date()
+    except Exception:
+        pass
+    try:
+        return datetime.fromisoformat(pub.replace("Z", "+00:00")).date()
+    except Exception:
+        return None
+
+
+def _scrape_rss(source: dict, cutoff: date | None = None) -> list[dict]:
+    text = _safe_get(source["url"], label=f"{source['label']} ({source['url']})")
     if not text:
         return []
     out = []
@@ -272,31 +283,40 @@ def _scrape_rss(source: dict) -> list[dict]:
                 elif ctag in ("pubdate", "published", "updated"):
                     pub = (child.text or "").strip()
             if title and 25 <= len(title) <= 280:
+                # Recency filter: skip stale items (keep unparseable dates).
+                pub_date = _parse_pub_date(pub)
+                if cutoff is not None and pub_date is not None and pub_date < cutoff:
+                    continue
                 out.append({
                     "title": title,
                     "url": link,
                     "source": source["label"],
                     "published": pub,
                 })
-    except ET.ParseError:
-        pass
+    except ET.ParseError as exc:
+        print(f"  Warning: {source['label']} RSS feed unparseable: {exc}")
     return out
 
 
-def _all_headlines() -> list[dict]:
+def _all_headlines(target_dt: date) -> list[dict]:
+    cutoff = target_dt - timedelta(days=MAX_RSS_AGE_DAYS)
     all_items: list[dict] = []
     for s in HTML_SOURCES:
         try:
             items = _scrape_html(s)
-            all_items.extend(items)
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"  Warning: {s['label']} ({s['url']}) scrape failed: {exc}")
+            items = []
+        print(f"    {s['label']} ({s['url']}): {len(items)} items")
+        all_items.extend(items)
     for s in RSS_SOURCES:
         try:
-            items = _scrape_rss(s)
-            all_items.extend(items)
-        except Exception:
-            pass
+            items = _scrape_rss(s, cutoff)
+        except Exception as exc:
+            print(f"  Warning: {s['label']} ({s['url']}) feed failed: {exc}")
+            items = []
+        print(f"    {s['label']} ({s['url']}): {len(items)} items")
+        all_items.extend(items)
     # Dedupe by lowercased first 70 chars
     seen = set()
     unique = []
@@ -400,7 +420,14 @@ def _earnings_today(target_dt: date, dry_run: bool = False) -> list[dict]:
             try:
                 hist = tk.earnings_history
                 if hist is not None and not hist.empty:
-                    row["surprise_pct"] = float(hist.iloc[-1].get("Surprise(%)", 0) or 0)
+                    hist = hist.sort_index()  # ensure iloc[-1] is the latest quarter
+                    last_row = hist.iloc[-1]
+                    # Column name drifted across yfinance versions.
+                    surprise = last_row.get("Surprise(%)")
+                    if surprise is None or surprise != surprise:  # None or NaN
+                        surprise = last_row.get("surprisePercent")
+                    if surprise is not None and surprise == surprise:
+                        row["surprise_pct"] = float(surprise)
             except Exception:
                 pass
             out.append(row)
@@ -440,19 +467,13 @@ def _bucket_by_sector(items: list[dict]) -> dict[str, list[dict]]:
     return buckets
 
 
-def _resolve_target_date(target_date: str | date | None) -> date:
-    if target_date is None:
-        return date.today()
-    if isinstance(target_date, date):
-        return target_date
-    return datetime.strptime(target_date, "%Y-%m-%d").date()
-
-
 def run_news_intelligence(
     dry_run: bool = False,
     target_date: str | date | None = None,
 ) -> dict:
-    target_dt = _resolve_target_date(target_date)
+    if isinstance(target_date, date):
+        target_date = target_date.isoformat()
+    target_dt = date.fromisoformat(resolve_target_date(target_date))
     today = target_dt.isoformat()
     out_path = STATE_DIR / f"news_{today}.json"
 
@@ -461,18 +482,17 @@ def run_news_intelligence(
                    "headlines": [], "by_theme": {}, "by_sector": {}, "earnings": [],
                    "total": 0, "sources": []}
         out_path = STATE_DIR / "dry_run" / f"news_{today}.json"
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(payload, indent=2, default=str))
+        save_json(out_path, payload)
         return payload
 
     print("Pulling headlines from financial news sources...")
-    raw = _all_headlines()
+    raw = _all_headlines(target_dt)
     print(f"  {len(raw)} unique headlines retrieved.")
 
     print("Tagging headlines with themes and sectors...")
     tagged = [_tag(h) for h in raw]
 
-    # Filter out junk: must have at least one theme OR a sector OR urgency >= 2
+    # Filter out junk: must have at least one theme OR a sector OR urgency >= 3
     relevant = [h for h in tagged if h["themes"] or h["sectors"] or h["urgency"] >= 3]
     relevant.sort(key=lambda x: x["urgency"], reverse=True)
 
@@ -496,7 +516,7 @@ def run_news_intelligence(
         "by_sector": {k: v[:8]  for k, v in by_sector.items()},  # top 8 per sector
         "earnings": earnings,
     }
-    out_path.write_text(json.dumps(payload, indent=2, default=str))
+    save_json(out_path, payload)
     print(f"Saved news intelligence → {out_path.relative_to(BASE_DIR)}")
     print(f"  Themes covered: {', '.join(sorted(by_theme.keys()))}")
     return payload

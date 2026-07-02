@@ -1,13 +1,13 @@
-from __future__ import annotations
-
 """
 Generate and manage earnings briefs in state/earnings/ using OpenAI.
 """
 
+from __future__ import annotations
+
 import json
 import re
 import xml.etree.ElementTree as ET
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -15,6 +15,7 @@ import pandas as pd
 import requests
 import yfinance as yf
 
+from scanner.common import USER_AGENT, load_json, save_json
 from scanner.market_brief import fallback_narrative
 from scanner.openai_client import complete_text, openai_enabled
 from scanner.thematic_scanner import _scrape_catalyst_calendar
@@ -27,18 +28,18 @@ CALENDAR_STATE_DIR = BASE_DIR / "state"
 MIN_EARNINGS_MARKET_CAP = 2_000_000_000
 MAX_SNAPSHOTS = 35
 MAX_EVIDENCE_COMPANIES = 30
-MAX_EVIDENCE_CHARS = 4500
+MAX_EVIDENCE_CHARS = 2000
+MAX_EVIDENCE_ITEMS = 3
+MAX_PROMPT_CHARS = 400_000
+BRIEF_MAX_OUTPUT_TOKENS = 16000
+
+
+class NoEarningsCompaniesError(RuntimeError):
+    """Raised when a session has no qualifying reporters (a skip, not a failure)."""
 
 
 def _is_weekday(d: date) -> bool:
     return d.isoweekday() <= 5
-
-
-def _next_weekday(d: date) -> date:
-    probe = d + timedelta(days=1)
-    while not _is_weekday(probe):
-        probe += timedelta(days=1)
-    return probe
 
 
 def _format_short(d: date) -> str:
@@ -87,10 +88,7 @@ def _fetch_nasdaq_earnings_calendar(target_date: str) -> list[dict]:
     """Fetch Nasdaq earnings calendar rows for a date."""
     url = f"https://api.nasdaq.com/api/calendar/earnings?date={target_date}"
     headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        ),
+        "User-Agent": USER_AGENT,
         "Accept": "application/json, text/plain, */*",
         "Origin": "https://www.nasdaq.com",
         "Referer": "https://www.nasdaq.com/market-activity/earnings",
@@ -128,7 +126,7 @@ def _fallback_earnings_calendar(target_date: str) -> list[dict]:
     target_dt = datetime.strptime(target_date, "%Y-%m-%d").date()
     target_label = _format_short(target_dt)
     out = []
-    for event in _scrape_catalyst_calendar():
+    for event in _scrape_catalyst_calendar(target_dt):
         if event.get("type") != "earnings" or event.get("date") != target_label:
             continue
         ticker = str(event.get("ticker") or "").upper().strip()
@@ -153,19 +151,24 @@ def _fallback_earnings_calendar(target_date: str) -> list[dict]:
 
 
 def _load_earnings_calendar(target_date: str) -> list[dict]:
+    cache_path = CALENDAR_STATE_DIR / f"earnings_calendar_{target_date}.json"
+    cached = load_json(cache_path) if cache_path.exists() else None
+    if cached and cached.get("rows"):
+        print(f"  Using cached earnings calendar for {target_date} ({len(cached['rows'])} rows).")
+        return cached["rows"]
+
     try:
         rows = _fetch_nasdaq_earnings_calendar(target_date)
     except Exception as exc:
         print(f"  Warning: Nasdaq earnings calendar failed ({exc}); using fallback calendar.")
         rows = _fallback_earnings_calendar(target_date)
 
-    cache_path = CALENDAR_STATE_DIR / f"earnings_calendar_{target_date}.json"
-    cache_path.write_text(json.dumps({
+    save_json(cache_path, {
         "date": target_date,
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "count": len(rows),
         "rows": rows,
-    }, indent=2), encoding="utf-8")
+    })
     return rows
 
 
@@ -238,8 +241,15 @@ def _ticker_snapshot(ticker: str, calendar_row: dict | None = None) -> dict:
 
     headlines = []
     for item in news_items[:4]:
-        title = item.get("title", "").strip()
-        publisher = item.get("publisher", "").strip()
+        # Newer yfinance nests fields under "content"; fall back to flat schema.
+        content = item.get("content") or {}
+        title = str(content.get("title") or item.get("title") or "").strip()
+        provider = content.get("provider") or {}
+        publisher = ""
+        if isinstance(provider, dict):
+            publisher = str(provider.get("displayName") or "").strip()
+        if not publisher:
+            publisher = str(item.get("publisher") or "").strip()
         if title:
             headlines.append(f"{publisher}: {title}" if publisher else title)
 
@@ -335,12 +345,17 @@ def _latest_actuals_from_yfinance(ticker: str, calendar_row: dict | None = None)
         if selected is not None:
             eps_actual = _safe_float(selected.get("epsActual"))
             eps_estimate = _safe_float(selected.get("epsEstimate"))
+            # yfinance's surprisePercent is already a percentage — pass through.
             surprise = _safe_float(selected.get("surprisePercent"))
+            fiscal_period = ""
+            if selected_key is not None:
+                period = pd.Timestamp(selected_key).to_period("Q")
+                fiscal_period = f"{period.year}-Q{period.quarter}"
             actuals.update({
-                "fiscal_period": selected_key.strftime("%Y-Q%q") if selected_key is not None else "",
+                "fiscal_period": fiscal_period,
                 "eps_actual": eps_actual,
                 "eps_estimate": eps_estimate,
-                "eps_surprise_pct": round(surprise * 100, 2) if surprise is not None and abs(surprise) < 5 else surprise,
+                "eps_surprise_pct": round(surprise, 2) if surprise is not None else None,
                 "has_actual_eps": eps_actual is not None,
             })
 
@@ -494,12 +509,12 @@ def _fetch_company_evidence(ticker: str, calendar_row: dict | None = None) -> di
             item["text"] = _fetch_url_text(item.get("url", ""), limit=MAX_EVIDENCE_CHARS)
         elif any(token in title_l for token in ("reports", "announces", "results", "earnings")):
             item["kind"] = "press_or_news"
-            item["text"] = _fetch_url_text(item.get("url", ""), limit=2500)
+            item["text"] = _fetch_url_text(item.get("url", ""), limit=MAX_EVIDENCE_CHARS)
         else:
             item["kind"] = "headline"
             item["text"] = ""
         evidence_items.append(item)
-        if len(evidence_items) >= 5:
+        if len(evidence_items) >= MAX_EVIDENCE_ITEMS:
             break
 
     actuals = _latest_actuals_from_yfinance(ticker, calendar_row)
@@ -602,7 +617,7 @@ def generate_earnings_brief(target_date: str | None = None, session: str = "AM")
     session_label = "Pre-Market" if session == "AM" else "Post-Close"
 
     if not companies:
-        raise RuntimeError(
+        raise NoEarningsCompaniesError(
             f"No >$2B {session_label.lower()} earnings companies found for {target_date}; refusing to generate empty brief."
         )
 
@@ -612,7 +627,11 @@ def generate_earnings_brief(target_date: str | None = None, session: str = "AM")
     evidence_count = sum(1 for c in companies if (c.get("earnings_evidence") or {}).get("has_actual_result"))
     call_count = sum(1 for c in companies if (c.get("earnings_evidence") or {}).get("has_conference_call"))
 
-    prompt = f"""You are Morning Signal's earnings strategist. Write a deep, evidence-first markdown earnings analysis.
+    def _compact(obj) -> str:
+        return json.dumps(obj, separators=(",", ":"), default=str)
+
+    def _build_prompt() -> str:
+        return f"""You are Morning Signal's earnings strategist. Write a deep, evidence-first markdown earnings analysis.
 
 Today: {target_date}
 Session: {session_label}
@@ -622,13 +641,13 @@ If a company lacks actual result or conference-call evidence, label it "Awaiting
 This is not a calendar preview. It is a post-result/call earnings analysis where evidence exists.
 
 MARKET CONTEXT
-{json.dumps(market_context, indent=2)}
+{_compact(market_context)}
 
 PRIMARY COMPANIES (all US-listed companies in this session with market cap >= $2B, sorted by market cap)
-{json.dumps(companies, indent=2)}
+{_compact(companies)}
 
 OTHER >$2B REPORTERS TODAY / UNSPECIFIED SESSION WATCH LIST
-{json.dumps(watchlist, indent=2)}
+{_compact(watchlist)}
 
 Evidence summary: {evidence_count} companies have actual-result evidence; {call_count} companies have conference-call/transcript evidence.
 
@@ -666,11 +685,43 @@ Short note describing that this brief was generated from Nasdaq calendar data, y
 
 Every company in PRIMARY COMPANIES must appear at least once, either in Company-by-Company Analysis, Awaiting Reliable Post-Call Source, or Full Reporter Tape. Keep it analytical and publication-ready. Return markdown only."""
 
-    print(f"  Generating {session_label.lower()} earnings brief via OpenAI GPT-5.4...")
-    text = complete_text(prompt, max_output_tokens=16000)
+    # Enforce a hard prompt budget: trim the longest evidence texts first.
+    prompt = _build_prompt()
+    trimmed: list[str] = []
+    while len(prompt) > MAX_PROMPT_CHARS:
+        longest_item = None
+        longest_ticker = None
+        for company in companies:
+            for item in (company.get("earnings_evidence") or {}).get("evidence_items", []):
+                text_len = len(item.get("text") or "")
+                if longest_item is None or text_len > len(longest_item.get("text") or ""):
+                    longest_item = item
+                    longest_ticker = company.get("ticker", "?")
+        if longest_item is None or len(longest_item.get("text") or "") <= 200:
+            print(f"  Warning: prompt still {len(prompt)} chars after trimming all evidence.")
+            break
+        old_len = len(longest_item["text"])
+        longest_item["text"] = longest_item["text"][: max(200, old_len // 2)]
+        trimmed.append(f"{longest_ticker} {old_len}→{len(longest_item['text'])}")
+        prompt = _build_prompt()
+    if trimmed:
+        print(f"  Prompt exceeded {MAX_PROMPT_CHARS} chars; trimmed evidence: {', '.join(trimmed)}")
+
+    print(f"  Generating {session_label.lower()} earnings brief via OpenAI GPT-5.4 "
+          f"(prompt {len(prompt):,} chars)...")
+    text = complete_text(prompt, max_output_tokens=BRIEF_MAX_OUTPUT_TOKENS)
+    text = text.strip()
+
+    # Detect probable truncation: the client only returns text, so approximate
+    # tokens as chars/4 and flag output within 2% of the max token cap.
+    approx_tokens = len(text) / 4
+    if approx_tokens >= BRIEF_MAX_OUTPUT_TOKENS * 0.98:
+        print(f"  *** WARNING: earnings brief output (~{approx_tokens:,.0f} tokens) is within 2% of the "
+              f"{BRIEF_MAX_OUTPUT_TOKENS}-token cap — output may be TRUNCATED. ***")
+        text = "<!-- WARNING: output may be truncated -->\n" + text
 
     out_path = STATE_DIR / f"earnings_{target_date}_{session}.md"
-    out_path.write_text(text.strip() + "\n", encoding="utf-8")
+    out_path.write_text(text + "\n", encoding="utf-8")
     print(f"  Saved earnings brief → {out_path}")
     return out_path
 
@@ -699,6 +750,7 @@ def sync_earnings(
 ) -> list[dict]:
     target_date = target_date or date.today().isoformat()
 
+    failures: list[str] = []
     for session in sessions:
         out_path = STATE_DIR / f"earnings_{target_date}_{session}.md"
         if out_path.exists() and not regenerate:
@@ -718,11 +770,18 @@ def sync_earnings(
 
         try:
             generate_earnings_brief(target_date, session)
+        except NoEarningsCompaniesError as exc:
+            # Nothing qualifying reported this session — a skip, not a failure.
+            print(f"  Skipping {out_path.name}: {exc}")
         except Exception as exc:  # pragma: no cover - provider/network dependent
             print(f"  Warning: failed to generate {out_path.name}: {exc}")
+            failures.append(f"{out_path.name}: {exc}")
 
     briefs = get_earnings_list()
     print(f"  Earnings library ready: {len(briefs)} briefs")
+    if failures:
+        # Surface generation failures so run_daily records the step as failed.
+        raise RuntimeError("Earnings brief generation failed — " + "; ".join(failures))
     return briefs
 
 

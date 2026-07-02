@@ -9,7 +9,8 @@ extra signals a best-in-class market dashboard needs:
   • Regime composite:  risk-on / risk-off score with component breakdown.
   • Vol regime:        VIX level + 5d direction.
   • Credit stress:     HYG/IEF behavior.
-  • Yield curve:       2s10s level + steepening trend.
+  • Yield curve:       3M/10Y level + steepening trend (stored under the
+                       legacy `spread_2s10s` key).
   • Dollar regime:     UUP 1d/5d/YTD.
   • 52-week highs / lows count across the S&P 1500 universe (from the price
     cache the breakout scanner already maintains).
@@ -21,11 +22,12 @@ Everything is saved into state/dashboard_YYYY-MM-DD.json.
 
 from __future__ import annotations
 
-import json
 from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
+
+from scanner.common import load_json, resolve_target_date, save_json
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
@@ -37,32 +39,24 @@ STATE_DIR.mkdir(exist_ok=True)
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _resolve_target_date(target_date: str | date | None) -> date:
-    if target_date is None:
-        return date.today()
-    if isinstance(target_date, date):
-        return target_date
-    return datetime.strptime(target_date, "%Y-%m-%d").date()
-
-
 def _load_brief(target_dt: date) -> dict | None:
     p = STATE_DIR / f"market_brief_{target_dt.isoformat()}.json"
     if p.exists():
-        return json.loads(p.read_text())
+        return load_json(p, default=None)
     return None
 
 
 def _load_breakouts(target_dt: date) -> list:
     p = STATE_DIR / f"breakouts_{target_dt.isoformat()}.json"
     if p.exists():
-        return json.loads(p.read_text())
+        return load_json(p, default=[]) or []
     return []
 
 
 def _load_industries(target_dt: date) -> dict | None:
     p = STATE_DIR / f"industries_{target_dt.isoformat()}.json"
     if p.exists():
-        return json.loads(p.read_text())
+        return load_json(p, default=None)
     return None
 
 
@@ -104,13 +98,21 @@ def _fifty_two_week_extremes(target_dt: date) -> dict:
         lo52 = float(close.tail(252).min())
         if hi52 <= 0:
             continue
-        # Within last 5 trading days hitting a new 52w high?
+        # Classification semantics:
+        #   new_highs:  traded within 0.1% of the 52-week high at some point in
+        #               the last 5 sessions (a fresh high, with tolerance);
+        #   near_highs: last close within 1% of the 52-week high, but no fresh
+        #               high in the last 5 sessions;
+        #   new_lows / near_lows: mirrored logic against the 52-week low.
+        # A ticker appears in at most one bucket; the high-side classification
+        # takes precedence over the low-side (a very tight, flat 52-week range
+        # could otherwise land a ticker in both).
         recent = close.tail(5)
         if len(recent) and float(recent.max()) >= hi52 * 0.999:
             new_highs.append(ticker)
         elif last >= hi52 * 0.99:
             near_highs.append(ticker)
-        if len(recent) and float(recent.min()) <= lo52 * 1.001:
+        elif len(recent) and float(recent.min()) <= lo52 * 1.001:
             new_lows.append(ticker)
         elif last <= lo52 * 1.01:
             near_lows.append(ticker)
@@ -140,9 +142,11 @@ def _regime_classifier(brief: dict, industries: dict | None) -> dict:
       • Dollar (DXY weakening = risk-on for equities)
     """
     macro = brief.get("macro", {})
-    vix_level = macro.get("vix", {}).get("level", 0)
-    vix_5d = macro.get("vix", {}).get("5d_change", 0)
-    spread_2s10s = macro.get("spread_2s10s", 0)
+    # Missing market data is stored as None (not 0) — coerce for the math below.
+    vix_level = macro.get("vix", {}).get("level") or 0
+    vix_5d = macro.get("vix", {}).get("5d_change") or 0
+    spread_raw = macro.get("spread_2s10s")
+    spread_2s10s = spread_raw if spread_raw is not None else 0
     sig = brief.get("market_signal", {})
 
     # VIX score: prefer level <16 (=+1), >24 (=-1)
@@ -188,7 +192,7 @@ def _regime_classifier(brief: dict, industries: dict | None) -> dict:
 
     components = {
         "VIX":        {"score": round(vix_score, 2),       "detail": f"{vix_level:.2f} ({vix_5d:+.1f}% 5d)"},
-        "Curve":      {"score": round(curve_score, 2),     "detail": f"2s10s {spread_2s10s*100:+.0f}bps"},
+        "Curve":      {"score": round(curve_score, 2),     "detail": f"3M/10Y {spread_2s10s*100:+.0f}bps" if spread_raw is not None else "n/a"},
         "Credit":     {"score": round(credit_score, 2),    "detail": f"HYG 5d {hyg.get('5d', 0):+.2f}%" if hyg else "n/a"},
         "Breadth":    {"score": round(breadth_score, 2),   "detail": (f"50d {stock_breadth.get('pct_above_50d', 0):.0f}% / "
                                                                        f"200d {stock_breadth.get('pct_above_200d', 0):.0f}%") if industries else "n/a"},
@@ -338,14 +342,6 @@ def _crowdedness(brief: dict, breakouts: list, industries: dict | None) -> dict:
                 "top_sector": "n/a"}
 
     sector_counts: dict[str, int] = {}
-    industry_counts: dict[str, int] = {}
-    industry_map = {}
-    if industries:
-        # Build ticker→industry mapping from the industries payload (if present)
-        for rec in industries.get("industries", []):
-            for t in rec.get("constituent_events", {}).get("golden_cross", []) + \
-                     rec.get("constituent_events", {}).get("reclaim_50d", []):
-                industry_map[t] = rec["industry"]
 
     for b in breakouts:
         sec = b.get("sector", "Unknown")
@@ -378,12 +374,13 @@ def run_dashboard_data(
     dry_run: bool = False,
     target_date: str | date | None = None,
 ) -> dict:
-    target_dt = _resolve_target_date(target_date)
+    if isinstance(target_date, date):
+        target_date = target_date.isoformat()
+    target_dt = date.fromisoformat(resolve_target_date(target_date))
     today = target_dt.isoformat()
     out_path = STATE_DIR / f"dashboard_{today}.json"
     if dry_run:
         out_path = STATE_DIR / "dry_run" / f"dashboard_{today}.json"
-        out_path.parent.mkdir(parents=True, exist_ok=True)
 
     brief = _load_brief(target_dt)
     if brief is None:
@@ -424,7 +421,7 @@ def run_dashboard_data(
         "style_box": style_box,
         "crowdedness": crowdedness,
     }
-    out_path.write_text(json.dumps(payload, indent=2, default=str))
+    save_json(out_path, payload)
     print(f"Saved dashboard data → {out_path.relative_to(BASE_DIR)}")
     print(f"  Regime: {regime['regime']} (score {regime['score']}) · "
           f"52w highs: {extremes['new_highs']['count']} · 52w lows: {extremes['new_lows']['count']}")

@@ -5,12 +5,14 @@ Saves enriched data into the market brief JSON.
 """
 
 import json
-import os
+import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
+import requests
+
+from scanner.common import USER_AGENT, resolve_target_date
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
@@ -345,18 +347,16 @@ def _compute_market_signal(closes: dict, spy_close: pd.Series) -> dict:
 # Catalyst Calendar (earnings + economic releases)
 # ---------------------------------------------------------------------------
 
-def _scrape_catalyst_calendar() -> list:
+def _scrape_catalyst_calendar(target_dt: date | None = None) -> list:
     """Scrape upcoming earnings (Zacks) and economic events for next 5 trading days."""
-    import json
-    import requests
-    from datetime import timedelta
     from bs4 import BeautifulSoup
 
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'}
+    headers = {'User-Agent': USER_AGENT}
     events = []
-    today_dt = date.today()
+    today_dt = target_dt or date.today()
 
     # Zacks earnings calendar
+    zacks_count = 0
     for offset in range(5):
         d = today_dt + timedelta(days=offset)
         # Skip weekends
@@ -373,15 +373,14 @@ def _scrape_catalyst_calendar() -> list:
                         if isinstance(row, list) and len(row) >= 4:
                             # Zacks returns HTML in cells — extract text
                             ticker_html = row[0] if isinstance(row[0], str) else ""
-                            ticker_match = re.search(r'>([A-Z]{1,5})<', ticker_html) if 'import re' or True else None
-                            import re as _re
-                            ticker_match = _re.search(r'>([A-Z]{1,5})<', ticker_html)
+                            ticker_match = re.search(r'>([A-Z]{1,5})<', ticker_html)
                             ticker = ticker_match.group(1) if ticker_match else ""
                             company = BeautifulSoup(row[1], 'html.parser').get_text(strip=True) if isinstance(row[1], str) else str(row[1])
                             time_str = row[2] if isinstance(row[2], str) else ""
                             eps_est = row[3] if isinstance(row[3], str) else ""
 
                             if ticker and len(ticker) <= 5:
+                                zacks_count += 1
                                 events.append({
                                     "date": d.strftime("%b %d"),
                                     "time": time_str[:20] if time_str else "TBD",
@@ -390,10 +389,11 @@ def _scrape_catalyst_calendar() -> list:
                                     "type": "earnings",
                                     "ticker": ticker,
                                 })
-                except (json.JSONDecodeError, KeyError):
-                    pass
-        except Exception:
-            pass
+                except (json.JSONDecodeError, KeyError) as exc:
+                    print(f"  Warning: Zacks calendar JSON unparseable for {d_str}: {exc}")
+        except Exception as exc:
+            print(f"  Warning: Zacks calendar API failed for {d_str}: {exc}")
+    print(f"  Zacks calendar API: {zacks_count} earnings events")
 
     # Fallback: if Zacks failed, try scraping Zacks HTML page
     if not events:
@@ -415,10 +415,12 @@ def _scrape_catalyst_calendar() -> list:
                                 "type": "earnings",
                                 "ticker": ticker,
                             })
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"  Warning: Zacks calendar HTML fallback failed: {exc}")
+        print(f"  Zacks calendar HTML fallback: {len(events)} earnings events")
 
     # ForexFactory economic calendar
+    econ_count = 0
     try:
         r = requests.get("https://nfs.faireconomy.media/ff_calendar_thisweek.json",
                          headers=headers, timeout=10)
@@ -430,6 +432,7 @@ def _scrape_catalyst_calendar() -> list:
                     try:
                         ev_date = datetime.strptime(ev_date_str, "%Y-%m-%dT%H:%M:%S%z").date()
                         if today_dt <= ev_date <= today_dt + timedelta(days=7):
+                            econ_count += 1
                             events.append({
                                 "date": ev_date.strftime("%b %d"),
                                 "time": ev.get("time", ""),
@@ -438,10 +441,11 @@ def _scrape_catalyst_calendar() -> list:
                                 "type": "economic",
                                 "ticker": "",
                             })
-                    except Exception:
-                        pass
-    except Exception:
-        pass
+                    except Exception as exc:
+                        print(f"  Warning: ForexFactory event date unparseable ({ev_date_str}): {exc}")
+    except Exception as exc:
+        print(f"  Warning: ForexFactory economic calendar failed: {exc}")
+    print(f"  ForexFactory calendar: {econ_count} economic events")
 
     # Deduplicate and limit
     seen = set()
@@ -459,70 +463,55 @@ def _scrape_catalyst_calendar() -> list:
 # Notable Options Flow
 # ---------------------------------------------------------------------------
 
+# Link text on Yahoo pages that looks like a ticker but isn't one.
+_FLOW_JUNK_TICKERS = {"NYSE", "NASDAQ", "AMEX", "CBOE", "OTC", "ETF", "ETFS", "NEWS", "LIVE", "MORE"}
+
+
 def _scrape_notable_flow() -> list:
-    """Scrape unusual options activity from Barchart."""
-    import requests
+    """Scrape most-active options tickers from Yahoo Finance.
+
+    (The old Barchart scraper targeted a JS-rendered page and always yielded
+    nothing, so Yahoo is the primary source now.)
+    """
     from bs4 import BeautifulSoup
 
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'}
+    headers = {'User-Agent': USER_AGENT}
     flows = []
 
     try:
-        r = requests.get("https://www.barchart.com/options/unusual-activity/stocks",
+        r = requests.get("https://finance.yahoo.com/markets/options/most-active/",
                          headers=headers, timeout=10)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, 'html.parser')
-            for row in soup.select('table tbody tr')[:10]:
-                cells = row.select('td')
-                if len(cells) >= 7:
-                    ticker = cells[0].get_text(strip=True)
-                    exp = cells[2].get_text(strip=True) if len(cells) > 2 else ""
-                    strike = cells[3].get_text(strip=True) if len(cells) > 3 else ""
-                    call_put = cells[4].get_text(strip=True) if len(cells) > 4 else ""
-                    volume = cells[5].get_text(strip=True) if len(cells) > 5 else ""
-                    oi = cells[6].get_text(strip=True) if len(cells) > 6 else ""
-                    if ticker and len(ticker) <= 5:
-                        direction = "bullish" if "Call" in call_put else "bearish"
-                        flows.append({
-                            "ticker": ticker,
-                            "type": call_put,
-                            "strike": strike,
-                            "expiry": exp,
-                            "volume": volume,
-                            "open_interest": oi,
-                            "direction": direction,
-                            "summary": f"{ticker} {exp} ${strike} {call_put}s — Vol: {volume} vs OI: {oi}",
-                        })
-    except Exception:
-        pass
+            seen = set()
+            for a in soup.select('a'):
+                t = a.get_text(strip=True)
+                if not t or not (1 <= len(t) <= 5) or not t.isupper() or t in _FLOW_JUNK_TICKERS:
+                    continue
+                href = a.get('href', '')
+                # Only trust link text that matches the /quote/<SYMBOL> target.
+                m = re.search(r'/quote/([A-Z0-9.\-]{1,6})', href)
+                if not m or m.group(1) != t or t in seen:
+                    continue
+                seen.add(t)
+                flows.append({
+                    "ticker": t,
+                    "type": "Active",
+                    "strike": "",
+                    "expiry": "",
+                    "volume": "",
+                    "open_interest": "",
+                    "direction": "neutral",
+                    "summary": f"{t} — among most active options today",
+                })
+                if len(flows) >= 5:
+                    break
+        else:
+            print(f"  Warning: Yahoo options most-active returned HTTP {r.status_code}")
+    except Exception as exc:
+        print(f"  Warning: Yahoo options most-active scrape failed: {exc}")
 
-    # Fallback: if Barchart blocked, try scraping Yahoo Finance options movers
-    if not flows:
-        try:
-            r = requests.get("https://finance.yahoo.com/markets/options/most-active/",
-                             headers=headers, timeout=10)
-            if r.status_code == 200:
-                soup = BeautifulSoup(r.text, 'html.parser')
-                for a in soup.select('a'):
-                    t = a.get_text(strip=True)
-                    if t and 3 <= len(t) <= 5 and t.isupper():
-                        href = a.get('href', '')
-                        if '/quote/' in href:
-                            flows.append({
-                                "ticker": t,
-                                "type": "Active",
-                                "strike": "",
-                                "expiry": "",
-                                "volume": "",
-                                "open_interest": "",
-                                "direction": "neutral",
-                                "summary": f"{t} — among most active options today",
-                            })
-                            if len(flows) >= 5:
-                                break
-        except Exception:
-            pass
-
+    print(f"  Yahoo options most-active: {len(flows)} tickers")
     return flows[:8]
 
 
@@ -530,9 +519,9 @@ def _scrape_notable_flow() -> list:
 # Main entry point
 # ---------------------------------------------------------------------------
 
-def run_thematic_scan(dry_run: bool = False) -> dict:
+def run_thematic_scan(dry_run: bool = False, target_date: str | None = None) -> dict:
     """Fetch thematic ETF data and compute all derived metrics."""
-    today_dt = date.today()
+    today_dt = date.fromisoformat(resolve_target_date(target_date))
 
     if dry_run:
         return _mock_thematic_data()
@@ -571,7 +560,12 @@ def run_thematic_scan(dry_run: bool = False) -> dict:
         except (KeyError, TypeError):
             return pd.Series(dtype=float)
 
+    if data is None or data.empty:
+        raise RuntimeError("Thematic scan: yf.download returned no data — refusing to emit a hollow payload.")
+
     spy_close = get_close("SPY")
+    if spy_close.empty:
+        raise RuntimeError("Thematic scan: no SPY closes in downloaded data — refusing to emit a hollow payload.")
 
     # --- Feature 1: Thematic ETF returns ---
     print("  Computing thematic ETF returns...")
@@ -629,7 +623,7 @@ def run_thematic_scan(dry_run: bool = False) -> dict:
 
     # --- Feature 5: Catalyst Calendar ---
     print("  Scraping catalyst calendar...")
-    catalyst_calendar = _scrape_catalyst_calendar()
+    catalyst_calendar = _scrape_catalyst_calendar(today_dt)
     print(f"  Found {len(catalyst_calendar)} upcoming catalysts")
 
     # --- Feature 6: Notable Options Flow ---
@@ -708,4 +702,6 @@ def _mock_thematic_data() -> dict:
         "rrg": {"benchmark": "SPY", "data": rrg_data},
         "factors": {"performance": factors, "heatmap": heatmap, "heatmap_weeks": weeks},
         "market_signal": signal,
+        "catalyst_calendar": [],
+        "notable_flow": [],
     }

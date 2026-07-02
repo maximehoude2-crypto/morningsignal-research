@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -29,8 +30,23 @@ def get_client():
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise RuntimeError("OPENAI_API_KEY is not configured.")
-        _client = OpenAI(api_key=api_key)
+        # Retries are handled in complete_text — disable the SDK's internal
+        # retries so they don't multiply with ours, and bound each request.
+        _client = OpenAI(api_key=api_key, timeout=300.0, max_retries=0)
     return _client
+
+
+def _is_retryable(exc: Exception) -> bool:
+    """Only rate limits, connection issues, timeouts, and 5xx are retryable."""
+    try:
+        import openai
+    except ImportError:  # pragma: no cover
+        return False
+    if isinstance(exc, (openai.RateLimitError, openai.APIConnectionError, openai.APITimeoutError)):
+        return True
+    if isinstance(exc, openai.APIStatusError):
+        return exc.status_code >= 500
+    return False
 
 
 def complete_text(
@@ -41,8 +57,6 @@ def complete_text(
     reasoning_effort: str | None = None,
     retries: int = 2,
 ) -> str:
-    last_error: Exception | None = None
-
     for attempt in range(retries + 1):
         try:
             response = get_client().responses.create(
@@ -70,27 +84,28 @@ def complete_text(
 
             raise RuntimeError("OpenAI returned no text output.")
         except Exception as exc:  # pragma: no cover - provider/network failures
-            last_error = exc
-            if attempt >= retries:
+            # Fail fast on deterministic errors (auth, 400, context length…).
+            if attempt >= retries or not _is_retryable(exc):
                 raise
             time.sleep(2 * (attempt + 1))
-
-    raise RuntimeError(str(last_error or "OpenAI request failed"))
 
 
 def extract_json(text: str) -> dict:
     raw = text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[-1]
-    if raw.endswith("```"):
-        raw = raw.rsplit("```", 1)[0]
-    raw = raw.strip()
+    # Strip the first fenced code block (```json … ``` or ``` … ```), if any.
+    fence = re.search(r"```(?:json)?\s*\n(.*?)```", raw, re.DOTALL)
+    if fence:
+        raw = fence.group(1).strip()
 
     try:
-        return json.loads(raw)
+        parsed = json.loads(raw)
     except json.JSONDecodeError:
         start = raw.find("{")
         end = raw.rfind("}")
         if start == -1 or end == -1 or end <= start:
             raise
-        return json.loads(raw[start:end + 1])
+        parsed = json.loads(raw[start:end + 1])
+
+    if not isinstance(parsed, dict):
+        raise ValueError(f"Expected a JSON object, got {type(parsed).__name__}")
+    return parsed

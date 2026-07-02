@@ -8,10 +8,42 @@ import json
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from scanner.common import load_json, resolve_target_date, save_json
 from scanner.openai_client import complete_text, extract_json, openai_enabled
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
+
+# Fallback executive summaries used when generation is skipped/fails. Also used
+# to recognize failure-stub files so they can be regenerated (and never allowed
+# to overwrite a good one).
+_FALLBACK_SUMMARY_SKIPPED = "OpenAI is not configured yet, so the weekly commentary was skipped."
+_FALLBACK_SUMMARY_FAILED = "Weekly summary generation failed. Please refer to daily reports."
+
+
+def _fallback_narrative_stub(agg: dict, summary: str) -> dict:
+    """Fallback dict whose keys mirror the prompt's JSON schema."""
+    return {
+        "headline": f"Weekly Market Summary: {agg.get('week_start', '')} — {agg.get('week_end', '')}",
+        "executive_summary": summary,
+        "key_events": [],
+        "thematic_analysis": [],
+        "sector_review": [],
+        "earnings_and_data": [],
+        "factor_commentary": "",
+        "signal_commentary": "",
+        "week_ahead": "",
+        "notable_moves": [],
+    }
+
+
+def _is_fallback_narrative(narrative) -> bool:
+    if not isinstance(narrative, dict) or not narrative:
+        return True
+    return narrative.get("executive_summary", "") in (
+        _FALLBACK_SUMMARY_SKIPPED,
+        _FALLBACK_SUMMARY_FAILED,
+    )
 
 
 def _get_week_dates(ref_date: date = None) -> list[date]:
@@ -63,10 +95,13 @@ def _aggregate_week_data(briefs: list[dict]) -> dict:
     sector_weekly = {}
     for b in briefs:
         for s in b.get("sectors", []):
-            name = s["name"]
+            name = s.get("name")
+            day_change = s.get("day_change")
+            if not name or day_change is None:
+                continue  # skip malformed entries
             if name not in sector_weekly:
                 sector_weekly[name] = {"cumulative": 1.0, "symbol": s.get("symbol", "")}
-            sector_weekly[name]["cumulative"] *= (1 + s["day_change"] / 100)
+            sector_weekly[name]["cumulative"] *= (1 + day_change / 100)
     sectors = []
     for name, data in sector_weekly.items():
         sectors.append({
@@ -76,11 +111,12 @@ def _aggregate_week_data(briefs: list[dict]) -> dict:
         })
     sectors.sort(key=lambda x: x["weekly_change"], reverse=True)
 
-    # Collect all daily narratives
+    # Collect all daily narratives (keep bullet-less ones — the summary text
+    # alone is still useful weekly context)
     daily_narratives = []
     for b in briefs:
         narr = b.get("narrative", {})
-        if isinstance(narr, dict) and narr.get("bullets"):
+        if isinstance(narr, dict) and (narr.get("bullets") or narr.get("summary")):
             daily_narratives.append({
                 "date": b.get("date", ""),
                 "summary": narr.get("summary", ""),
@@ -128,8 +164,11 @@ def _aggregate_week_data(briefs: list[dict]) -> dict:
     }
 
 
-def _generate_weekly_narrative(agg: dict) -> dict:
-    """Call OpenAI to synthesize a weekly summary from aggregated data."""
+def _generate_weekly_narrative(agg: dict) -> tuple[dict, bool]:
+    """Call OpenAI to synthesize a weekly summary from aggregated data.
+
+    Returns (narrative, ok) — ok is False when a fallback stub was returned.
+    """
 
     indices_str = "\n".join(
         f"  - {v['name']}: {v['weekly_change']:+.2f}% (close: ${v['last_price']})"
@@ -198,37 +237,39 @@ Signal: {signal.get('signal', 'N/A')} (score: {signal.get('score', 0):+.3f})
 ## TASK
 Produce a JSON object with this structure. Return ONLY raw JSON — no markdown, no code fences.
 
+(All example values below are SYNTHETIC placeholders that show format only — never copy them; populate every field from THIS week's data above.)
+
 {{
-  "headline": "One punchy sentence — the week's defining narrative. E.g. 'Anthropic Mythos Splits Tech in Two: Software Reckoning Meets Semi Supercycle'",
+  "headline": "One punchy sentence — the week's defining narrative. Format example (synthetic): 'Example Catalyst Splits Sector X in Two: Theme A Meets Theme B'",
 
   "executive_summary": "5-6 paragraph executive summary (~500 words) that tells the STORY of this week as a coherent narrative arc. Structure it as: (1) Open with the single most important event/catalyst of the week and its market impact, (2) How that catalyst rippled across sectors — name specific stocks and their moves, (3) Key earnings or economic data releases and what they signaled, (4) The thematic rotation story — which investment themes gained/lost traction and why (AI infra vs SaaS, private credit risk, energy transition, etc.), (5) Cross-asset context: what rates, credit, vol, and factor rotation tell us about market regime, (6) What this means for thematic portfolio positioning going into next week. Be SPECIFIC — name companies, cite numbers, reference actual events from the daily narratives. This should read like a Goldman Sachs or Morgan Stanley weekly note.",
 
   "key_events": [
     {{
-      "event": "Anthropic Mythos Model Launch",
-      "date": "Apr 10",
-      "impact": "3-4 sentence analysis of what happened, which stocks/sectors it impacted, the magnitude of moves, and the second-order implications. E.g. 'Anthropic released Mythos, its most capable model yet, triggering an immediate repricing of software names as the market reassessed AI displacement risk. SNOW -8.42%, NOW -7.58%, PANW -6.74%, with the entire IGV ETF down -2.57%. Simultaneously, semiconductor names rallied as the same catalyst validated the AI infrastructure buildout thesis — SMCI +8.79%, MRVL +7.19%. This divergence marks the clearest market signal yet that investors are distinguishing AI beneficiaries from AI casualties.'"
+      "event": "Example Event A (synthetic placeholder — use a real event from THIS week's daily narratives)",
+      "date": "Mon DD",
+      "impact": "3-4 sentence analysis of what happened, which stocks/sectors it impacted, the magnitude of moves, and the second-order implications. Format example (synthetic): 'Company X announced Example Event A, triggering a repricing of the affected group. TICKER1 -X.XX%, TICKER2 -X.XX%, with the related ETF down -X.XX%. Simultaneously, an adjacent group rallied on the same catalyst — TICKER3 +X.XX%, TICKER4 +X.XX%. This divergence signals how investors are separating beneficiaries from casualties.'"
     }}
   ],
 
   "thematic_analysis": [
     {{
-      "theme": "AI Infrastructure vs Software Disruption",
+      "theme": "Example Theme A vs Example Theme B (synthetic placeholder — pick real cross-cutting themes from THIS week)",
       "narrative": "4-5 sentence deep analysis of this investment theme as it played out this week. Reference specific thematic ETFs (SMH, IGV, WCLD, HACK, BOTZ), individual stocks, and the catalysts. Explain what this means for thematic positioning — is this a rotation to lean into or fade? What are the leading indicators to watch?"
     }}
   ],
 
   "sector_review": [
     {{
-      "sector": "Technology — Software vs Semis",
-      "weekly_change": -2.3,
-      "narrative": "3-4 sentence review. Name the key stocks that drove the sector, the specific catalysts (earnings, product launches, regulatory actions), and what this means for positioning. Don't just say 'tech was mixed' — explain the SOFTWARE vs SEMIS divergence with specific names and numbers."
+      "sector": "Example Sector — Sub-group A vs Sub-group B (synthetic placeholder)",
+      "weekly_change": -9.9,
+      "narrative": "3-4 sentence review. Name the key stocks that drove the sector, the specific catalysts (earnings, product launches, regulatory actions), and what this means for positioning. Don't just say 'the sector was mixed' — explain sub-sector divergences with specific names and numbers."
     }}
   ],
 
   "earnings_and_data": [
     {{
-      "event": "TSMC Q1 Revenue Beat (+35% YoY)",
+      "event": "Example Data Release (+X% YoY) (synthetic placeholder — use a real release from THIS week)",
       "impact": "2-3 sentences on what this data point revealed and how the market reacted"
     }}
   ],
@@ -241,9 +282,9 @@ Produce a JSON object with this structure. Return ONLY raw JSON — no markdown,
 
   "notable_moves": [
     {{
-      "ticker": "SMCI",
-      "move": "+8.79%",
-      "date": "Apr 11",
+      "ticker": "TICKER",
+      "move": "+X.XX%",
+      "date": "Mon DD",
       "context": "2 sentences: what drove this move and why it matters for the broader theme"
     }}
   ]
@@ -251,7 +292,7 @@ Produce a JSON object with this structure. Return ONLY raw JSON — no markdown,
 
 RULES:
 1. This is written for THEMATIC INVESTORS — every section should have a thematic angle (AI, energy transition, private credit, etc.)
-2. Reference SPECIFIC events from the daily narratives — Anthropic Mythos, TSMC revenue, HHS budget cuts, Iran pipeline attacks, etc.
+2. Reference SPECIFIC events from THIS week's daily narratives ONLY — never events from the synthetic examples above, and never events you remember from other weeks
 3. Name specific stocks with their moves (ticker + percentage)
 4. Reference thematic ETFs (SMH, IGV, WCLD, HACK, XBI, KRE, etc.) when relevant
 5. The executive summary must tell a STORY, not list events — connect the dots between catalysts
@@ -265,18 +306,7 @@ Return ONLY the JSON object."""
 
     if not openai_enabled():
         print("  OPENAI_API_KEY not set, skipping GPT-5.4 weekly summary generation")
-        return {
-            "headline": f"Weekly Market Summary: {agg.get('week_start', '')} — {agg.get('week_end', '')}",
-            "executive_summary": "OpenAI is not configured yet, so the weekly commentary was skipped.",
-            "sector_review": [],
-            "thematic_analysis": [],
-            "key_themes": [],
-            "factor_commentary": "",
-            "week_ahead": "",
-            "notable_moves": [],
-            "earnings_and_data": [],
-            "signal_commentary": "",
-        }
+        return _fallback_narrative_stub(agg, _FALLBACK_SUMMARY_SKIPPED), False
 
     print("  Generating weekly summary via OpenAI GPT-5.4...")
     try:
@@ -285,30 +315,33 @@ Return ONLY the JSON object."""
         print(f"  Weekly narrative: {len(narrative.get('sector_review', []))} sectors, "
               f"{len(narrative.get('thematic_analysis', [])) or len(narrative.get('key_themes', []))} themes, "
               f"{len(narrative.get('notable_moves', []))} notable moves")
-        return narrative
+        return narrative, True
 
     except Exception as e:
         print(f"  Warning: weekly narrative generation failed: {e}")
-        return {
-            "headline": f"Weekly Market Summary: {agg.get('week_start', '')} — {agg.get('week_end', '')}",
-            "executive_summary": "Weekly summary generation failed. Please refer to daily reports.",
-            "sector_review": [],
-            "thematic_analysis": [],
-            "key_themes": [],
-            "factor_commentary": "",
-            "week_ahead": "",
-            "notable_moves": [],
-            "earnings_and_data": [],
-            "signal_commentary": "",
-        }
+        return _fallback_narrative_stub(agg, _FALLBACK_SUMMARY_FAILED), False
 
 
-def run_weekly_summary(ref_date: date = None) -> dict | None:
-    """Generate weekly summary if today is Friday (or forced via ref_date)."""
-    if ref_date is None:
-        ref_date = date.today()
+def run_weekly_summary(target_date: str | None = None, force: bool = False) -> dict | None:
+    """Generate the weekly summary for the week containing target_date.
+
+    Skips regeneration when a good (non-fallback) file already exists for the
+    week unless force=True, and never overwrites a good file with a failure
+    stub.
+    """
+    ref_date = date.fromisoformat(resolve_target_date(target_date))
 
     week_dates = _get_week_dates(ref_date)
+    week_str = week_dates[0].isoformat()
+    out_path = STATE_DIR / f"weekly_summary_{week_str}.json"
+
+    existing = load_json(out_path) if out_path.exists() else None
+    existing_is_good = bool(existing) and not _is_fallback_narrative(existing.get("narrative"))
+    if existing_is_good and not force:
+        print(f"  Weekly summary for week of {week_str} already exists — skipping regeneration "
+              "(pass force=True to rebuild).")
+        return existing
+
     briefs = _load_daily_briefs(week_dates)
 
     if not briefs:
@@ -318,7 +351,11 @@ def run_weekly_summary(ref_date: date = None) -> dict | None:
     print(f"  Aggregating {len(briefs)} daily briefs ({week_dates[0]} to {week_dates[-1]})...")
 
     agg = _aggregate_week_data(briefs)
-    narrative = _generate_weekly_narrative(agg)
+    narrative, ok = _generate_weekly_narrative(agg)
+
+    if not ok and existing_is_good:
+        print("  Narrative generation failed — keeping the existing good weekly summary file.")
+        return existing
 
     result = {
         "generated_at": datetime.now().isoformat(),
@@ -326,10 +363,7 @@ def run_weekly_summary(ref_date: date = None) -> dict | None:
         "narrative": narrative,
     }
 
-    # Save
-    week_str = week_dates[0].isoformat()
-    out_path = STATE_DIR / f"weekly_summary_{week_str}.json"
-    out_path.write_text(json.dumps(result, indent=2, default=str))
+    save_json(out_path, result)
     print(f"  Saved weekly summary → {out_path}")
 
     return result

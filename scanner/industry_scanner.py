@@ -24,7 +24,7 @@ Everything is saved to state/industries_YYYY-MM-DD.json.
 
 from __future__ import annotations
 
-import json
+import time
 from datetime import date, datetime, timedelta
 from io import StringIO
 from pathlib import Path
@@ -32,6 +32,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import requests
+
+from scanner.common import USER_AGENT, load_json, resolve_target_date, save_json
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
@@ -87,18 +89,22 @@ def _coerce_col(df: pd.DataFrame, candidate: str) -> str | None:
 
 def _scrape_wiki_industries(source: dict) -> dict[str, dict]:
     """Return {ticker: {sector, industry, name}} for one Wikipedia source."""
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
-    }
-    try:
-        r = requests.get(source["url"], headers=headers, timeout=15)
-        r.raise_for_status()
-        tables = pd.read_html(StringIO(r.text))
-    except Exception as exc:  # noqa: BLE001
-        print(f"  Warning: could not fetch {source['url']}: {exc}")
+    headers = {"User-Agent": USER_AGENT}
+    tables = None
+    for attempt in range(2):
+        try:
+            r = requests.get(source["url"], headers=headers, timeout=15)
+            r.raise_for_status()
+            tables = pd.read_html(StringIO(r.text))
+            break
+        except Exception as exc:  # noqa: BLE001
+            if attempt == 0:
+                print(f"  Warning: fetch failed for {source['url']} ({exc}); retrying once...")
+                time.sleep(2)
+            else:
+                print(f"  Warning: could not fetch {source['url']}: {exc}")
+                return {}
+    if tables is None:
         return {}
 
     out: dict[str, dict] = {}
@@ -113,7 +119,8 @@ def _scrape_wiki_industries(source: dict) -> dict[str, dict]:
             raw = row[ticker_col]
             if pd.isna(raw):
                 continue
-            ticker = str(raw).split(".")[0].strip().replace("-", ".")
+            # yfinance uses dashes for class shares (BRK.B → BRK-B)
+            ticker = str(raw).strip().replace(".", "-")
             if not ticker:
                 continue
             industry = str(row[industry_col]).strip() if industry_col and not pd.isna(row[industry_col]) else "Unknown"
@@ -129,7 +136,7 @@ def get_industry_map(force_refresh: bool = False, max_age_days: int = 7) -> dict
     """Build/load a {ticker: {sector, industry, name}} mapping."""
     if INDUSTRY_MAP_PATH.exists() and not force_refresh:
         try:
-            payload = json.loads(INDUSTRY_MAP_PATH.read_text())
+            payload = load_json(INDUSTRY_MAP_PATH, default={}) or {}
             ts = datetime.fromisoformat(payload.get("generated_at", "1970-01-01T00:00:00"))
             age_days = (datetime.now() - ts).days
             if age_days <= max_age_days and payload.get("map"):
@@ -146,17 +153,17 @@ def get_industry_map(force_refresh: bool = False, max_age_days: int = 7) -> dict
 
     if not merged:
         # Fallback: try to load whatever exists, even if stale
-        if INDUSTRY_MAP_PATH.exists():
-            payload = json.loads(INDUSTRY_MAP_PATH.read_text())
+        payload = load_json(INDUSTRY_MAP_PATH, default={}) or {}
+        if payload.get("map"):
             print("  Using stale industry_map.json as fallback.")
-            return payload.get("map", {})
+            return payload["map"]
         return {}
 
-    INDUSTRY_MAP_PATH.write_text(json.dumps({
+    save_json(INDUSTRY_MAP_PATH, {
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "count": len(merged),
         "map": merged,
-    }, indent=2))
+    })
     return merged
 
 
@@ -222,10 +229,6 @@ def _multi_timeframe(close: pd.Series, target_dt: date) -> dict:
     d5 = back(5)
 
     idx = close.index
-    if idx.tz is not None:
-        anchor_today = pd.Timestamp(target_dt).tz_localize(idx.tz)
-    else:
-        anchor_today = pd.Timestamp(target_dt)
 
     def first_at_or_after(ts: pd.Timestamp) -> float | None:
         sub = close.loc[close.index >= ts]
@@ -414,8 +417,9 @@ def _classify_rotation(rrg: dict) -> str | None:
 
 def _build_industry_index(constituent_closes: list[pd.Series]) -> pd.Series | None:
     """
-    Equal-weighted price index. Each constituent normalised to 100 at first common
-    date, then averaged across constituents.
+    Equal-weighted price index. Each constituent is rebased to 100 at its own
+    first valid close, then averaged across the constituents that have data on
+    each date (no back-fill — pre-IPO dates stay NaN and are simply excluded).
     """
     if not constituent_closes:
         return None
@@ -423,10 +427,10 @@ def _build_industry_index(constituent_closes: list[pd.Series]) -> pd.Series | No
     if len(aligned) < MIN_INDUSTRY_SIZE:
         return None
     df = pd.concat(aligned, axis=1).dropna(how="all")
-    df = df.ffill().bfill()
+    df = df.ffill()
     if df.empty:
         return None
-    base = df.iloc[0]
+    base = df.apply(lambda col: col.loc[col.first_valid_index()] if col.first_valid_index() is not None else np.nan)
     base = base.replace(0, np.nan)
     if base.isna().all():
         return None
@@ -438,19 +442,13 @@ def _build_industry_index(constituent_closes: list[pd.Series]) -> pd.Series | No
 # Main entry
 # ---------------------------------------------------------------------------
 
-def _resolve_target_date(target_date: str | date | None) -> date:
-    if target_date is None:
-        return date.today()
-    if isinstance(target_date, date):
-        return target_date
-    return datetime.strptime(target_date, "%Y-%m-%d").date()
-
-
 def run_industry_scan(
     dry_run: bool = False,
     target_date: str | date | None = None,
 ) -> dict:
-    target_dt = _resolve_target_date(target_date)
+    if isinstance(target_date, date):
+        target_date = target_date.isoformat()
+    target_dt = date.fromisoformat(resolve_target_date(target_date))
     today = target_dt.isoformat()
     out_path = STATE_DIR / f"industries_{today}.json"
 
@@ -480,8 +478,7 @@ def run_industry_scan(
             },
         }
         out_path = STATE_DIR / "dry_run" / f"industries_{today}.json"
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(payload, indent=2))
+        save_json(out_path, payload)
         return payload
 
     industry_map = get_industry_map()
@@ -493,13 +490,25 @@ def run_industry_scan(
     if bench is None:
         print("ERROR: benchmark unavailable — cannot compute RRG.")
 
+    # Load every constituent's parquet exactly once (~1,500 files) and keep the
+    # usable close series in memory for both the bucket and event passes.
+    print("Loading cached constituent prices...")
+    constituent_closes: dict[str, pd.Series] = {}
+    for ticker in industry_map:
+        df = _load_cached_prices(ticker, target_dt)
+        if df is None or "Close" not in df:
+            continue
+        close = df["Close"].dropna()
+        if len(close) < MIN_HISTORY:
+            continue
+        constituent_closes[ticker] = close
+
     # Group tickers by industry, but only those with cached price data for today.
     print("Aggregating constituents by GICS Sub-Industry...")
     industry_buckets: dict[str, list[str]] = {}
     industry_meta: dict[str, dict] = {}
     for ticker, meta in industry_map.items():
-        df = _load_cached_prices(ticker, target_dt)
-        if df is None or "Close" not in df or len(df["Close"].dropna()) < MIN_HISTORY:
+        if ticker not in constituent_closes:
             continue
         ind = meta.get("industry") or "Unknown"
         sect = meta.get("sector") or "Unknown"
@@ -523,17 +532,9 @@ def run_industry_scan(
 
     # Pre-compute MA events for every constituent (for breadth + stock-level events)
     print("Computing constituent MA events...")
-    constituent_events: dict[str, dict] = {}
-    constituent_closes: dict[str, pd.Series] = {}
-    for ticker in industry_map:
-        df = _load_cached_prices(ticker, target_dt)
-        if df is None or "Close" not in df:
-            continue
-        close = df["Close"].dropna()
-        if len(close) < MIN_HISTORY:
-            continue
-        constituent_closes[ticker] = close
-        constituent_events[ticker] = _ma_events(close)
+    constituent_events: dict[str, dict] = {
+        ticker: _ma_events(close) for ticker, close in constituent_closes.items()
+    }
 
     print(f"  {len(constituent_events)} constituents have ≥{MIN_HISTORY} days of price data.")
 
@@ -606,16 +607,20 @@ def run_industry_scan(
         for key in ("golden_cross", "death_cross", "reclaim_50d", "lost_50d",
                     "reclaim_200d", "lost_200d", "ema_bull_cross", "ema_bear_cross"):
             if events.get(key):
+                # age 0 (a cross today) is valid — don't let `or` discard it
+                age = events.get(f"{key}_age")
+                if age is None:
+                    age = events.get("ema_cross_age")
                 cross_events[key].append({
                     "industry": industry, "sector": sector,
-                    "age": events.get(f"{key}_age") or events.get("ema_cross_age"),
+                    "age": age,
                     "perf_5d": perf.get("5d", 0.0),
                 })
 
     # Sort outputs
     industries_out.sort(key=lambda x: x["performance"].get("1d", 0), reverse=True)
     for key, lst in cross_events.items():
-        cross_events[key] = sorted(lst, key=lambda x: x.get("age") or 99)
+        cross_events[key] = sorted(lst, key=lambda x: 99 if x.get("age") is None else x["age"])
 
     # Aggregate stock-level events across the whole universe
     stock_event_counts = {
@@ -662,7 +667,7 @@ def run_industry_scan(
         },
     }
 
-    out_path.write_text(json.dumps(payload, indent=2, default=str))
+    save_json(out_path, payload)
     print(f"Saved industry scan → {out_path.relative_to(BASE_DIR)}")
     print(f"  Industries: {summary['n_industries']} · "
           f"Rotation breakouts: {len(summary['rotation_breakouts'])} · "

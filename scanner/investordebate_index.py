@@ -25,10 +25,11 @@ Saves the consolidated index to state/investordebate_index.json.
 
 from __future__ import annotations
 
-import json
 import re
 from datetime import datetime
 from pathlib import Path
+
+from scanner.common import save_json
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
@@ -64,6 +65,11 @@ REPORT_FILE_RE = re.compile(
 def _meta_from_filename(p: Path) -> dict | None:
     m = REPORT_FILE_RE.match(p.name)
     if not m:
+        return None
+    try:
+        datetime.strptime(m.group("date"), "%Y-%m-%d")
+    except ValueError:
+        print(f"  Warning: skipping {p.name}: invalid date '{m.group('date')}' in filename.")
         return None
     slug = m.group("slug")
     canonical = SECTOR_CANONICAL.get(slug, {"name": slug.replace("-", " ").title(), "color": "#5e6878"})
@@ -335,11 +341,13 @@ def run_investordebate_index(dry_run: bool = False) -> dict:
 
     # Parse all
     parsed: list[dict] = []
+    failed: list[Path] = []
     for p in all_files:
         try:
             parsed.append(parse_report(p))
         except Exception as exc:  # noqa: BLE001
             print(f"  ! could not parse {p.name}: {exc}")
+            failed.append(p)
 
     # Group by sector_slug
     by_sector: dict[str, list[dict]] = {}
@@ -347,6 +355,18 @@ def run_investordebate_index(dry_run: bool = False) -> dict:
         by_sector.setdefault(r["sector_slug"], []).append(r)
     for slug, lst in by_sector.items():
         lst.sort(key=lambda x: x["date"], reverse=True)
+
+    # Loudly flag failed files that are the newest report for their sector —
+    # the index's "latest" entry would silently serve a stale report.
+    for p in failed:
+        m = REPORT_FILE_RE.match(p.name)
+        if not m:
+            continue
+        slug, file_date = m.group("slug"), m.group("date")
+        history = by_sector.get(slug, [])
+        if not history or file_date > history[0]["date"]:
+            print(f"  WARNING: {p.name} failed to parse and is the newest report for "
+                  f"sector '{slug}' — the index will show a stale (or missing) latest report.")
 
     # Build per-sector index entries (latest + diff vs prior)
     sectors_out: list[dict] = []
@@ -397,7 +417,7 @@ def run_investordebate_index(dry_run: bool = False) -> dict:
         "sectors": sectors_out,
     }
 
-    OUT_PATH.write_text(json.dumps(payload, indent=2, default=str))
+    save_json(OUT_PATH, payload)
     print(f"Saved investordebate index → {OUT_PATH.relative_to(BASE_DIR)}")
     print(f"  Sectors with reports: {payload['sectors_with_data']}/11 · "
           f"Total reports: {payload['total_reports']}")
