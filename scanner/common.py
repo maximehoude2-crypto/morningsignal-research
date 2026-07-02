@@ -42,3 +42,46 @@ def load_json(path: Path, default=None):
     except (OSError, json.JSONDecodeError) as exc:
         print(f"  Warning: could not read {path}: {exc}")
         return default
+
+
+def acquire_pipeline_lock():
+    """Take an exclusive, non-blocking lock on state/.pipeline.lock.
+
+    Returns the open file handle — the caller must keep a reference to it for
+    the lifetime of the run (the lock is released when the handle is closed,
+    i.e. at process exit). Raises SystemExit if another run holds the lock.
+    """
+    import fcntl
+
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    lock_path = STATE_DIR / ".pipeline.lock"
+    handle = open(lock_path, "w")
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        handle.close()
+        raise SystemExit("Another pipeline run is in progress")
+    handle.write(str(os.getpid()))
+    handle.flush()
+    return handle
+
+
+def step(name: str, fn, *args, **kwargs):
+    """Run a pipeline step, print status. Returns (success, result)."""
+    import time
+    import traceback
+
+    print(f"\n{'─' * 50}")
+    print(f"▶  {name}")
+    print(f"{'─' * 50}")
+    t0 = time.time()
+    try:
+        result = fn(*args, **kwargs)
+        elapsed = time.time() - t0
+        print(f"✓  {name} completed in {elapsed:.1f}s")
+        return True, result
+    except Exception as exc:
+        elapsed = time.time() - t0
+        print(f"✗  {name} FAILED in {elapsed:.1f}s: {exc}")
+        traceback.print_exc()
+        return False, None

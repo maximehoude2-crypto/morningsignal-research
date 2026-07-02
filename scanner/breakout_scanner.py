@@ -3,19 +3,17 @@ Breakout Scanner — scans S&P 1500 universe for high-scoring breakout setups.
 Saves results to state/breakouts_YYYY-MM-DD.json.
 """
 
-import json
-import os
 import time
-import hashlib
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from io import StringIO
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-import numpy as np
 import requests
 
-from scanner.indicators import composite_score
+from scanner.common import USER_AGENT, load_json, resolve_target_date, save_json
+from scanner.indicators import composite_from_components, score_components
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
@@ -26,8 +24,13 @@ CACHE_DIR.mkdir(exist_ok=True)
 BENCHMARK = "SPY"
 TOP_N = 15
 MIN_SCORE = 60
+MIN_UNIVERSE = 1200
 BATCH_SIZE = 100
-BATCH_SLEEP = 0.1
+BATCH_SLEEP = 1.0
+INFO_SLEEP = 0.5
+CACHE_MAX_AGE_DAYS = 10
+MARKET_TZ = ZoneInfo("America/New_York")
+MARKET_CLOSE_HOUR = 16
 
 
 # ---------------------------------------------------------------------------
@@ -35,19 +38,23 @@ BATCH_SLEEP = 0.1
 # ---------------------------------------------------------------------------
 
 def _fetch_wikipedia_tickers(url: str, ticker_col: str) -> list[str]:
-    try:
-        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        tables = pd.read_html(StringIO(response.text))
-        for tbl in tables:
-            cols = [c for c in tbl.columns if ticker_col.lower() in str(c).lower()]
-            if cols:
-                raw = tbl[cols[0]].dropna().tolist()
-                # Clean tickers (remove exchange suffix like .NYSE)
-                return [str(t).split(".")[0].strip().replace("-", ".") for t in raw if str(t).strip()]
-    except Exception as e:
-        print(f"  Warning: could not fetch {url}: {e}")
+    headers = {"User-Agent": USER_AGENT}
+    for attempt in range(2):
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            tables = pd.read_html(StringIO(response.text))
+            for tbl in tables:
+                cols = [c for c in tbl.columns if ticker_col.lower() in str(c).lower()]
+                if cols:
+                    raw = tbl[cols[0]].dropna().tolist()
+                    # Wikipedia writes class shares with dots (BRK.B);
+                    # yfinance wants dashes (BRK-B)
+                    return [str(t).strip().replace(".", "-") for t in raw if str(t).strip()]
+        except Exception as e:
+            print(f"  Warning: could not fetch {url} (attempt {attempt + 1}/2): {e}")
+            if attempt == 0:
+                time.sleep(2)
     return []
 
 
@@ -65,6 +72,11 @@ def get_sp1500_tickers() -> list[str]:
     )
     combined = list(dict.fromkeys(sp500 + sp400 + sp600))  # deduplicate preserving order
     print(f"  Universe: {len(sp500)} S&P500 + {len(sp400)} S&P400 + {len(sp600)} S&P600 = {len(combined)} unique tickers")
+    if len(combined) < MIN_UNIVERSE:
+        raise RuntimeError(
+            f"Ticker universe sanity check failed: {len(combined)} tickers fetched "
+            f"(expected >= {MIN_UNIVERSE}) — refusing to scan a shrunken universe"
+        )
     return combined
 
 
@@ -73,11 +85,9 @@ def get_sp1500_tickers() -> list[str]:
 # ---------------------------------------------------------------------------
 
 def _resolve_target_date(target_date: str | date | None) -> date:
-    if target_date is None:
-        return date.today()
     if isinstance(target_date, date):
         return target_date
-    return datetime.strptime(target_date, "%Y-%m-%d").date()
+    return date.fromisoformat(resolve_target_date(target_date))
 
 
 def _cache_path(ticker: str, target_date: str | date | None = None) -> Path:
@@ -85,9 +95,26 @@ def _cache_path(ticker: str, target_date: str | date | None = None) -> Path:
     return CACHE_DIR / f"{ticker}_{target_dt.isoformat()}.parquet"
 
 
+def _cache_is_fresh(path: Path, target_dt: date) -> bool:
+    """
+    A cache file for a past date is always valid. For today's date it is
+    only valid if written after the 4:00 PM ET close — otherwise a midday
+    run would freeze a partial intraday bar for the after-close run.
+    """
+    if not path.exists():
+        return False
+    if target_dt != date.today():
+        return True
+    close = datetime(target_dt.year, target_dt.month, target_dt.day,
+                     MARKET_CLOSE_HOUR, 0, tzinfo=MARKET_TZ)
+    mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=MARKET_TZ)
+    return mtime > close
+
+
 def load_cached(ticker: str, target_date: str | date | None = None) -> pd.DataFrame | None:
-    p = _cache_path(ticker, target_date)
-    if p.exists():
+    target_dt = _resolve_target_date(target_date)
+    p = _cache_path(ticker, target_dt)
+    if _cache_is_fresh(p, target_dt):
         return pd.read_parquet(p)
     return None
 
@@ -96,32 +123,69 @@ def save_cache(ticker: str, df: pd.DataFrame, target_date: str | date | None = N
     df.to_parquet(_cache_path(ticker, target_date))
 
 
+def prune_cache(max_age_days: int = CACHE_MAX_AGE_DAYS) -> int:
+    """Delete parquet cache files older than max_age_days. Returns count."""
+    cutoff = time.time() - max_age_days * 86400
+    removed = 0
+    for f in CACHE_DIR.glob("*.parquet"):
+        try:
+            if f.stat().st_mtime < cutoff:
+                f.unlink()
+                removed += 1
+        except OSError:
+            pass
+    if removed:
+        print(f"  Pruned {removed} cache files older than {max_age_days} days")
+    return removed
+
+
 def fetch_prices_batch(
     tickers: list[str],
     dry_run: bool = False,
     target_date: str | date | None = None,
 ) -> dict[str, pd.DataFrame]:
     """Fetch 1 year of daily OHLCV for a batch of tickers."""
-    if dry_run:
+    if dry_run or not tickers:
         return {}
     import yfinance as yf
     target_dt = _resolve_target_date(target_date)
     end = datetime.combine(target_dt + timedelta(days=1), datetime.min.time())
     start = end - timedelta(days=380)
-    data = yf.download(
-        tickers,
-        start=start.strftime("%Y-%m-%d"),
-        end=end.strftime("%Y-%m-%d"),
-        group_by="ticker",
-        auto_adjust=True,
-        progress=False,
-        threads=True,
-    )
+
+    data = None
+    for attempt in range(2):
+        try:
+            data = yf.download(
+                tickers,
+                start=start.strftime("%Y-%m-%d"),
+                end=end.strftime("%Y-%m-%d"),
+                group_by="ticker",
+                auto_adjust=True,
+                progress=False,
+                threads=True,
+            )
+        except Exception as e:
+            print(f"  Warning: batch download failed (attempt {attempt + 1}/2): {e}")
+            data = None
+        if data is not None and not data.empty:
+            break
+        if attempt == 0:
+            time.sleep(5)  # backoff before the single retry
+    if data is None or data.empty:
+        return {}
+
     result = {}
     if len(tickers) == 1:
         t = tickers[0]
-        if not data.empty:
-            result[t] = data
+        df = data
+        if isinstance(df.columns, pd.MultiIndex):
+            try:
+                df = df[t]
+            except KeyError:
+                df = df.droplevel(0, axis=1)
+        df = df.dropna(how="all")
+        if not df.empty:
+            result[t] = df
     else:
         for t in tickers:
             try:
@@ -147,40 +211,60 @@ def get_price_data(
     return df
 
 
+def _normalize_index(obj):
+    """Coerce a price index to tz-naive normalized dates for reliable joins."""
+    idx = pd.DatetimeIndex(obj.index)
+    if idx.tz is not None:
+        idx = idx.tz_localize(None)
+    obj.index = idx.normalize()
+    return obj
+
+
 # ---------------------------------------------------------------------------
 # Consecutive-day flagging
 # ---------------------------------------------------------------------------
 
+STREAK_STATE_PATH = STATE_DIR / "streak_state.json"
+DEEP_DIVE_QUEUE_PATH = STATE_DIR / "deep_dive_queue.json"
+
+
 def load_streak_state() -> dict:
-    p = STATE_DIR / "streak_state.json"
-    if p.exists():
-        return json.loads(p.read_text())
-    return {}
+    return load_json(STREAK_STATE_PATH, default={}) or {}
 
 
 def save_streak_state(state: dict):
-    p = STATE_DIR / "streak_state.json"
-    p.write_text(json.dumps(state, indent=2))
+    save_json(STREAK_STATE_PATH, state)
 
 
 def update_streaks(top_tickers: list[str], target_date: str | date | None = None) -> dict:
-    """Track how many consecutive days each ticker has been in top 15."""
+    """
+    Track how many consecutive days each ticker has been in top 15.
+    Idempotent per date: a ticker already counted for the target date is
+    not incremented again on a same-day rerun.
+    """
     streak = load_streak_state()
     target_dt = _resolve_target_date(target_date)
     today_str = target_dt.isoformat()
     # Expire old entries (not in top 15 today)
     new_streak = {}
     for t in top_tickers:
-        prev = streak.get(t, {"count": 0, "since": today_str})
-        new_streak[t] = {"count": prev["count"] + 1, "since": prev["since"]}
+        prev = streak.get(t)
+        if prev and prev.get("last_counted") == today_str:
+            new_streak[t] = prev  # already counted for this date
+        elif prev:
+            new_streak[t] = {"count": prev["count"] + 1,
+                             "since": prev.get("since", today_str),
+                             "last_counted": today_str}
+        else:
+            new_streak[t] = {"count": 1, "since": today_str,
+                             "last_counted": today_str}
     save_streak_state(new_streak)
     return new_streak
 
 
 def update_deep_dive_queue(streaks: dict, target_date: str | date | None = None):
     """Flag tickers with 3+ consecutive days for deep dive."""
-    p = STATE_DIR / "deep_dive_queue.json"
-    queue = json.loads(p.read_text()) if p.exists() else []
+    queue = load_json(DEEP_DIVE_QUEUE_PATH, default=[]) or []
     existing = {e["ticker"] for e in queue}
     target_dt = _resolve_target_date(target_date)
     for ticker, info in streaks.items():
@@ -188,7 +272,7 @@ def update_deep_dive_queue(streaks: dict, target_date: str | date | None = None)
             queue.append({"ticker": ticker, "flagged_date": target_dt.isoformat(),
                           "streak_days": info["count"]})
             print(f"  >> Auto-flagged {ticker} for deep dive ({info['count']} consecutive days)")
-    p.write_text(json.dumps(queue, indent=2))
+    save_json(DEEP_DIVE_QUEUE_PATH, queue)
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +338,9 @@ def run_scanner(
 ) -> list[dict]:
     """
     Main entry point. Returns list of top breakout dicts.
+    Two-pass scoring: pass 1 computes per-ticker components (stage 2 gate,
+    raw RS, base, trend); pass 2 percentile-ranks raw RS across the scanned
+    universe and combines into the final composite.
     """
     target_dt = _resolve_target_date(target_date)
     today = target_dt.isoformat()
@@ -263,18 +350,17 @@ def run_scanner(
         print("[DRY RUN] Generating mock breakout data...")
         results = mock_breakout_data()
         out_path = STATE_DIR / "dry_run" / f"breakouts_{today}.json"
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(results, indent=2))
+        save_json(out_path, results)
         print(f"  Saved {len(results)} mock breakouts → {out_path}")
         return results
 
+    prune_cache()
+
     tickers = get_sp1500_tickers()
-    if not tickers:
-        print("ERROR: Could not fetch ticker universe")
-        return []
+
+    import yfinance as yf
 
     # Fetch benchmark using Ticker API (avoids MultiIndex issue with yf.download)
-    import yfinance as yf
     print(f"Fetching benchmark ({BENCHMARK})...")
     bench_end = datetime.combine(target_dt + timedelta(days=1), datetime.min.time())
     bench_start = bench_end - timedelta(days=380)
@@ -286,12 +372,10 @@ def run_scanner(
     if bench_hist is None or bench_hist.empty:
         print("ERROR: Could not fetch benchmark data")
         return []
-    bench_prices = bench_hist["Close"].dropna()
+    bench_prices = _normalize_index(bench_hist["Close"].dropna()).rename("Benchmark")
 
-    # Fetch ticker info (sector/name) from yfinance
-    import yfinance as yf
-
-    scored = []
+    # Pass 1: per-ticker components
+    candidates = []
     batches = [tickers[i:i + BATCH_SIZE] for i in range(0, len(tickers), BATCH_SIZE)]
 
     print(f"Scanning {len(tickers)} tickers in {len(batches)} batches...")
@@ -309,38 +393,67 @@ def run_scanner(
             if df is None or len(df) < 200:
                 continue
 
-            prices = df["Close"].dropna()
-            volumes = df["Volume"].dropna()
-
-            # Align lengths
-            min_len = min(len(prices), len(volumes), len(bench_prices))
-            if min_len < 200:
+            # Align price, volume and benchmark on the DatetimeIndex
+            pv = _normalize_index(df[["Close", "Volume"]].dropna())
+            joined = pv.join(bench_prices, how="inner")
+            if len(joined) < 200:
                 continue
 
-            prices = prices.iloc[-min_len:]
-            volumes = volumes.iloc[-min_len:]
-            bench_aligned = bench_prices.iloc[-min_len:]
+            prices = joined["Close"]
+            volumes = joined["Volume"]
+            bench_aligned = joined["Benchmark"]
 
-            sc = composite_score(prices, volumes, bench_aligned)
-            if sc["total"] >= MIN_SCORE and sc["stage2"]:
-                high_52w = prices.tail(252).max()
-                avg_vol = int(volumes.tail(50).mean())
-                vol_ratio = round(volumes.tail(5).mean() / avg_vol, 2) if avg_vol > 0 else 0
-                scored.append({
-                    "ticker": ticker,
-                    "score": sc["total"],
-                    "rs": sc["rs"],
-                    "base": sc["base"],
-                    "trend": sc["trend"],
-                    "stage2": sc["stage2"],
-                    "price": round(float(prices.iloc[-1]), 2),
-                    "high_52w": round(float(high_52w), 2),
-                    "pct_from_high": round((float(prices.iloc[-1]) / float(high_52w) - 1) * 100, 1),
-                    "avg_volume": avg_vol,
-                    "vol_ratio": vol_ratio,
-                })
+            comp = score_components(prices, volumes, bench_aligned)
+
+            high_52w = prices.tail(252).max()
+            # Average volume excludes the last 5 (breakout) sessions
+            avg_vol = int(volumes.iloc[-55:-5].mean())
+            vol_ratio = round(float(volumes.tail(5).mean()) / avg_vol, 2) if avg_vol > 0 else 0
+            candidates.append({
+                "ticker": ticker,
+                "stage2": comp["stage2"],
+                "rs_raw": comp["rs_raw"],
+                "base": comp["base"],
+                "trend": comp["trend"],
+                "price": round(float(prices.iloc[-1]), 2),
+                "high_52w": round(float(high_52w), 2),
+                "pct_from_high": round((float(prices.iloc[-1]) / float(high_52w) - 1) * 100, 1),
+                "avg_volume": avg_vol,
+                "vol_ratio": vol_ratio,
+            })
 
         time.sleep(BATCH_SLEEP)
+
+    if not candidates:
+        print("ERROR: no tickers produced usable price data")
+        save_json(out_path, [])
+        return []
+
+    # Pass 2: percentile-rank raw RS across the scanned universe (0-100),
+    # then combine into the final composite. Stage 2 is a hard gate.
+    rs_percentiles = pd.Series([c["rs_raw"] for c in candidates]).rank(pct=True) * 100
+
+    scored = []
+    for cand, rs_pct in zip(candidates, rs_percentiles):
+        if not cand["stage2"]:
+            continue
+        rs_score = round(float(rs_pct), 1)
+        total = composite_from_components(rs_score, cand["base"], cand["trend"])
+        if total >= MIN_SCORE:
+            scored.append({
+                "ticker": cand["ticker"],
+                "score": total,
+                "rs": rs_score,
+                "rs_raw": round(float(cand["rs_raw"]), 4),
+                "base": round(float(cand["base"]), 1),
+                "trend": round(float(cand["trend"]), 1),
+                "stage2": True,
+                "price": cand["price"],
+                "high_52w": cand["high_52w"],
+                "pct_from_high": cand["pct_from_high"],
+                "avg_volume": cand["avg_volume"],
+                "vol_ratio": cand["vol_ratio"],
+            })
 
     # Sort and take top N
     scored.sort(key=lambda x: x["score"], reverse=True)
@@ -356,6 +469,7 @@ def run_scanner(
         except Exception:
             item.setdefault("name", item["ticker"])
             item.setdefault("sector", "Unknown")
+        time.sleep(INFO_SLEEP)  # .info is the most rate-limited endpoint
 
     # Add rank
     for i, item in enumerate(top):
@@ -367,7 +481,7 @@ def run_scanner(
     for item in top:
         item["streak_days"] = streaks.get(item["ticker"], {}).get("count", 1)
 
-    out_path.write_text(json.dumps(top, indent=2))
+    save_json(out_path, top)
     print(f"Saved {len(top)} breakouts → {out_path}")
     return top
 
