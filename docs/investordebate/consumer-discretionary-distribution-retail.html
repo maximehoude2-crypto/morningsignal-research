@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Consumer Discretionary Distribution & Retail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-07-23 07:34</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Consumer Discretionary Distribution & Retail</div>
+        <div class="hero-title">Consumer Discretionary Distribution & Retail — Committee Report</div>
+        <div class="hero-summary">
+          June retail and food-services sales rose only 0.2% MoM to $768.6B after May’s 0.9% gain; consumers are still spending, but the rate of change is slowing. Nonstore retail grew 12.2% YoY in May, structurally favoring Amazon and marketplace models. Housing is mixed: June starts jumped 19% MoM, but sing
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-07-20</span>
+          <span class="pill">37 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Consumer Discretionary Distribution & Retail yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-07-20</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">ROST</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.5/5</td>
+            <td>8.7/10</td>
+            <td class="thesis-cell">Q1 sales +21%, comps +17%, EPS +37% and a raised FY outlook prove off-price share gains rather than mere consumer resilience.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">AMZN</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.3/10</td>
+            <td class="thesis-cell">Q1 sales +17%, AWS +28% and retail margin expansion offset a temporarily collapsed FCF caused by explicit AI capex.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">EBAY</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.0/10</td>
+            <td class="thesis-cell">Q1 revenue +19% and GMV +18% mark a real growth reacceleration at ~17x forward earnings.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">WSM</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.5/5</td>
+            <td>7.6/10</td>
+            <td class="thesis-cell">4.8% comp growth and 16.2% operating margin show share and supply-chain discipline despite a weak housing backdrop.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">ETSY</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.0/5</td>
+            <td>7.3/10</td>
+            <td class="thesis-cell">Q1 GMS beat and expectation of positive YoY GMS each quarter create operating leverage at a low-teens forward multiple, but the 52% YTD rally caps conviction.</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">Amazon splits Fundamental/Industry from Credit/Risk. The bull sees 12% North America sales growth, $8.3B segment operating profit and AWS at 37.7% margin; the bear sees trailing FCF compressed to $1.2B after $59.3B more property/equipment spend. CIO ruling: BUY, but ROST ranks first because its cash conversion is less capex-dependent.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--blue);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Where We Differ from Consensus</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">The committee prefers ROST to TJX and EBAY to higher-multiple marketplaces. It treats ETSY’s rebound as investable but not high conviction. It remains cautious on CVNA despite franchise momentum because leverage/used-auto cyclicality and a 34x forward multiple leave weak downside protection.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--red);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">What We're Probably Wrong About</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">Housing turnover may inflect faster than permits imply, making HD/LOW/WSM/RH too conservative. We may also underappreciate how fast AI-driven shopping agents strengthen Amazon’s conversion while weakening smaller marketplaces.</div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 5 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · ROST — Ross Stores</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 sales grew 21%, comps 17%, margin reached 13.4% versus 11.8–12.1% plan and EPS rose 37% to $2.02. Management raised FY comp guidance to 6–7% and EPS to $7.50–7.74. The mechanism is merchandise availability plus value perception driving traffic and occupancy leverage.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>The multiple is ~27x and Q1 comps are unlikely to repeat; a tariff or inventory-cost shock can reverse merchandise margin.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#2 · AMZN — Amazon</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 sales rose 17% to $181.5B, operating income rose to $23.9B, North America profit reached $8.3B and AWS sales grew 28% at 37.7% margin. The company is monetizing the retail/logistics/ads/cloud flywheel at enormous scale.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>TTM FCF fell to $1.2B as AI investment surged, and $16.8B of investment gains inflated net income. At ~25x forward earnings, the stock needs AI capex to translate into AWS growth and durable margins.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#3 · EBAY — eBay</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 revenue rose 19% to $3.1B and GMV rose 18% to $22.2B, 14% FX-neutral. That is a genuine reacceleration for a stock around 17x forward earnings, with focus-category and advertising monetization supporting margin.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Part of growth is FX and easier comparisons; marketplace relevance and buyer frequency still face Amazon/social-commerce pressure.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#4 · WSM — Williams-Sonoma</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 comps rose 4.8%, margin was 16.2% and EPS rose 4.3% despite weak housing. Supply-chain efficiency offset half of a 100 bp merchandise-margin decline, demonstrating structural cost control.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Inventory rose 9%, including $60M tariff costs, faster than sales. Falling permits and flat single-family starts can pressure demand and markdowns.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#5 · ETSY — Etsy</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 GMS exceeded the prior range and management expects positive Etsy marketplace GMS in each 2026 quarter. At ~13x forward earnings, positive GMS and advertising/take-rate leverage can create disproportionate EPS upside.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>The 52% rally discounts much of the recovery before active-buyer and frequency proof. AI shopping, Amazon and low-cost marketplaces challenge discovery.</p>
+      </div>
+      
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (30699 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Consumer Discretionary Distribution & Retail — v3.0
+
+**GICS Level 2:** Consumer Discretionary Distribution & Retail (Code 2550) | **Parent Sector:** Consumer Discretionary  
+**Report Date:** 2026-07-20  
+**Universe:** 37 US-listed stocks above $2B market cap  
+**Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Retail Structural  
+**Market Data As Of:** 2026-07-17 close; company/Census evidence through 2026-07-20  
+**Status:** COMPLETE — first same-group session; public-source limitations disclosed in Appendix G
+
+---
+
+## SPECIALIST WEIGHTS THIS SESSION
+
+First run for this industry group — default weights applied. Performance tracking begins this session.
+
+| Specialist | Default | Score | Multiplier | Session weight | Change |
+|---|---:|---:|---:|---:|---:|
+| Fundamental | 18% | N/A | 1.00x | 18% | first run |
+| Quant/Factor | 14% | N/A | 1.00x | 14% | first run |
+| Technical | 13% | N/A | 1.00x | 13% | first run |
+| Macro | 15% | N/A | 1.00x | 15% | first run |
+| Credit/Risk | 13% | N/A | 1.00x | 13% | first run |
+| Sentiment | 10% | N/A | 1.00x | 10% | first run |
+| MomentumPulse | 7% | N/A | 1.00x | 7% | first run |
+| Retail Structural | 10% | N/A | 1.00x | 10% | first run |
+| **Total** | **100%** |  |  | **100%** |  |
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+### Macro Context
+
+June retail and food-services sales rose only 0.2% MoM to $768.6B after May’s 0.9% gain; consumers are still spending, but the rate of change is slowing. Nonstore retail grew 12.2% YoY in May, structurally favoring Amazon and marketplace models. Housing is mixed: June starts jumped 19% MoM, but single-family starts were flat and permits fell 3%, so home improvement/furnishings lack a broad demand turn. With the 10-year at 4.57% and CPI at 3.5%, the winning setup is value/off-price share gain or high-ROI digital distribution—not indiscriminate consumer beta.
+
+### Top 5 Ranked Stocks
+
+| Rank | Ticker | Rating | Conviction | Composite | One-Line Thesis |
+|---:|---|---|---:|---:|---|
+| 1 | ROST | STRONG BUY | 4.5/5 | 8.7 | Q1 sales +21%, comps +17%, EPS +37% and a raised FY outlook prove off-price share gains rather than mere consumer resilience. |
+| 2 | AMZN | BUY | 4.0/5 | 8.3 | Q1 sales +17%, AWS +28% and retail margin expansion offset a temporarily collapsed FCF caused by explicit AI capex. |
+| 3 | EBAY | BUY | 4.0/5 | 8.0 | Q1 revenue +19% and GMV +18% mark a real growth reacceleration at ~17x forward earnings. |
+| 4 | WSM | BUY | 3.5/5 | 7.6 | 4.8% comp growth and 16.2% operating margin show share and supply-chain discipline despite a weak housing backdrop. |
+| 5 | ETSY | BUY | 3.0/5 | 7.3 | Q1 GMS beat and expectation of positive YoY GMS each quarter create operating leverage at a low-teens forward multiple, but the 52% YTD rally caps conviction. |
+
+### Key Industry Group Call
+
+**Overweight off-price and asset-light digital; underweight housing-dependent and leveraged turnarounds.** ROST is the cleanest current proof. AMZN’s retail economics are improving, but the call is partly an AWS/capex debate. Home-improvement and furnishings need permit/turnover improvement before a sector-wide rerating.
+
+### Biggest Disagreement
+
+Amazon splits Fundamental/Industry from Credit/Risk. The bull sees 12% North America sales growth, $8.3B segment operating profit and AWS at 37.7% margin; the bear sees trailing FCF compressed to $1.2B after $59.3B more property/equipment spend. CIO ruling: BUY, but ROST ranks first because its cash conversion is less capex-dependent.
+
+### Where We Differ From Consensus
+
+The committee prefers ROST to TJX and EBAY to higher-multiple marketplaces. It treats ETSY’s rebound as investable but not high conviction. It remains cautious on CVNA despite franchise momentum because leverage/used-auto cyclicality and a 34x forward multiple leave weak downside protection.
+
+### What We're Probably Wrong About
+
+Housing turnover may inflect faster than permits imply, making HD/LOW/WSM/RH too conservative. We may also underappreciate how fast AI-driven shopping agents strengthen Amazon’s conversion while weakening smaller marketplaces.
+
+---
+
+## RESEARCH REFERENCE
+
+### Macro and group-specific snapshot
+
+| Variable | Latest | Rate of change | Retail mechanism |
+|---|---:|---|---|
+| June retail/food sales | $768.6B, +0.2% MoM | slower than May +0.9% | Spending positive, but decelerating. |
+| May nonstore retail | +12.2% YoY | strong | Supports e-commerce share gain. |
+| June housing starts | 1.427M, +19% MoM | rebound | Mixed read; single-family -0.2% MoM. |
+| June permits | 1.367M, -3% MoM | deteriorating | Weak leading read for home retail. |
+| Retail inventories (May) | +3.4% YoY | up | Markdown risk if sales slow. |
+| CPI / unemployment | 3.5% / 4.2% | inflation sticky; labor firm | Real purchasing power constrained but not collapsing. |
+
+Sources: [Census June retail indicator](https://www.census.gov/economic-indicators/e-commerce.html), [Census June housing](https://www.census.gov/construction/nrc/current/index.html), [Census advance inventories](https://www.census.gov/econ/indicators/current/index.html), [BLS CPI](https://www.bls.gov/news.release/archives/cpi_07142026.htm).
+
+### Tier-1 evidence briefs
+
+| Ticker | Latest evidence | Valuation / structure | Catalyst and falsification |
+|---|---|---|---|
+| ROST | Q1 sales +21%; comps +17%; margin 13.4%; EPS $2.02 (+37%); FY comp/EPS raised. | $233.46; ~27.3x forward P/E; $2.55B repurchase program. | Fiscal Q2 in Aug.: comps must meet 6–7% and EPS $1.85–1.93; comp <4% or guide reversal falsifies. |
+| AMZN | Q1 sales $181.5B (+17%); operating income $23.9B; AWS sales +28% to $37.6B and margin 37.7%. | $247.23; ~24.9x forward P/E; TTM FCF $1.2B after AI capex. | Q2 release expected late Jul.: AWS ≥mid-20s growth and op income ≥$20B; capex rises without AWS acceleration falsifies. |
+| EBAY | Q1 revenue $3.1B (+19%); GMV $22.2B (+18%); FX-neutral GMV +14%. | $112.06; ~16.7x forward P/E; +28.7% YTD. | Q2: GMV must remain double digit and margins stable; FX-neutral GMV <5% falsifies. |
+| WSM | Q1 comps +4.8%; margin 16.2%; EPS $1.93 (+4.3%); inventory +9%, including $60M tariffs. | $228.41; ~22.2x forward P/E; $652M cash. | Q2: comps positive and margin ≥15.5%; inventory growth >sales plus guide cut falsifies. |
+| ETSY | Q1 GMS exceeded prior guide; management expects YoY Etsy GMS growth each quarter. | $84.10; ~12.9x forward P/E; +51.7% YTD. | Q2: positive marketplace GMS; return to negative GMS falsifies turnaround. |
+| TJX | Revenue growth ~9.2%, margin ~11.8%; flat YTD. | $154.46; ~26.8x forward P/E. | Next earnings: comp/share proof; comp <2% and margin compression falsify premium. |
+| BKNG | Revenue growth ~16.2%, margin ~25%; -15.2% YTD after split-adjusted quote. | $181.68; ~14.8x forward P/E. | Q2 summer bookings; room-night growth <5% or guide cut falsifies value case. |
+| BURL | Revenue +14.1%, but margin only ~5.9%; +19.5% YTD. | $345.31; ~25x forward P/E. | Q2 comp/margin; comp below ROST by >5 points keeps HOLD. |
+| DLTR | Revenue +7.2%, margin ~9.1%; +26% over three months. | $125.94; ~16.4x forward P/E. | Q2 traffic/mix; gross-margin reversal or guide cut falsifies. |
+| DG | Revenue +3.4%, margin ~5.9%; +12.3% vs 50-day. | $125.75; ~15.7x forward P/E. | Q2 shrink/margin; traffic without margin recovery is insufficient. |
+| BBY | Revenue +1.9%, margin ~4%; +27.6% YTD. | $85.41; ~12.1x forward P/E. | Q2 electronics cycle; negative comps after rerating falsify. |
+| ULTA | Revenue +11.1%, margin ~14.2%; -20.7% YTD. | $479.57; ~15.1x forward P/E. | Q2 traffic/loyalty; comp acceleration would upgrade. |
+| HD | Revenue +4.8%, margin ~11.9%; flat YTD. | $338.87; ~21.1x forward P/E. | Aug. earnings and housing turnover; comp <0 with permit weakness keeps HOLD. |
+| LOW | Revenue +10.3%, margin ~11.1%; -13.4% YTD. | $208.73; ~15.5x forward P/E. | Aug. comps/pro demand; another guide cut falsifies cheapness. |
+| CVNA | Revenue +52%, margin ~9%; -20.2% YTD. | $67.34; ~34.2x forward P/E; leverage remains key. | Q2 GPU and debt; unit growth without cash conversion falsifies. |
+
+Company sources: [Amazon Q1](https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-First-Quarter-Results/), [Ross Q1](https://investors.rossstores.com/news-releases/news-release-details/ross-stores-reports-robust-first-quarter-sales-and-earnings), [eBay Q1](https://investors.ebayinc.com/investor-news/press-release-details/2026/eBay-Inc--Reports-First-Quarter-2026-Results/default.aspx), [Etsy Q1 filing](https://investors.etsy.com/sec-filings/all-sec-filings/content/0001370637-26-000042/q126shareholderletter.htm), [Williams-Sonoma Q1](https://ir.williams-sonomainc.com/investor-information/news-releases/news-release-details/2026/Williams-Sonoma-Inc--announces-strong-first-quarter-2026-results/default.aspx).
+
+---
+
+## ROUND 1 — INDEPENDENT SPECIALIST ANALYSIS
+
+**Fundamental:** ROST has the best current operating proof. AMZN’s retail/AWS moat is unmatched, but capex obscures owner earnings. EBAY’s GMV acceleration changes the value-trap debate. WSM’s 16.2% margin is strong despite housing; ETSY’s low multiple is attractive only if GMS turns positive.
+
+**Quant/Factor:** ROST, EBAY and WSM combine quality, momentum and reasonable valuation. AMZN is quality/growth with moderate momentum. ETSY/BBY/KMX are momentum turnarounds; CVNA/W/FIVE remain valuation-risky despite growth.
+
+**Technical:** Stage-2 leaders are ROST, EBAY, ETSY, DLTR, BBY, WSM, KMX, SAH and RH. Stage-4 names include LOW, ULTA, CHWY, TSCO, AEO, CVNA and CPNG. AMZN is a consolidating Stage 2, not a breakout.
+
+**Macro:** Strong nonstore growth favors AMZN/EBAY/ETSY; flat single-family starts and falling permits cap HD/LOW/WSM/RH. Sticky inflation favors off-price, but tariff inventory raises gross-margin risk.
+
+**Credit/Risk:** ROST/EBAY/WSM have strong cash economics. AMZN can self-fund capex, but FCF duration is a genuine risk. CVNA, auto dealers, W and RH deserve leverage haircuts; cyclicality plus debt is non-linear.
+
+**Sentiment:** ROST’s beat is strong enough to withstand positive consensus, but the 30% YTD move narrows asymmetry. ETSY’s 52% rally risks becoming a crowded comeback. HD/LOW sentiment is washed out, but catalysts are not yet visible.
+
+**MomentumPulse:** ROST, EBAY, ETSY, WSM, BBY, KMX and SAH lead. AMZN’s earnings momentum is stronger than its flat 3-month price. LOW/ULTA/CHWY/TSCO/AEO fail the price-confirmation test.
+
+**Retail Structural:** Off-price wins through treasure-hunt inventory and trade-down; Amazon wins via selection/logistics/Prime/AWS; eBay/Etsy require marketplace liquidity and buyer frequency. Housing-linked retail needs turnover, not just starts. Inventory growth above sales is the earliest margin warning.
+
+### Round 1 scoring matrix — complete universe
+
+| # | Ticker | Tier | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Group | Avg | Std | Flag |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | ROST | T1 | 9.0 | 8.5 | 8.5 | 9.0 | 8.5 | 7.0 | 9.0 | 9.5 | 8.63 | 0.74 | consensus |
+| 2 | AMZN | T1 | 9.5 | 8.0 | 7.0 | 8.0 | 6.5 | 7.5 | 7.5 | 10.0 | 8.00 | 1.15 | moderate |
+| 3 | EBAY | T1 | 8.0 | 8.5 | 8.5 | 7.5 | 8.0 | 7.5 | 8.5 | 8.0 | 8.06 | 0.40 | consensus |
+| 4 | WSM | T1 | 8.0 | 8.0 | 8.5 | 5.5 | 8.5 | 7.0 | 8.5 | 8.0 | 7.75 | 1.01 | moderate |
+| 5 | ETSY | T1 | 7.0 | 8.0 | 9.5 | 8.0 | 7.0 | 5.5 | 9.5 | 8.0 | 7.81 | 1.30 | moderate |
+| 6 | TJX | T1 | 8.5 | 7.0 | 6.5 | 8.5 | 8.0 | 7.0 | 6.5 | 9.0 | 7.63 | 0.93 | consensus |
+| 7 | BKNG | T1 | 8.5 | 8.0 | 7.0 | 7.5 | 7.5 | 7.0 | 7.0 | 8.5 | 7.63 | 0.60 | consensus |
+| 8 | BURL | T1 | 7.0 | 6.5 | 8.0 | 8.0 | 6.0 | 6.5 | 8.0 | 8.0 | 7.25 | 0.82 | consensus |
+| 9 | DLTR | T1 | 6.5 | 7.5 | 8.5 | 8.0 | 6.5 | 6.5 | 8.5 | 7.5 | 7.44 | 0.86 | consensus |
+| 10 | DG | T1 | 6.0 | 7.5 | 7.0 | 8.0 | 6.0 | 6.0 | 7.0 | 7.0 | 6.81 | 0.75 | consensus |
+| 11 | BBY | T1 | 6.0 | 8.0 | 9.0 | 6.0 | 7.0 | 6.0 | 9.0 | 6.0 | 7.13 | 1.27 | moderate |
+| 12 | ULTA | T1 | 7.5 | 8.0 | 3.5 | 7.0 | 8.0 | 6.0 | 3.5 | 7.0 | 6.31 | 1.71 | moderate |
+| 13 | HD | T1 | 8.0 | 6.5 | 6.0 | 4.5 | 7.0 | 6.5 | 6.0 | 7.5 | 6.50 | 1.00 | moderate |
+| 14 | LOW | T1 | 7.0 | 7.5 | 3.5 | 4.0 | 6.5 | 6.0 | 3.5 | 7.0 | 5.63 | 1.56 | moderate |
+| 15 | CVNA | T1 | 5.0 | 4.5 | 5.5 | 5.0 | 2.5 | 6.5 | 5.5 | 7.0 | 5.19 | 1.35 | moderate |
+| 16 | ORLY | T2 | 8.5 | 6.0 | 5.0 | 7.0 | 8.0 | 6.5 | 5.0 | 8.5 | 6.81 | 1.32 | moderate |
+| 17 | AZO | T2 | 8.5 | 7.0 | 4.0 | 7.0 | 6.5 | 6.5 | 4.0 | 8.5 | 6.50 | 1.58 | moderate |
+| 18 | FIVE | T2 | 6.5 | 5.0 | 6.0 | 7.5 | 7.0 | 6.0 | 6.0 | 7.0 | 6.38 | 0.78 | consensus |
+| 19 | W | T2 | 4.5 | 5.0 | 7.5 | 4.5 | 3.0 | 6.5 | 7.0 | 6.0 | 5.50 | 1.48 | moderate |
+| 20 | CHWY | T2 | 7.0 | 7.0 | 3.0 | 6.0 | 7.5 | 6.0 | 3.0 | 7.5 | 5.88 | 1.77 | moderate |
+| 21 | TSCO | T2 | 7.0 | 7.0 | 2.5 | 6.0 | 7.5 | 6.0 | 2.5 | 7.5 | 5.75 | 1.92 | moderate |
+| 22 | DKS | T2 | 7.5 | 7.0 | 7.0 | 6.5 | 7.0 | 6.5 | 7.0 | 7.5 | 7.00 | 0.35 | consensus |
+| 23 | ANF | T2 | 6.0 | 8.0 | 6.5 | 6.0 | 7.0 | 5.5 | 6.5 | 7.0 | 6.56 | 0.75 | consensus |
+| 24 | AEO | T2 | 5.0 | 7.0 | 3.5 | 5.5 | 6.5 | 5.5 | 3.5 | 5.5 | 5.31 | 1.21 | moderate |
+| 25 | URBN | T2 | 7.0 | 7.5 | 7.0 | 6.5 | 7.5 | 6.5 | 7.0 | 7.0 | 7.00 | 0.35 | consensus |
+| 26 | GME | T2 | 3.5 | 4.5 | 6.0 | 4.5 | 6.5 | 3.0 | 6.0 | 3.5 | 4.69 | 1.30 | moderate |
+| 27 | ASO | T3 | 6.0 | 8.0 | 4.0 | 6.0 | 5.5 | 5.5 | 4.0 | 6.0 | 5.63 | 1.22 | moderate |
+| 28 | RH | T3 | 5.5 | 4.5 | 9.0 | 4.0 | 3.0 | 7.0 | 9.0 | 6.5 | 6.06 | 2.08 | high divergence |
+| 29 | KMX | T3 | 5.5 | 6.5 | 9.0 | 6.0 | 5.5 | 6.5 | 9.0 | 6.0 | 6.75 | 1.39 | moderate |
+| 30 | AN | T3 | 6.0 | 7.5 | 7.0 | 5.5 | 5.0 | 6.0 | 7.0 | 6.5 | 6.31 | 0.82 | consensus |
+| 31 | LAD | T3 | 6.0 | 7.5 | 8.0 | 5.5 | 4.0 | 6.0 | 8.0 | 6.5 | 6.44 | 1.25 | moderate |
+| 32 | GPI | T3 | 6.0 | 8.0 | 5.5 | 5.5 | 4.5 | 6.0 | 5.5 | 6.5 | 5.94 | 1.01 | moderate |
+| 33 | ABG | T3 | 6.0 | 8.0 | 7.5 | 5.5 | 4.5 | 6.0 | 7.5 | 6.5 | 6.44 | 1.15 | moderate |
+| 34 | SAH | T3 | 5.5 | 6.5 | 9.5 | 5.5 | 4.5 | 5.5 | 9.5 | 6.0 | 6.63 | 1.88 | moderate |
+| 35 | CPNG | T3 | 6.5 | 4.5 | 3.0 | 6.5 | 6.0 | 6.0 | 3.0 | 7.5 | 5.38 | 1.60 | moderate |
+| 36 | MELI | T3 | 8.0 | 5.5 | 7.0 | 6.5 | 7.5 | 7.0 | 7.0 | 9.0 | 7.19 | 1.03 | moderate |
+| 37 | SE | T3 | 6.5 | 5.5 | 8.0 | 6.0 | 6.5 | 6.5 | 8.0 | 7.5 | 6.81 | 0.86 | consensus |
+
+---
+
+## ROUND 2 — ADVERSARIAL CROSS-EXAMINATION
+
+### ROST — structural share gain or unsustainable comp spike?
+
+**Bull:** Q1 sales +21%, comps +17%, 13.4% margin and EPS +37% all exceeded plan. Management still guides Q2 comps +6–7% and raised FY EPS to $7.50–7.74, so the thesis does not require repeating 17%. Off-price gains from excess branded inventory, trade-down and store expansion.
+
+**Bear:** A 17% comp can pull demand forward, while the stock’s 30% YTD gain and 27x forward multiple reduce room for normalizing traffic. Tariffs and wage pressure can reverse first-quarter leverage.
+
+**Key disagreement:** Durable share gain versus a one-quarter assortment/traffic spike.  
+**Watch:** fiscal Q2 comps, merchandise margin and inventory per store.
+
+### AMZN — moat plus margin or capex black hole?
+
+**Bull:** Q1 sales rose 17%, operating income 30%, AWS 28%, and North America operating income reached $8.3B. Retail, ads and cloud reinforce each other. Capex is directed toward a supply-constrained AWS opportunity with 37.7% segment margin.
+
+**Bear:** TTM FCF fell to $1.2B as property/equipment spending increased $59.3B. Q1 net income included $16.8B of pre-tax investment gains, so headline EPS overstates operating economics. If AI capex stays elevated while AWS growth slows, owner earnings disappoint.
+
+**Key disagreement:** Whether AI capex earns above-cost returns quickly enough.  
+**Watch:** Q2 AWS growth, capex, retail margin and operating-income guide.
+
+### ETSY — genuine marketplace recovery or short-covering?
+
+**Bull:** Q1 GMS was stronger than expected and management expects positive YoY Etsy GMS in every 2026 quarter. At ~13x forward earnings, positive GMS can create meaningful operating leverage.
+
+**Bear:** The stock has risen 52% YTD before sustained buyer-frequency proof. AI discovery, Amazon/Temu competition and discretionary softness challenge marketplace liquidity.
+
+**Key disagreement:** Whether positive GMS becomes durable active-buyer growth.  
+**Watch:** Q2 GMS, active buyers, frequency and take rate.
+
+### RH — timing artifact reversal or leverage trap?
+
+**Bull:** The TIF Signal Library identifies backorder distortion and raised guidance as a potential timing artifact; the stock is up 45% over three months. Housing optionality is high.
+
+**Bear:** Trailing growth is negative, leverage and rate sensitivity remain high, and a 20x forward multiple is not cheap for near-zero operating growth. Backorders must actually convert to revenue.
+
+**Key disagreement:** Timing reversal versus structurally weak demand.  
+**Watch:** Q2 revenue above guide, backorder decline and EBITDA margin recovery.
+
+---
+
+## ROUND 3 — POSITION CHANGES
+
+| Specialist | Ticker | R1 | R3 | Δ | Reason |
+|---|---|---:|---:|---:|---|
+| Fundamental | ROST | 9.0 | 9.5 | +0.5 | Raised FY guide confirms Q1 was not isolated. |
+| Sentiment | ROST | 7.0 | 6.5 | -0.5 | 30% YTD and positive consensus raise the bar. |
+| Credit/Risk | AMZN | 6.5 | 6.0 | -0.5 | FCF collapse is material even if intentional. |
+| Retail Structural | AMZN | 10.0 | 10.0 | 0 | Logistics/Prime/AWS flywheel remains unmatched. |
+| Fundamental | ETSY | 7.0 | 7.5 | +0.5 | Positive-GMS guidance changes the fundamental slope. |
+| Sentiment | ETSY | 5.5 | 5.0 | -0.5 | 52% YTD prices much of the turnaround. |
+| Fundamental | RH | 5.5 | 6.0 | +0.5 | Signal Library timing-artifact evidence deserves credit. |
+| Credit/Risk | RH | 3.0 | 2.5 | -0.5 | Leverage makes failed conversion non-linear. |
+
+---
+
+## ROUND 4 — CIO SYNTHESIS AND FINAL RANKINGS
+
+Default weights were used. ROST ranks first on the cleanest combination of traffic, comps, margin and guide revision. AMZN ranks second because operating proof is exceptional but capex creates owner-earnings uncertainty. EBAY’s GMV inflection beats the group’s more expensive marketplace stories. WSM and ETSY offer differentiated, catalyst-linked upside.
+
+| Ticker | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Group | Composite | Δ vs R1 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ROST | 9.5 | 8.5 | 8.5 | 9.0 | 8.5 | 6.5 | 9.0 | 9.5 | 8.67 | +0.04 |
+| AMZN | 9.5 | 8.0 | 7.0 | 8.0 | 6.0 | 7.5 | 7.5 | 10.0 | 7.94 | -0.06 |
+| ETSY | 7.5 | 8.0 | 9.5 | 8.0 | 7.0 | 5.0 | 9.5 | 8.0 | 7.85 | +0.04 |
+| RH | 6.0 | 4.5 | 9.0 | 4.0 | 2.5 | 7.0 | 9.0 | 6.5 | 6.07 | +0.01 |
+
+### Detailed stock analysis
+
+### 1. ROST — Ross Stores
+**Price:** $233.46 | **Market cap:** $74.9B | **YTD:** +29.6%  
+**Rating:** STRONG BUY | **Conviction:** 4.5/5 | **Composite:** 8.7/10
+
+**Bull case:** Q1 sales grew 21%, comps 17%, margin reached 13.4% versus 11.8–12.1% plan and EPS rose 37% to $2.02. Management raised FY comp guidance to 6–7% and EPS to $7.50–7.74. The mechanism is merchandise availability plus value perception driving traffic and occupancy leverage.  
+**Bear case:** The multiple is ~27x and Q1 comps are unlikely to repeat; a tariff or inventory-cost shock can reverse merchandise margin.  
+**Catalysts:** Fiscal Q2 in August; back-to-school traffic; FY guide update.  
+**Falsification:** Q2 comp <4%, operating margin <12%, or EPS guide below $7.50.  
+**Price targets:** Bear $190 (-19%) | Base $275 (+18%) | Bull $315 (+35%).
+
+### 2. AMZN — Amazon
+**Price:** $247.23 | **Market cap:** $2.66T | **YTD:** +7.1%  
+**Rating:** BUY | **Conviction:** 4.0/5 | **Composite:** 8.3/10
+
+**Bull case:** Q1 sales rose 17% to $181.5B, operating income rose to $23.9B, North America profit reached $8.3B and AWS sales grew 28% at 37.7% margin. The company is monetizing the retail/logistics/ads/cloud flywheel at enormous scale.  
+**Bear case:** TTM FCF fell to $1.2B as AI investment surged, and $16.8B of investment gains inflated net income. At ~25x forward earnings, the stock needs AI capex to translate into AWS growth and durable margins.  
+**Catalysts:** Q2 expected late July; AWS capacity additions; holiday retail guide.  
+**Falsification:** AWS growth <22%, operating income below $20B, or capex growth without backlog/revenue acceleration.  
+**Price targets:** Bear $205 (-17%) | Base $295 (+19%) | Bull $340 (+38%).
+
+### 3. EBAY — eBay
+**Price:** $112.06 | **Market cap:** $49.8B | **YTD:** +28.7%  
+**Rating:** BUY | **Conviction:** 4.0/5 | **Composite:** 8.0/10
+
+**Bull case:** Q1 revenue rose 19% to $3.1B and GMV rose 18% to $22.2B, 14% FX-neutral. That is a genuine reacceleration for a stock around 17x forward earnings, with focus-category and advertising monetization supporting margin.  
+**Bear case:** Part of growth is FX and easier comparisons; marketplace relevance and buyer frequency still face Amazon/social-commerce pressure.  
+**Catalysts:** Q2 release; focus-category GMV; ad revenue/take rate.  
+**Falsification:** FX-neutral GMV <5%, active-buyer decline accelerates, or operating margin compresses >200 bp.  
+**Price targets:** Bear $90 (-20%) | Base $135 (+20%) | Bull $155 (+38%).
+
+### 4. WSM — Williams-Sonoma
+**Price:** $228.41 | **Market cap:** $26.9B | **YTD:** +27.9%  
+**Rating:** BUY | **Conviction:** 3.5/5 | **Composite:** 7.6/10
+
+**Bull case:** Q1 comps rose 4.8%, margin was 16.2% and EPS rose 4.3% despite weak housing. Supply-chain efficiency offset half of a 100 bp merchandise-margin decline, demonstrating structural cost control.  
+**Bear case:** Inventory rose 9%, including $60M tariff costs, faster than sales. Falling permits and flat single-family starts can pressure demand and markdowns.  
+**Catalysts:** Q2; inventory normalization; tariff mitigation.  
+**Falsification:** Negative comps, margin <15.5%, or inventory growth exceeds sales by >5 points again.  
+**Price targets:** Bear $185 (-19%) | Base $270 (+18%) | Bull $305 (+34%).
+
+### 5. ETSY — Etsy
+**Price:** $84.10 | **Market cap:** $8.0B | **YTD:** +51.7%  
+**Rating:** BUY | **Conviction:** 3.0/5 | **Composite:** 7.3/10
+
+**Bull case:** Q1 GMS exceeded the prior range and management expects positive Etsy marketplace GMS in each 2026 quarter. At ~13x forward earnings, positive GMS and advertising/take-rate leverage can create disproportionate EPS upside.  
+**Bear case:** The 52% rally discounts much of the recovery before active-buyer and frequency proof. AI shopping, Amazon and low-cost marketplaces challenge discovery.  
+**Catalysts:** Q2; active buyer/frequency; product-search updates.  
+**Falsification:** Negative Q2 Etsy GMS, active-buyer contraction >5%, or take-rate gains come only from seller extraction.  
+**Price targets:** Bear $66 (-22%) | Base $102 (+21%) | Bull $120 (+43%).
+
+## HOLD ZONE SUMMARY
+
+| Ticker | Rating | Composite | What changes the view |
+|---|---|---:|---|
+| TJX | BUY/HOLD | 7.6 | Comp/share gain at less demanding entry. |
+| BKNG | BUY/HOLD | 7.6 | Summer bookings and room-night growth. |
+| DLTR | HOLD | 7.4 | Margin improvement survives mix normalization. |
+| BURL | HOLD | 7.3 | Narrows comp/margin gap to ROST. |
+| MELI | HOLD | 7.2 | Price and earnings momentum realign. |
+| BBY | HOLD | 7.1 | Positive comps validate device cycle. |
+| DKS | HOLD | 7.0 | Dick’s/Foot Locker integration economics. |
+| URBN | HOLD | 7.0 | Brand comps remain broad-based. |
+| ORLY | HOLD | 6.8 | Better entry or accelerating DIY/DIFM. |
+| DG | HOLD | 6.8 | Margin recovery catches traffic. |
+
+## BOTTOM 5 — AVOID / SELL
+
+| Ticker | Rating | Composite | Broken mechanism | Flip condition |
+|---|---|---:|---|---|
+| GME | STRONG SELL | 4.7 | Valuation/narrative detached from core retail cash earnings. | Durable operating profit from new strategy. |
+| CVNA | SELL | 5.2 | High multiple plus balance-sheet cyclicality. | Net debt falls and FCF scales with units. |
+| AEO | SELL | 5.3 | Negative trend and weak margin differentiation. | Positive comps plus margin guide raise. |
+| CPNG | SELL | 5.4 | Negative trend and low current margins at high multiple. | Reacceleration with durable positive margin. |
+| W | SELL | 5.5 | Housing sensitivity and thin profitability. | Positive FCF through a full housing quarter. |
+
+---
+
+## APPENDIX C — CIO WEIGHTING RATIONALE
+
+Default weights apply. Retail Structural is essential for traffic/ticket/conversion and inventory mechanics, but Fundamental and Credit/Risk prevent comp momentum from overwhelming cash conversion. Macro receives 15% because housing, real income and rates separate winners from value traps.
+
+## APPENDIX D — UNIVERSE DISCOVERY AUDIT
+
+Universe: AMZN, HD, LOW, TJX, BKNG, ORLY, ROST, EBAY, ETSY, ULTA, DLTR, DG, BBY, AZO, BURL, FIVE, W, CHWY, TSCO, DKS, ANF, AEO, URBN, GME, ASO, WSM, RH, CVNA, KMX, AN, LAD, GPI, ABG, SAH, CPNG, MELI and SE. US-listed ADR/foreign issuers were included. Several public market-cap fields were null but were retained only where scale clearly exceeds $2B.
+
+## APPENDIX E — SPECIALIST CALLS LOG (ENTRY PRICE = 2026-07-17 CLOSE)
+
+### Top 3 BUY picks per specialist
+
+| Specialist | Rank | Ticker | Entry | Conviction | Rationale |
+|---|---:|---|---:|---:|---|
+| Fundamental | 1 | ROST | $233.46 | 5 | Comp/margin/guide proof. |
+| Fundamental | 2 | AMZN | $247.23 | 5 | Retail/AWS flywheel. |
+| Fundamental | 3 | EBAY | $112.06 | 4 | GMV inflection at reasonable multiple. |
+| Quant/Factor | 1 | ROST | $233.46 | 5 | Quality and momentum. |
+| Quant/Factor | 2 | EBAY | $112.06 | 4 | Value plus revisions. |
+| Quant/Factor | 3 | WSM | $228.41 | 4 | Margin quality and momentum. |
+| Technical | 1 | ETSY | $84.10 | 4 | Stage-2 breakout. |
+| Technical | 2 | ROST | $233.46 | 4 | Earnings-backed uptrend. |
+| Technical | 3 | WSM | $228.41 | 4 | Strong 3/6-month trend. |
+| Macro | 1 | ROST | $233.46 | 4 | Trade-down/share gain. |
+| Macro | 2 | AMZN | $247.23 | 4 | Nonstore structural growth. |
+| Macro | 3 | EBAY | $112.06 | 4 | Asset-light distribution. |
+| Credit/Risk | 1 | ROST | $233.46 | 5 | Clean cash economics. |
+| Credit/Risk | 2 | WSM | $228.41 | 4 | Cash-rich balance sheet. |
+| Credit/Risk | 3 | EBAY | $112.06 | 4 | Asset-light FCF. |
+| Sentiment | 1 | EBAY | $112.06 | 4 | Growth inflection underappreciated. |
+| Sentiment | 2 | AMZN | $247.23 | 4 | Flat 3M despite operating strength. |
+| Sentiment | 3 | ULTA | $479.57 | 3 | Washed-out quality franchise. |
+| MomentumPulse | 1 | ROST | $233.46 | 5 | Earnings/price momentum aligned. |
+| MomentumPulse | 2 | ETSY | $84.10 | 4 | GMS slope and breakout. |
+| MomentumPulse | 3 | EBAY | $112.06 | 4 | GMV and price momentum. |
+| Retail Structural | 1 | AMZN | $247.23 | 5 | Strongest flywheel. |
+| Retail Structural | 2 | ROST | $233.46 | 5 | Off-price share gain. |
+| Retail Structural | 3 | EBAY | $112.06 | 4 | Marketplace liquidity recovery. |
+
+### Top 3 SELL/AVOID picks per specialist
+
+| Specialist | Rank | Ticker | Entry | Rationale |
+|---|---:|---|---:|---|
+| Fundamental | 1 | GME | $21.89 | Core earnings do not support valuation. |
+| Fundamental | 2 | W | $89.31 | Thin profit and housing risk. |
+| Fundamental | 3 | CVNA | $67.34 | High multiple and balance-sheet risk. |
+| Quant/Factor | 1 | CVNA | $67.34 | Expensive cyclicality. |
+| Quant/Factor | 2 | CPNG | $16.62 | High multiple, negative trend. |
+| Quant/Factor | 3 | RH | $187.88 | Weak earnings quality. |
+| Technical | 1 | TSCO | $30.51 | Stage-4 trend. |
+| Technical | 2 | CHWY | $20.93 | 37% YTD decline. |
+| Technical | 3 | AEO | $17.03 | Persistent downtrend. |
+| Macro | 1 | W | $89.31 | Housing/rate sensitivity. |
+| Macro | 2 | RH | $187.88 | Housing plus leverage. |
+| Macro | 3 | LOW | $208.73 | Weak turnover/permits. |
+| Credit/Risk | 1 | CVNA | $67.34 | Leverage/cycle downside. |
+| Credit/Risk | 2 | RH | $187.88 | Non-linear balance-sheet risk. |
+| Credit/Risk | 3 | LAD | $335.28 | Dealer leverage and low margin. |
+| Sentiment | 1 | ETSY | $84.10 | Comeback trade crowded. |
+| Sentiment | 2 | SAH | $100.37 | 62% YTD ahead of earnings. |
+| Sentiment | 3 | KMX | $57.33 | 48% YTD recovery priced. |
+| MomentumPulse | 1 | TSCO | $30.51 | Negative YTD/3M. |
+| MomentumPulse | 2 | CHWY | $20.93 | Price trend contradicts growth. |
+| MomentumPulse | 3 | LOW | $208.73 | Negative revisions and trend. |
+| Retail Structural | 1 | GME | $21.89 | No durable distribution edge. |
+| Retail Structural | 2 | W | $89.31 | Weak unit economics. |
+| Retail Structural | 3 | AEO | $17.03 | Insufficient brand differentiation. |
+
+## APPENDIX F — SPECIALIST LEADERBOARD
+
+| Rank | Specialist | Sessions | BUY Win% | SELL Win% | Score | Trend |
+|---:|---|---:|---:|---:|---:|---|
+| 1–8 | All specialists | 0 evaluated | N/A | N/A | N/A | First session. |
+
+## APPENDIX G — EXACT BLOCKED INPUTS / DATA QUALITY
+
+- Paid point-in-time consensus/revision histories, channel checks, card-spend panels, traffic/conversion data and short-interest days-to-cover were unavailable without token/paywall access.
+- AMZN Q1 net income included a $16.8B pre-tax investment gain; the report does not treat that as operating earnings.
+- HD, LOW, BBY, AZO, W, KMX, LAD, SAH and SE public market-cap fields returned null; eligibility was retained only for clearly above-threshold names.
+- BKNG’s $181.68 quote is split-adjusted; comparisons to old per-share price targets would be invalid.
+- Exact Q2 dates for EBAY, ETSY, WSM and ROST were not all independently verified from company calendars; the report uses month windows and does not fabricate dates.
+- GICS classifications for cross-border platforms CPNG/MELI/SE can vary by data vendor; included because the mandate is US-listed and their economic activity fits distribution/retail.
+
+## Sources
+
+- [Amazon Q1 2026](https://ir.aboutamazon.com/news-release/news-release-details/2026/Amazon-com-Announces-First-Quarter-Results/)
+- [Ross Q1 2026](https://investors.rossstores.com/news-releases/news-release-details/ross-stores-reports-robust-first-quarter-sales-and-earnings)
+- [eBay Q1 2026](https://investors.ebayinc.com/investor-news/press-release-details/2026/eBay-Inc--Reports-First-Quarter-2026-Results/default.aspx)
+- [Etsy Q1 2026 filing](https://investors.etsy.com/sec-filings/all-sec-filings/content/0001370637-26-000042/q126shareholderletter.htm)
+- [Williams-Sonoma Q1 2026](https://ir.williams-sonomainc.com/investor-information/news-releases/news-release-details/2026/Williams-Sonoma-Inc--announces-strong-first-quarter-2026-results/default.aspx)
+- [Census June retail sales](https://www.census.gov/economic-indicators/e-commerce.html)
+- [Census June housing starts/permits](https://www.census.gov/construction/nrc/current/index.html)
+
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-07-23 07:34 · Not financial advice.</div>
+</footer>
+</body>
+</html>

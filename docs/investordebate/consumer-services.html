@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Consumer Services</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-07-23 07:34</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Consumer Services</div>
+        <div class="hero-title">Consumer Services — Committee Report</div>
+        <div class="hero-summary">
+          Consumer services enter the summer with demand intact but increasingly selective. June retail and food-services sales rose only 0.2% MoM, CPI was 3.5% YoY, unemployment was 4.2%, and the 10-year Treasury was 4.57%. That combination rewards concepts producing traffic through value or experience rathe
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-07-20</span>
+          <span class="pill">40 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Consumer Services yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-07-20</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">TXRH</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.5/5</td>
+            <td>8.6/10</td>
+            <td class="thesis-cell">Traffic-led 7.1% comps plus 5–6% store-week growth create durable unit economics despite commodity inflation.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">EAT</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.2/10</td>
+            <td class="thesis-cell">Chili's traffic recovery and double-digit restaurant margin make the low-teens forward multiple attractive despite decelerating comps.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">MAR</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.0/10</td>
+            <td class="thesis-cell">Fee revenue, a 618,000-room pipeline and 4.5–5% net-room growth compound with limited owned-asset intensity.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">ABNB</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.5/5</td>
+            <td>7.7/10</td>
+            <td class="thesis-cell">Q1 revenue +18%, GBV +19% and improving AI support unit costs validate the platform flywheel.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">SBUX</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.5/5</td>
+            <td>7.4/10</td>
+            <td class="thesis-cell">Transaction-led 7.1% US comps prove the turnaround has demand traction, though North America margin compression caps conviction.</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">EAT divides Fundamental/Momentum from Credit/Risk and Structural. Bulls see Chili's positive traffic, 11.3% consolidated operating margin and $10.60–10.85 adjusted-EPS guidance at roughly 15x forward earnings. Bears see company traffic still down 2% for the quarter, 18.4% restaurant margin down 50 bp and comps slowing to 3.3%. CIO ruling: BUY, but behind TXRH.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--blue);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Where We Differ from Consensus</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">The committee prefers TXRH and EAT to premium-growth CAVA/BROS and prefers MAR/ABNB to highly leveraged casinos and cruises. SBUX is treated as an investable operating turnaround, not a fully repaired margin story. CAKE's exceptional price momentum is respected but not chased after a roughly 70% YTD move.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--red);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">What We're Probably Wrong About</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">Cruise pricing or online gaming profitability could remain stronger for longer, making RCL/DKNG exclusions too conservative. Conversely, restaurant traffic may soften quickly if real disposable income weakens, exposing TXRH's commodity pressure and SBUX's high multiple.</div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 5 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · TXRH — Texas Roadhouse</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 revenue rose 12.8%, comps 7.1%, store weeks 5.7% and EPS 9.6%. Early-Q2 comps remained 6.5%. The mechanism is traffic-led AUV growth plus 5–6% store-week expansion, creating labor leverage and a long reinvestment runway.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Restaurant margin fell 36 bp as commodity inflation hit 6.2%, and the 26x multiple requires sustained traffic.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#2 · EAT — Brinker International</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Fiscal Q3 revenue reached $1.47B, Chili's comps rose 4%, and adjusted EPS was $2.90. Positive traffic in February/March suggests menu and service improvements are carrying the brand beyond price.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Full-quarter company traffic fell 2%, restaurant margin declined 50 bp, and comps have slowed. The stock's strong run raises execution risk into August.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#3 · MAR — Marriott International</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 worldwide RevPAR rose 4.2%, fee revenue 13%, net rooms 4.5% and the pipeline reached 618,000 rooms, 43% under construction. The fee model compounds rooms and revenue without owning most real estate.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>FY RevPAR guidance is only 2–3%; debt was $16.5B against $0.5B cash, and a 28x multiple leaves little room for travel deceleration.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#4 · ABNB — Airbnb</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 revenue grew 18% to $2.7B, GBV 19%, nights/seats 9% and adjusted EBITDA 24%. App-booked nights rose 22% and AI support reduced cost per booking about 10%, creating both demand and margin levers.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Revenue is growing faster than nights partly through pricing/take rate, regulation remains persistent, and services/experiences economics are early.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#5 · SBUX — Starbucks</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Fiscal Q2 global comps rose 6.2% and US comps 7.1%, driven by 4.3% transaction growth. Revenue rose 8.8%, showing Back to Starbucks has restored customer demand before full margin recovery.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>North America operating margin fell 170 bp to 9.9% as labor, coffee and tariffs offset sales leverage. At 35x forward earnings, the stock already discounts meaningful repair.</p>
+      </div>
+      
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (32613 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Consumer Services — v3.0
+
+**GICS Level 2:** Consumer Services (Code 2530) | **Parent Sector:** Consumer Discretionary  
+**Report Date:** 2026-07-20  
+**Universe:** 40 US-listed stocks above $2B market cap  
+**Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Consumer Services Structural  
+**Market Data As Of:** 2026-07-17 close; company and public macro evidence through 2026-07-20  
+**Status:** COMPLETE — first same-group session; public-source limitations disclosed in Appendix G
+
+---
+
+## SPECIALIST WEIGHTS THIS SESSION
+
+First run for this industry group — default weights applied. Performance tracking begins this session.
+
+| Specialist | Default | Score | Multiplier | Session weight | Change |
+|---|---:|---:|---:|---:|---:|
+| Fundamental | 18% | N/A | 1.00x | 18% | first run |
+| Quant/Factor | 14% | N/A | 1.00x | 14% | first run |
+| Technical | 13% | N/A | 1.00x | 13% | first run |
+| Macro | 15% | N/A | 1.00x | 15% | first run |
+| Credit/Risk | 13% | N/A | 1.00x | 13% | first run |
+| Sentiment | 10% | N/A | 1.00x | 10% | first run |
+| MomentumPulse | 7% | N/A | 1.00x | 7% | first run |
+| Consumer Services Structural | 10% | N/A | 1.00x | 10% | first run |
+| **Total** | **100%** |  |  | **100%** |  |
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+### Macro Context
+
+Consumer services enter the summer with demand intact but increasingly selective. June retail and food-services sales rose only 0.2% MoM, CPI was 3.5% YoY, unemployment was 4.2%, and the 10-year Treasury was 4.57%. That combination rewards concepts producing traffic through value or experience rather than price alone. Restaurants show the clearest dispersion: Texas Roadhouse's Q1 comparable sales rose 7.1% and Brinker posted positive traffic in February and March, while commodity and labor inflation still cap margins. Travel remains healthier: Marriott's worldwide RevPAR rose 4.2% and Airbnb's Q1 gross booking value rose 19%, but elevated multiples and consumer sensitivity demand catalyst discipline.
+
+### Top 5 Ranked Stocks
+
+| Rank | Ticker | Rating | Conviction | Composite | One-Line Thesis |
+|---:|---|---|---:|---:|---|
+| 1 | TXRH | STRONG BUY | 4.5/5 | 8.6 | Traffic-led 7.1% comps plus 5–6% store-week growth create durable unit economics despite commodity inflation. |
+| 2 | EAT | BUY | 4.0/5 | 8.2 | Chili's traffic recovery and double-digit restaurant margin make the low-teens forward multiple attractive despite decelerating comps. |
+| 3 | MAR | BUY | 4.0/5 | 8.0 | Fee revenue, a 618,000-room pipeline and 4.5–5% net-room growth compound with limited owned-asset intensity. |
+| 4 | ABNB | BUY | 3.5/5 | 7.7 | Q1 revenue +18%, GBV +19% and improving AI support unit costs validate the platform flywheel. |
+| 5 | SBUX | BUY | 3.5/5 | 7.4 | Transaction-led 7.1% US comps prove the turnaround has demand traction, though North America margin compression caps conviction. |
+
+### Key Industry Group Call
+
+**Overweight traffic-led restaurants and asset-light travel platforms; avoid leveraged experiential businesses where price momentum is the only evidence.** TXRH is the best fundamental compounder. EAT offers more valuation asymmetry but less margin durability. MAR and ABNB monetize travel without cruise/casino balance-sheet intensity.
+
+### Biggest Disagreement
+
+EAT divides Fundamental/Momentum from Credit/Risk and Structural. Bulls see Chili's positive traffic, 11.3% consolidated operating margin and $10.60–10.85 adjusted-EPS guidance at roughly 15x forward earnings. Bears see company traffic still down 2% for the quarter, 18.4% restaurant margin down 50 bp and comps slowing to 3.3%. CIO ruling: BUY, but behind TXRH.
+
+### Where We Differ From Consensus
+
+The committee prefers TXRH and EAT to premium-growth CAVA/BROS and prefers MAR/ABNB to highly leveraged casinos and cruises. SBUX is treated as an investable operating turnaround, not a fully repaired margin story. CAKE's exceptional price momentum is respected but not chased after a roughly 70% YTD move.
+
+### What We're Probably Wrong About
+
+Cruise pricing or online gaming profitability could remain stronger for longer, making RCL/DKNG exclusions too conservative. Conversely, restaurant traffic may soften quickly if real disposable income weakens, exposing TXRH's commodity pressure and SBUX's high multiple.
+
+---
+
+## RESEARCH REFERENCE
+
+### Macro and group-specific snapshot
+
+| Variable | Latest | Rate of change | Consumer-services mechanism |
+|---|---:|---|---|
+| June retail/food-services sales | $768.6B, +0.2% MoM | decelerating from May | Positive demand, less operating leverage. |
+| CPI / unemployment | 3.5% / 4.2% | sticky / stable | Value and wage productivity matter. |
+| 10-year / 2-year Treasury | 4.57% / 4.16% | restrictive | Penalizes leveraged casinos, cruises and long-duration growth. |
+| TXRH Q1 comps | +7.1% | Q2 first five weeks +6.5% | Traffic and unit growth remain aligned. |
+| MAR Q1 worldwide RevPAR | +4.2% | FY guide +2–3% | Travel normalizing, not collapsing. |
+| ABNB Q1 GBV / nights and seats | +19% / +9% | healthy | Platform demand and monetization improving. |
+
+Sources: [Census retail indicators](https://www.census.gov/economic-indicators/), [BLS CPI](https://www.bls.gov/news.release/archives/cpi_07142026.htm), [Federal Reserve economic data](https://fred.stlouisfed.org/), [Texas Roadhouse Q1](https://investor.texasroadhouse.com/news/news-details/2026/Texas-Roadhouse-Inc--Announces-First-Quarter-2026-Results/default.aspx), [Marriott Q1](https://marriott.gcs-web.com/news-releases/news-release-details/marriott-international-reports-first-quarter-2026-results), [Airbnb Q1](https://news.airbnb.com/airbnb-q1-2026-financial-results/).
+
+### Tier-1 evidence briefs
+
+| Ticker | Latest evidence | Valuation / structure | Catalyst and falsification |
+|---|---|---|---|
+| TXRH | Q1 revenue +12.8%; comps +7.1%; EPS +9.6%; first five Q2 weeks +6.5%. | $197.03; ~25.8x forward P/E; cash exceeds reported financial debt. | Q2: comps ≥5% and traffic positive; comp <3% or margin <15% falsifies. |
+| EAT | Fiscal Q3 company comps +3.3%, Chili's +4.0%; revenue $1.47B; adjusted EPS $2.90. | $189.35; ~15.2x forward P/E; consolidated margin 11.3%. | Aug. 12: traffic and FY guide; negative Chili's traffic or guide cut falsifies. |
+| MAR | Q1 RevPAR +4.2%; fee revenue +13%; pipeline 618k rooms; net rooms +4.5%. | $366.24; ~28.0x forward P/E; asset-light fees but $16.5B debt. | Q2: RevPAR +1.5–2.5%; net-room guide; RevPAR negative or pipeline slippage falsifies. |
+| ABNB | Q1 revenue $2.7B (+18%); GBV +19%; nights/seats +9%; adjusted EBITDA $519M (+24%). | $145.98; ~24.2x forward P/E; platform model with net cash. | Q2 and summer rollout; nights growth <5% or take-rate-only growth falsifies. |
+| SBUX | Fiscal Q2 global comps +6.2%, US comps +7.1% on transactions +4.3%; revenue +8.8%. | $105.49; ~35.1x forward P/E; NA margin fell 170 bp to 9.9%. | Fiscal Q3: traffic plus margin; transactions <0 or NA margin <9% falsifies. |
+| CAKE | Revenue +5.6%, operating margin near 9%; strongest price trend in restaurant subset. | $85.77; ~19.1x forward P/E; +69.9% YTD. | Next earnings: traffic/margin; negative traffic makes momentum fragile. |
+| CAVA | High unit growth and brand whitespace; revenue growth remains premium. | $68.85; ~91.4x forward P/E. | New-store productivity; comp <5% or margin miss breaks premium case. |
+| BROS | Revenue growth ~30.8% with rapid unit additions. | $68.36; ~54.3x forward P/E. | New-store AUVs; deceleration below 20% without margin lift falsifies. |
+| MCD | Global scale and franchised cash flows, but price momentum is weak. | $267.71; ~18.9x forward P/E; -12.4% YTD. | Next quarter traffic/value offers; US traffic recovery upgrades. |
+| DRI | Revenue +13.7% and operating margin around 12%. | $198.53; ~16.0x forward P/E; +7.9% YTD. | Brand traffic and integration; negative organic comps downgrades. |
+| RCL | Strong cruise pricing and balance-sheet repair, but high cyclical exposure. | $286.96; ~14.3x forward P/E. | Summer yields and bookings; yield miss plus leverage stalls upgrade. |
+| DKNG | Scale and improving profitability in online betting. | $24.94; ~14.7x forward P/E; -27.6% YTD. | State-level hold and EBITDA; promo reacceleration falsifies. |
+| EXPE | Q1 double-digit bookings/revenue growth and margin expansion. | $268.77; ~11.7x forward P/E. | Summer room nights; bookings <5% keeps HOLD. |
+| HLT | Asset-light fee model and development pipeline, but premium multiple. | $321.32; ~30.8x forward P/E. | Q2 RevPAR/net units; pipeline conversion is key. |
+| LVS | Macau/Singapore exposure and low multiple offset geopolitical/cycle risk. | $45.36; ~12.4x forward P/E; -30.3% YTD. | Macau mass demand; further share loss falsifies value case. |
+
+Company sources: [TXRH Q1](https://investor.texasroadhouse.com/news/news-details/2026/Texas-Roadhouse-Inc--Announces-First-Quarter-2026-Results/default.aspx), [Brinker fiscal Q3](https://investors.brinker.com/news/news-details/2026/BRINKER-INTERNATIONAL-REPORTS-THIRD-QUARTER-OF-FISCAL-2026-RESULTS-AND-UPDATES-FISCAL-2026-GUIDANCE/default.aspx), [Starbucks fiscal Q2](https://investor.starbucks.com/news/financial-releases/news-details/2026/Starbucks-Reports-Q2-Fiscal-Year-2026-Results/default.aspx), [Airbnb Q1](https://news.airbnb.com/airbnb-q1-2026-financial-results/), [Marriott Q1](https://marriott.gcs-web.com/news-releases/news-release-details/marriott-international-reports-first-quarter-2026-results), [Expedia Q1](https://ir.expediagroup.com/news-and-events/news/news-details/2026/Expedia-Group-Reports-First-Quarter-2026-Results/default.aspx).
+
+---
+
+## ROUND 1 — INDEPENDENT SPECIALIST ANALYSIS
+
+**Fundamental:** TXRH has the best traffic/unit-growth combination. EAT offers the strongest valuation asymmetry but weaker durability. MAR and ABNB have superior asset-light economics; SBUX's demand turn is real, though its margin repair is incomplete.
+
+**Quant/Factor:** EAT, TXRH, MAR and ABNB combine earnings momentum and adequate quality. CAKE has exceptional price momentum but less valuation asymmetry. CAVA/BROS remain multiple-sensitive; FLUT/PLNT have severe negative trends.
+
+**Technical:** Stage-2 leaders include CAKE, EAT, TXRH, MAR, ABNB, HLT and SBUX. Stage-4 or damaged trends include WING, FLUT, PLNT, TCOM, DKNG and LVS.
+
+**Macro:** Value-led restaurant traffic and asset-light travel win under sticky inflation and high rates. Leveraged casinos/cruises need sustained discretionary demand; international travel benefits from a firm dollar only selectively.
+
+**Credit/Risk:** ABNB has the cleanest balance-sheet structure. TXRH is self-funded. MAR's fee model is excellent but debt/shareholder returns magnify downside. Casino and cruise leverage warrants lower scores despite improving earnings.
+
+**Sentiment:** TXRH is well loved but still supported by traffic. EAT's re-rating is substantial, yet the forward multiple remains reasonable. CAKE and VAC are crowded momentum; PLNT/FLUT are washed out without confirmed catalysts.
+
+**MomentumPulse:** CAKE, EAT, TXRH, BROS, MAR and SBUX lead. WING, FLUT, PLNT, TCOM, LVS and DKNG fail price confirmation.
+
+**Consumer Services Structural:** Best mechanisms are repeat traffic plus unit whitespace (TXRH), brand repair plus labor productivity (SBUX), fee-based global distribution (MAR), and marketplace density plus support automation (ABNB). Unit growth without AUV durability is not enough.
+
+### Round 1 scoring matrix — complete universe
+
+| # | Ticker | Tier | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Group | Avg | Std | Flag |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | TXRH | T1 | 9.0 | 8.0 | 8.5 | 8.5 | 9.0 | 7.0 | 8.5 | 9.5 | 8.50 | 0.75 | consensus |
+| 2 | EAT | T1 | 8.5 | 8.5 | 9.0 | 7.5 | 6.5 | 7.0 | 9.0 | 8.0 | 8.00 | 0.89 | consensus |
+| 3 | MAR | T1 | 8.5 | 8.0 | 8.0 | 8.0 | 6.5 | 7.5 | 8.0 | 9.0 | 7.94 | 0.72 | consensus |
+| 4 | ABNB | T1 | 8.5 | 8.0 | 7.5 | 8.0 | 9.0 | 7.0 | 7.5 | 9.0 | 8.06 | 0.74 | consensus |
+| 5 | SBUX | T1 | 7.5 | 6.5 | 8.5 | 7.0 | 7.0 | 7.5 | 8.5 | 8.0 | 7.56 | 0.70 | consensus |
+| 6 | CAKE | T1 | 7.0 | 8.0 | 9.5 | 7.0 | 7.0 | 5.5 | 9.5 | 7.5 | 7.63 | 1.26 | moderate |
+| 7 | DRI | T1 | 8.0 | 8.0 | 7.5 | 7.5 | 7.5 | 7.0 | 7.5 | 8.0 | 7.63 | 0.35 | consensus |
+| 8 | CAVA | T1 | 7.5 | 4.0 | 7.5 | 6.5 | 7.0 | 6.0 | 7.5 | 8.5 | 6.81 | 1.28 | moderate |
+| 9 | BROS | T1 | 7.5 | 5.0 | 9.0 | 7.0 | 7.0 | 6.0 | 9.0 | 8.0 | 7.31 | 1.29 | moderate |
+| 10 | MCD | T1 | 8.5 | 7.5 | 4.0 | 8.0 | 8.5 | 6.5 | 4.0 | 9.0 | 7.00 | 1.78 | moderate |
+| 11 | HLT | T1 | 8.0 | 7.0 | 8.0 | 7.5 | 6.0 | 7.0 | 8.0 | 8.5 | 7.50 | 0.76 | consensus |
+| 12 | RCL | T1 | 8.0 | 8.0 | 6.5 | 6.0 | 5.0 | 7.5 | 6.5 | 8.5 | 7.00 | 1.15 | moderate |
+| 13 | EXPE | T1 | 7.5 | 8.5 | 6.0 | 7.5 | 7.5 | 6.5 | 6.0 | 7.5 | 7.13 | 0.84 | consensus |
+| 14 | DKNG | T1 | 7.5 | 8.0 | 3.5 | 6.5 | 6.5 | 5.5 | 3.5 | 8.0 | 6.19 | 1.76 | moderate |
+| 15 | LVS | T1 | 7.0 | 8.0 | 3.0 | 5.5 | 5.5 | 6.5 | 3.0 | 7.5 | 5.75 | 1.69 | moderate |
+| 16 | YUM | T2 | 8.0 | 7.5 | 6.5 | 7.5 | 7.0 | 7.0 | 6.5 | 8.5 | 7.31 | 0.67 | consensus |
+| 17 | CMG | T2 | 8.0 | 6.5 | 5.0 | 7.0 | 8.5 | 6.0 | 5.0 | 8.5 | 6.81 | 1.36 | moderate |
+| 18 | DPZ | T2 | 7.5 | 8.0 | 4.0 | 7.5 | 7.5 | 6.5 | 4.0 | 8.0 | 6.63 | 1.52 | moderate |
+| 19 | QSR | T2 | 7.5 | 8.0 | 7.5 | 7.0 | 6.5 | 7.0 | 7.5 | 8.0 | 7.38 | 0.52 | consensus |
+| 20 | WING | T2 | 6.5 | 5.5 | 2.5 | 6.5 | 7.0 | 5.5 | 2.5 | 7.5 | 5.50 | 1.85 | moderate |
+| 21 | SHAK | T2 | 6.5 | 5.0 | 4.0 | 6.5 | 7.0 | 5.5 | 4.0 | 7.5 | 5.75 | 1.21 | moderate |
+| 22 | WYNN | T2 | 6.5 | 7.0 | 4.0 | 5.5 | 4.5 | 6.0 | 4.0 | 7.0 | 5.56 | 1.18 | moderate |
+| 23 | MGM | T2 | 7.0 | 7.5 | 8.0 | 5.5 | 5.0 | 6.5 | 8.0 | 7.0 | 6.81 | 1.11 | moderate |
+| 24 | CZR | T2 | 6.0 | 5.0 | 8.0 | 5.0 | 3.0 | 6.0 | 8.0 | 6.5 | 5.94 | 1.71 | moderate |
+| 25 | PENN | T2 | 6.0 | 7.0 | 8.5 | 5.5 | 4.5 | 6.0 | 8.5 | 6.5 | 6.56 | 1.45 | moderate |
+| 26 | BYD | T2 | 7.0 | 8.5 | 6.5 | 5.5 | 5.5 | 6.5 | 6.5 | 7.5 | 6.75 | 0.97 | consensus |
+| 27 | RRR | T3 | 6.5 | 7.0 | 6.5 | 5.5 | 4.5 | 6.5 | 6.5 | 7.0 | 6.31 | 0.78 | consensus |
+| 28 | FLUT | T3 | 8.0 | 8.0 | 2.0 | 6.5 | 7.0 | 5.0 | 2.0 | 8.5 | 5.88 | 2.66 | high divergence |
+| 29 | H | T3 | 7.5 | 5.5 | 8.0 | 7.5 | 5.5 | 6.5 | 8.0 | 8.0 | 7.06 | 1.04 | moderate |
+| 30 | CHH | T3 | 6.5 | 8.0 | 8.0 | 7.0 | 6.0 | 6.5 | 8.0 | 7.0 | 7.13 | 0.74 | consensus |
+| 31 | WH | T3 | 6.5 | 8.0 | 6.0 | 7.0 | 6.0 | 6.5 | 6.0 | 7.0 | 6.63 | 0.65 | consensus |
+| 32 | IHG | T3 | 8.0 | 7.0 | 8.0 | 7.5 | 7.0 | 7.0 | 8.0 | 8.0 | 7.56 | 0.46 | consensus |
+| 33 | HTHT | T3 | 7.0 | 8.0 | 4.0 | 6.0 | 7.0 | 5.5 | 4.0 | 8.0 | 6.19 | 1.58 | moderate |
+| 34 | CCL | T3 | 7.0 | 8.5 | 5.0 | 5.5 | 3.5 | 6.5 | 5.0 | 8.0 | 6.13 | 1.69 | moderate |
+| 35 | NCLH | T3 | 6.5 | 7.5 | 5.0 | 5.5 | 3.5 | 6.0 | 5.0 | 7.5 | 5.81 | 1.39 | moderate |
+| 36 | LYV | T3 | 7.5 | 4.5 | 8.5 | 6.0 | 5.0 | 6.0 | 8.5 | 8.0 | 6.75 | 1.55 | moderate |
+| 37 | MTN | T3 | 6.5 | 5.5 | 7.0 | 6.0 | 5.5 | 6.0 | 7.0 | 7.0 | 6.31 | 0.62 | consensus |
+| 38 | PLNT | T3 | 6.5 | 8.0 | 1.5 | 6.5 | 6.0 | 4.5 | 1.5 | 7.5 | 5.25 | 2.50 | high divergence |
+| 39 | TCOM | T3 | 7.5 | 8.5 | 2.5 | 6.5 | 7.5 | 5.0 | 2.5 | 8.5 | 6.06 | 2.42 | high divergence |
+| 40 | TNL | T3 | 6.5 | 8.0 | 7.0 | 5.5 | 4.5 | 6.5 | 7.0 | 6.5 | 6.44 | 1.01 | moderate |
+
+---
+
+## ROUND 2 — ADVERSARIAL CROSS-EXAMINATION
+
+### TXRH — durable traffic compounder or peak restaurant margin?
+
+**Bull:** Q1 revenue rose 12.8%, comps 7.1%, store weeks 5.7% and early-Q2 comps 6.5%. The comp is supported by traffic and unit growth rather than price alone. Twenty-two restaurants under construction sustain the runway.
+
+**Bear:** Restaurant margin fell 36 bp to 16.3% as commodity inflation reached 6.2%. At roughly 26x forward earnings, persistent beef and wage inflation can absorb traffic leverage.
+
+**Key disagreement:** Whether traffic/unit growth can outrun input inflation.  
+**Watch:** Q2 traffic, restaurant margin and 6–7% commodity guide.
+
+### EAT — durable Chili's reinvention or late-cycle re-rating?
+
+**Bull:** Chili's comps rose 4%, February and March each delivered 5.9% comps with positive traffic, and fiscal Q3 adjusted EPS was $2.90. At about 15x forward earnings, modest execution supports upside.
+
+**Bear:** Company traffic was still down 2% for the quarter and restaurant margin fell 50 bp. Sales momentum has slowed sharply from prior periods, so the market may be capitalizing peak margins.
+
+**Key disagreement:** Structural brand repair versus normalization after a promotional surge.  
+**Watch:** Aug. 12 traffic, restaurant margin and FY27 framing.
+
+### SBUX — transaction-led turn or expensive labor reset?
+
+**Bull:** US comps rose 7.1% on 4.3% transaction growth, the exact proof needed for Back to Starbucks. Consolidated revenue rose 8.8% and management raised the FY comp/EPS outlook.
+
+**Bear:** North America operating income fell 9% and margin compressed 170 bp to 9.9% because labor, mix, tariffs and coffee costs remain heavy. The stock already trades around 35x forward earnings.
+
+**Key disagreement:** Whether traffic leverage reaches the P&L fast enough.  
+**Watch:** fiscal Q3 transactions, throughput and North America margin.
+
+### FLUT — fundamental leader or broken tape?
+
+**Bull:** Scale, product and cross-sell can sustain online betting leadership at a low-teens forward multiple.
+
+**Bear:** A roughly 50% YTD decline is a major information signal, public market-cap/quote comparability is imperfect, and regulatory/promotion risk can overwhelm reported growth.
+
+**Key disagreement:** Value after dislocation versus an unresolved earnings/regulatory reset.  
+**Watch:** US hold, customer acquisition cost, EBITDA and regulatory changes.
+
+---
+
+## ROUND 3 — POSITION CHANGES
+
+| Specialist | Ticker | R1 | R3 | Δ | Reason |
+|---|---|---:|---:|---:|---|
+| Fundamental | TXRH | 9.0 | 9.5 | +0.5 | Early-Q2 comps confirm Q1 traffic persistence. |
+| Credit/Risk | TXRH | 9.0 | 8.5 | -0.5 | Commodity pressure prevents a clean margin upgrade. |
+| Fundamental | EAT | 8.5 | 8.0 | -0.5 | Traffic and margin details temper headline comps. |
+| Quant/Factor | EAT | 8.5 | 9.0 | +0.5 | Valuation remains undemanding after estimate growth. |
+| Fundamental | SBUX | 7.5 | 8.0 | +0.5 | Transaction-led comps validate the operating turn. |
+| Credit/Risk | SBUX | 7.0 | 6.5 | -0.5 | North America margin remains below proof threshold. |
+| Fundamental | FLUT | 8.0 | 7.5 | -0.5 | Trend and regulatory uncertainty require a discount. |
+| MomentumPulse | FLUT | 2.0 | 1.5 | -0.5 | Price action still contradicts the fundamental case. |
+
+---
+
+## ROUND 4 — CIO SYNTHESIS AND FINAL RANKINGS
+
+Default weights were used. TXRH ranks first because traffic, comps and unit growth reinforce one another. EAT ranks second on valuation and Chili's repair, with a margin-quality haircut. MAR and ABNB are the preferred travel exposures because fee/platform economics reduce capital intensity. SBUX ranks fifth: demand proof is present, margin proof is not.
+
+| Ticker | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Group | Composite | Δ vs R1 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| TXRH | 9.5 | 8.0 | 8.5 | 8.5 | 8.5 | 7.0 | 8.5 | 9.5 | 8.55 | +0.05 |
+| EAT | 8.0 | 9.0 | 9.0 | 7.5 | 6.5 | 7.0 | 9.0 | 8.0 | 8.00 | 0.00 |
+| MAR | 8.5 | 8.0 | 8.0 | 8.0 | 6.5 | 7.5 | 8.0 | 9.0 | 7.94 | 0.00 |
+| ABNB | 8.5 | 8.0 | 7.5 | 8.0 | 9.0 | 7.0 | 7.5 | 9.0 | 8.06 | 0.00 |
+| SBUX | 8.0 | 6.5 | 8.5 | 7.0 | 6.5 | 7.5 | 8.5 | 8.0 | 7.56 | 0.00 |
+| FLUT | 7.5 | 8.0 | 2.0 | 6.5 | 7.0 | 5.0 | 1.5 | 8.5 | 5.75 | -0.13 |
+
+### Detailed stock analysis
+
+### 1. TXRH — Texas Roadhouse
+**Price:** $197.03 | **Market cap:** $13.1B | **YTD:** +18.7%  
+**Rating:** STRONG BUY | **Conviction:** 4.5/5 | **Composite:** 8.6/10
+
+**Bull case:** Q1 revenue rose 12.8%, comps 7.1%, store weeks 5.7% and EPS 9.6%. Early-Q2 comps remained 6.5%. The mechanism is traffic-led AUV growth plus 5–6% store-week expansion, creating labor leverage and a long reinvestment runway.  
+**Bear case:** Restaurant margin fell 36 bp as commodity inflation hit 6.2%, and the 26x multiple requires sustained traffic.  
+**Catalysts:** Q2 results; 22 restaurants under construction; commodity update.  
+**Falsification:** Q2 comps <3%, negative traffic, restaurant margin <15%, or store-week guide below 5%.  
+**Price targets:** Bear $160 (-19%) | Base $235 (+19%) | Bull $270 (+37%).
+
+### 2. EAT — Brinker International
+**Price:** $189.35 | **Market cap:** $8.5B | **YTD:** +31.9%  
+**Rating:** BUY | **Conviction:** 4.0/5 | **Composite:** 8.2/10
+
+**Bull case:** Fiscal Q3 revenue reached $1.47B, Chili's comps rose 4%, and adjusted EPS was $2.90. Positive traffic in February/March suggests menu and service improvements are carrying the brand beyond price.  
+**Bear case:** Full-quarter company traffic fell 2%, restaurant margin declined 50 bp, and comps have slowed. The stock's strong run raises execution risk into August.  
+**Catalysts:** Aug. 12 fiscal Q4; FY27 outlook; Chili's traffic.  
+**Falsification:** Chili's traffic negative, restaurant margin <17%, or FY adjusted EPS below current $10.60–10.85 range.  
+**Price targets:** Bear $145 (-23%) | Base $225 (+19%) | Bull $265 (+40%).
+
+### 3. MAR — Marriott International
+**Price:** $366.24 | **Market cap:** $96.8B | **YTD:** +18.1%  
+**Rating:** BUY | **Conviction:** 4.0/5 | **Composite:** 8.0/10
+
+**Bull case:** Q1 worldwide RevPAR rose 4.2%, fee revenue 13%, net rooms 4.5% and the pipeline reached 618,000 rooms, 43% under construction. The fee model compounds rooms and revenue without owning most real estate.  
+**Bear case:** FY RevPAR guidance is only 2–3%; debt was $16.5B against $0.5B cash, and a 28x multiple leaves little room for travel deceleration.  
+**Catalysts:** Q2 RevPAR; pipeline conversions; net-room guidance.  
+**Falsification:** Worldwide RevPAR turns negative, net-room growth <4%, or adjusted EBITDA guide below $5.88B.  
+**Price targets:** Bear $300 (-18%) | Base $430 (+17%) | Bull $485 (+32%).
+
+### 4. ABNB — Airbnb
+**Price:** $145.98 | **Market cap:** $91.0B | **YTD:** +7.6%  
+**Rating:** BUY | **Conviction:** 3.5/5 | **Composite:** 7.7/10
+
+**Bull case:** Q1 revenue grew 18% to $2.7B, GBV 19%, nights/seats 9% and adjusted EBITDA 24%. App-booked nights rose 22% and AI support reduced cost per booking about 10%, creating both demand and margin levers.  
+**Bear case:** Revenue is growing faster than nights partly through pricing/take rate, regulation remains persistent, and services/experiences economics are early.  
+**Catalysts:** Q2; summer category expansion; AI support resolution rate.  
+**Falsification:** Nights growth <5%, cost per booking stops falling, or core-stay growth relies mainly on fee increases.  
+**Price targets:** Bear $118 (-19%) | Base $175 (+20%) | Bull $205 (+40%).
+
+### 5. SBUX — Starbucks
+**Price:** $105.49 | **Market cap:** $120.0B | **YTD:** +25.3%  
+**Rating:** BUY | **Conviction:** 3.5/5 | **Composite:** 7.4/10
+
+**Bull case:** Fiscal Q2 global comps rose 6.2% and US comps 7.1%, driven by 4.3% transaction growth. Revenue rose 8.8%, showing Back to Starbucks has restored customer demand before full margin recovery.  
+**Bear case:** North America operating margin fell 170 bp to 9.9% as labor, coffee and tariffs offset sales leverage. At 35x forward earnings, the stock already discounts meaningful repair.  
+**Catalysts:** Fiscal Q3; transaction growth; throughput and labor productivity.  
+**Falsification:** US transactions turn negative, North America margin <9%, or comp guidance is cut.  
+**Price targets:** Bear $82 (-22%) | Base $125 (+18%) | Bull $145 (+37%).
+
+## HOLD ZONE SUMMARY
+
+| Ticker | Rating | Composite | What changes the view |
+|---|---|---:|---|
+| IHG | BUY/HOLD | 7.6 | Better entry with RevPAR and net-unit durability. |
+| CAKE | BUY/HOLD | 7.6 | Traffic proof after a 70% YTD re-rating. |
+| HLT | BUY/HOLD | 7.5 | Pipeline conversion at less demanding valuation. |
+| QSR | BUY/HOLD | 7.4 | Organic comps accelerate across brands. |
+| BROS | HOLD | 7.3 | New-store productivity offsets premium multiple. |
+| YUM | HOLD | 7.3 | Broad-based franchise traffic improvement. |
+| EXPE | HOLD | 7.1 | Summer bookings stay double digit. |
+| RCL | HOLD | 7.0 | Yield holds while leverage falls faster. |
+| MCD | HOLD | 7.0 | US traffic inflects positive. |
+| DRI | HOLD | 7.6 | Organic comps remain positive after integration. |
+
+## BOTTOM 5 — AVOID / SELL
+
+| Ticker | Rating | Composite | Broken mechanism | Flip condition |
+|---|---|---:|---|---|
+| PLNT | STRONG SELL | 5.3 | Severe price breakdown without current catalyst proof. | Positive comps, deleveraging and technical base. |
+| WING | SELL | 5.5 | Premium valuation met a 40% YTD downtrend. | Traffic reaccelerates with stable food costs. |
+| WYNN | SELL | 5.6 | Macau/Las Vegas cyclicality plus leverage and weak trend. | Market-share gain and sustained debt reduction. |
+| NCLH | SELL | 5.8 | Cruise cyclicality and balance-sheet risk with missing entry quote. | Yield beat plus rapid deleveraging. |
+| FLUT | SELL | 5.8 | Fundamental promise conflicts with a 50% YTD drawdown. | Earnings and price trend confirm together. |
+
+---
+
+## APPENDIX C — CIO WEIGHTING RATIONALE
+
+Default weights apply. Consumer Services Structural receives 10% to capture traffic/ticket, unit-level economics, room pipelines, RevPAR and platform density. Fundamental and Credit/Risk prevent high comps or bookings from overwhelming margin and leverage. Macro remains 15% because real income, rates and travel cyclicality matter materially.
+
+## APPENDIX D — UNIVERSE DISCOVERY AUDIT
+
+Universe: MCD, SBUX, CMG, YUM, DPZ, DRI, QSR, WING, CAVA, TXRH, EAT, CAKE, BROS, SHAK, WYNN, LVS, MGM, CZR, PENN, BYD, RRR, DKNG, FLUT, MAR, HLT, H, CHH, WH, IHG, HTHT, RCL, CCL, NCLH, ABNB, LYV, MTN, PLNT, EXPE, TCOM and TNL. US-listed ADR/foreign issuers were included. PLAY, SG, GENI, FUN and TRIP were excluded because the public snapshot was below $2B. NCLH exceeded the threshold but its quote timed out; no entry price was fabricated.
+
+## APPENDIX E — SPECIALIST CALLS LOG (ENTRY PRICE = 2026-07-17 CLOSE)
+
+### Top 3 BUY picks per specialist
+
+| Specialist | Rank | Ticker | Entry | Conviction | Rationale |
+|---|---:|---|---:|---:|---|
+| Fundamental | 1 | TXRH | $197.03 | 5 | Traffic, comps and unit growth align. |
+| Fundamental | 2 | MAR | $366.24 | 5 | Fee growth and room pipeline. |
+| Fundamental | 3 | ABNB | $145.98 | 4 | Platform growth and net cash. |
+| Quant/Factor | 1 | EAT | $189.35 | 5 | Earnings momentum at low multiple. |
+| Quant/Factor | 2 | TXRH | $197.03 | 4 | Quality plus momentum. |
+| Quant/Factor | 3 | EXPE | $268.77 | 4 | Bookings growth at low multiple. |
+| Technical | 1 | CAKE | $85.77 | 4 | Strongest price trend. |
+| Technical | 2 | EAT | $189.35 | 4 | Earnings-backed Stage 2. |
+| Technical | 3 | TXRH | $197.03 | 4 | Positive medium-term trend. |
+| Macro | 1 | TXRH | $197.03 | 4 | Value-led traffic resilience. |
+| Macro | 2 | MAR | $366.24 | 4 | Asset-light travel demand. |
+| Macro | 3 | ABNB | $145.98 | 4 | Global platform diversification. |
+| Credit/Risk | 1 | ABNB | $145.98 | 5 | Net-cash platform economics. |
+| Credit/Risk | 2 | TXRH | $197.03 | 5 | Self-funded unit growth. |
+| Credit/Risk | 3 | SBUX | $105.49 | 3 | Scale and liquidity despite margin reset. |
+| Sentiment | 1 | SBUX | $105.49 | 4 | Turnaround proof still contested. |
+| Sentiment | 2 | EAT | $189.35 | 4 | Low multiple offsets re-rating. |
+| Sentiment | 3 | ABNB | $145.98 | 4 | Initiatives not fully valued. |
+| MomentumPulse | 1 | CAKE | $85.77 | 5 | Earnings and price trend aligned. |
+| MomentumPulse | 2 | EAT | $189.35 | 5 | Strong 3/6-month momentum. |
+| MomentumPulse | 3 | TXRH | $197.03 | 4 | Durable relative strength. |
+| Consumer Services Structural | 1 | TXRH | $197.03 | 5 | Best traffic/unit flywheel. |
+| Consumer Services Structural | 2 | MAR | $366.24 | 5 | Fee-based room compounding. |
+| Consumer Services Structural | 3 | ABNB | $145.98 | 4 | Marketplace density and support automation. |
+
+### Top 3 SELL/AVOID picks per specialist
+
+| Specialist | Rank | Ticker | Entry | Rationale |
+|---|---:|---|---:|---|
+| Fundamental | 1 | PLNT | $52.36 | Earnings proof does not offset breakdown. |
+| Fundamental | 2 | WING | $142.33 | Premium multiple with slowing momentum. |
+| Fundamental | 3 | CZR | $29.86 | Leverage limits equity asymmetry. |
+| Quant/Factor | 1 | CAVA | $68.85 | Extreme forward multiple. |
+| Quant/Factor | 2 | BROS | $68.36 | Premium multiple despite growth. |
+| Quant/Factor | 3 | LYV | $180.22 | Valuation discounts durable growth. |
+| Technical | 1 | PLNT | $52.36 | Severe Stage-4 trend. |
+| Technical | 2 | FLUT | $106.56 | 50% YTD drawdown. |
+| Technical | 3 | WING | $142.33 | Persistent downtrend. |
+| Macro | 1 | CZR | $29.86 | Leveraged discretionary exposure. |
+| Macro | 2 | WYNN | $96.64 | Cyclical travel and China risk. |
+| Macro | 3 | NCLH | N/A | Cruise leverage; quote unavailable. |
+| Credit/Risk | 1 | CZR | $29.86 | Highest leverage sensitivity. |
+| Credit/Risk | 2 | NCLH | N/A | Balance-sheet and cycle risk. |
+| Credit/Risk | 3 | CCL | $26.41 | Deleveraging still incomplete. |
+| Sentiment | 1 | CAKE | $85.77 | 70% YTD creates crowding. |
+| Sentiment | 2 | CAVA | $68.85 | Premium multiple leaves a crowded setup. |
+| Sentiment | 3 | PENN | $20.57 | Turnaround expectations elevated. |
+| MomentumPulse | 1 | PLNT | $52.36 | Worst price confirmation. |
+| MomentumPulse | 2 | FLUT | $106.56 | Trend contradicts fundamentals. |
+| MomentumPulse | 3 | TCOM | $42.45 | 41% YTD drawdown. |
+| Consumer Services Structural | 1 | CZR | $29.86 | Asset intensity plus leverage. |
+| Consumer Services Structural | 2 | WING | $142.33 | Franchise growth lacks price proof. |
+| Consumer Services Structural | 3 | WYNN | $96.64 | Volatile geography and high fixed costs. |
+
+## APPENDIX F — SPECIALIST LEADERBOARD
+
+| Rank | Specialist | Sessions | BUY Win% | SELL Win% | Score | Trend |
+|---:|---|---:|---:|---:|---:|---|
+| 1–8 | All specialists | 0 evaluated | N/A | N/A | N/A | First session. |
+
+## APPENDIX G — EXACT BLOCKED INPUTS / DATA QUALITY
+
+- Paid point-in-time consensus and revision histories, buy-side hurdles, proprietary restaurant traffic panels, hotel forward-booking curves, gaming hold data, options positioning and short-interest days-to-cover were unavailable without token/paywall access.
+- NCLH's public quote timed out; it was retained as clearly above $2B, but no entry price or price-derived score was fabricated.
+- Public market-cap fields were null for MCD, SBUX, CMG, YUM, DRI, CAVA, TXRH, MAR, HLT, RCL, ABNB and LYV; eligibility was retained only where public scale clearly exceeds $2B.
+- PLAY, SG, GENI, FUN, TRIP and VAC were excluded because available public market-cap snapshots were below $2B.
+- FLUT's US-listed quote and historical return series may reflect corporate-action/currency effects; the report does not infer a fundamental event from price alone.
+- Exact next earnings dates for all 40 companies were not independently verified from issuer calendars; only Brinker's Aug. 12 date was confirmed, and no other precise date was fabricated.
+- GICS placement of online gaming, cruise, foreign hotel ADRs and travel platforms varies by vendor; the report includes them because their economics fit Consumer Services and they are US-listed.
+
+## Sources
+
+- [Texas Roadhouse Q1 2026](https://investor.texasroadhouse.com/news/news-details/2026/Texas-Roadhouse-Inc--Announces-First-Quarter-2026-Results/default.aspx)
+- [Brinker fiscal Q3 2026](https://investors.brinker.com/news/news-details/2026/BRINKER-INTERNATIONAL-REPORTS-THIRD-QUARTER-OF-FISCAL-2026-RESULTS-AND-UPDATES-FISCAL-2026-GUIDANCE/default.aspx)
+- [Starbucks fiscal Q2 2026](https://investor.starbucks.com/news/financial-releases/news-details/2026/Starbucks-Reports-Q2-Fiscal-Year-2026-Results/default.aspx)
+- [Airbnb Q1 2026](https://news.airbnb.com/airbnb-q1-2026-financial-results/)
+- [Airbnb Q1 2026 Form 10-Q](https://www.sec.gov/Archives/edgar/data/1559720/000155972026000014/abnb-20260331.htm)
+- [Marriott Q1 2026](https://marriott.gcs-web.com/news-releases/news-release-details/marriott-international-reports-first-quarter-2026-results)
+- [Expedia Q1 2026](https://ir.expediagroup.com/news-and-events/news/news-details/2026/Expedia-Group-Reports-First-Quarter-2026-Results/default.aspx)
+- [Census economic indicators](https://www.census.gov/economic-indicators/)
+- [BLS CPI, June 2026](https://www.bls.gov/news.release/archives/cpi_07142026.htm)
+- [Federal Reserve economic data](https://fred.stlouisfed.org/)
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-07-23 07:34 · Not financial advice.</div>
+</footer>
+</body>
+</html>
