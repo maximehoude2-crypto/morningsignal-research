@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Transportation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-07-28 16:32</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Transportation</div>
+        <div class="hero-title">Transportation — Committee Report</div>
+        <div class="hero-summary">
+          Multi-specialist committee review covering every US-listed stock above $2B market cap in the Transportation GICS industry group.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-07-27</span>
+          <span class="pill">35 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Transportation yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-07-27</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">CSX</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.9/10</td>
+            <td class="thesis-cell">Volume, margin and EPS acceleration with clean tape</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">JBHT</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.5/5</td>
+            <td>8.8/10</td>
+            <td class="thesis-cell">Intermodal operating leverage and improving demand</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">UNP</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.5/10</td>
+            <td class="thesis-cell">Network quality plus standalone EPS growth; merger upside excluded</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">ODFL</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>3.5/5</td>
+            <td>8.3/10</td>
+            <td class="thesis-cell">Best LTL quality, limited by valuation</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">NSC</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>3.5/5</td>
+            <td>8.2/10</td>
+            <td class="thesis-cell">Rail momentum with deal optionality</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (23512 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Transportation Industry Group Analysis — v3.0
+
+**Report Date:** 2026-07-27  
+**GICS Level / Code:** Level 2 — Transportation (2030)  
+**Parent Sector:** Industrials  
+**Universe:** 35 US-listed stocks at or above approximately $2B market cap, including one disclosed borderline name  
+**Analyst Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Freight & Network Analyst  
+**Market Data As Of:** 2026-07-24 close; primary evidence through 2026-07-27 10:20 EDT  
+**Scheduled Task:** InvestorDebate Weekly — authoritative seven-week rotation, week 3
+
+> **Decision view:** Favor networks converting volume into operating leverage and cash, particularly rails and intermodal. Avoid airlines or mobility names where balance-sheet risk, fuel sensitivity, or weak tape overwhelms cheap headline multiples. Top three paper calls: **CSX, JBHT, UNP**.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT — TRANSPORTATION
+
+| Variable | Current | Transportation transmission |
+|---|---:|---|
+| Fed funds / 10Y | 3.50%–3.75% / 4.65% | High financing costs penalize airlines, rental fleets and highly levered logistics; cash-rich brokers and ports have more resilience. |
+| June ISM Manufacturing | 53.3 | A sixth expansion month supports carloads, intermodal and truckload demand. |
+| ISM New Orders / Prices | 56.0 / 73.0 | Better orders lift freight, while still-high input prices test fuel surcharge recovery and wage/productivity discipline. |
+| Rail volume signal | CSX Q2 volume +6%; intermodal +9% | Rail demand has moved from stabilization to growth; incremental margin is now the key discriminator. |
+| Jet-fuel shock | Delta Q2 fuel expense +67%; average fuel $3.66/gal | Revenue growth can coexist with lower airline earnings; capacity and pricing discipline must offset fuel. |
+| Parcel normalization | UPS Q1 U.S. volume down; revenue/piece +6.5% | Parcel is a yield/cost-reset story, not yet a clean volume recovery. |
+| Regulatory event | UNP–NSC transcontinental merger process | Potential long-duration network synergy, but regulatory, service and leverage risks reduce near-term risk-adjusted conviction. |
+
+Primary sources: [ISM June Manufacturing](https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/june/); [CSX Q2 2026](https://investors.csx.com/news-and-events/news/news-details/2026/CSX-Corp--Announces-Second-Quarter-2026-Results/default.aspx); [Delta Q2 2026](https://ir.delta.com/news/news-details/2026/Delta-Air-Lines-Announces-June-Quarter-2026-Financial-Results/default.aspx); [UPS Q1 2026](https://about.ups.com/us/en/newsroom/press-releases/financials/ups-releases-1q-2026-earnings.html); [Union Pacific Q2 2026](https://investor.unionpacific.com/news-releases/news-release-details/union-pacific-reports-second-quarter-2026-results).
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+| Method | Count | Notes |
+|---|---:|---|
+| Railroads, parcel, truckload/LTL, brokers and logistics | 20 | Core freight networks and asset-light intermediaries |
+| Airlines, mobility, airports and marine transport | 13 | Includes listed airport ADRs and shipping operators classified or economically mapped to transportation |
+| Inactive exclusions | 2 | ATSG and SAVE had no active quote and were not scored. |
+| Borderline inclusion | 1 | JBLU was approximately $1.96B, retained to prevent threshold noise from hiding a relevant airline comparator. |
+| **Total analyzed** | **35** | Full eight-lens scoring applied to every active name. |
+
+### Stock universe and tape
+
+| Segment | Tickers |
+|---|---|
+| Rail / parcel / vehicle services | UNP, NSC, CSX, UPS, FDX, CPRT |
+| LTL / truckload / intermodal | ODFL, SAIA, XPO, JBHT, KNX, WERN, HUBG, SNDR |
+| Brokers / logistics | CHRW, EXPD, GXO, RXO |
+| Airlines | DAL, UAL, AAL, LUV, ALK, JBLU |
+| Mobility / rental | UBER, LYFT, UHAL, CAR |
+| Marine / ports | MATX, ZIM, SBLK, DAC, CAAP, PAC, ASR |
+
+**Cap/tape audit:** UNP $182.6B/+32.5% YTD; UPS $97.6B/+13.6%; NSC $78.8B/+21.8%; CSX $98.6B/+46.8%; FDX $74.5B/+33.3%; CPRT $25.9B/-26.0%; ODFL $48.5B/+46.4%; SAIA $11.3B/+25.7%; XPO $25.0B/+53.5%; DAL $55.9B/+23.2%; UAL $38.4B/+4.7%; AAL $9.6B/-6.5%; LUV $22.1B/+9.2%; CHRW $22.0B/+13.9%; EXPD $22.9B/+15.4%; GXO $6.1B/-2.9%; JBHT $27.1B/+46.5%; KNX $11.8B/+38.8%; WERN $2.5B/+38.6%; HUBG $3.0B/+15.3%; MATX $6.4B/+70.2%; UBER $134.2B/-20.4%; LYFT $5.4B/-28.3%; UHAL $14.0B/+41.3%; ZIM $3.0B/+13.7%; SBLK $3.1B/+45.3%; DAC $2.6B/+47.2%; CAAP $4.1B/-5.3%; PAC $12.9B/-17.4%; ASR $8.0B/-17.3%; SNDR $6.6B/+39.5%; RXO $4.2B/+99.6%; CAR $5.6B/+24.4%; ALK $5.2B/-10.5%; JBLU $1.96B borderline. Public unauthenticated Yahoo/yfinance, 2026-07-24 close.
+
+---
+
+## APPENDIX C: DARWINIAN ANALYST LEDGER + CIO WEIGHTING
+
+No prior same-group report or specialist-performance file exists. All elapsed 1w/4w/12w outcomes are N/A, so the first session uses default weights.
+
+| Specialist | Prior | Track rank | Evidence | Multiplier | Current | Change |
+|---|---:|---:|---|---:|---:|---:|
+| Fundamental | 18% | N/A | First session | 1.00x | 18% | 0 |
+| Quant/Factor | 14% | N/A | First session | 1.00x | 14% | 0 |
+| Technical | 13% | N/A | First session | 1.00x | 13% | 0 |
+| Macro | 15% | N/A | First session | 1.00x | 15% | 0 |
+| Credit/Risk | 13% | N/A | First session | 1.00x | 13% | 0 |
+| Sentiment | 10% | N/A | First session | 1.00x | 10% | 0 |
+| MomentumPulse | 7% | N/A | First session | 1.00x | 7% | 0 |
+| Freight & Network | 10% | N/A | First session | 1.00x | 10% | 0 |
+| **Total** | **100%** |  |  |  | **100%** |  |
+
+---
+
+## THE DEBATE — FULL PROTOCOL
+
+### ROUND 1: Independent deep analysis
+
+#### CSX — rail operating leverage
+
+- **Fundamental (9):** Q2 revenue +10%, operating income +17%, EPS +23% and operating margin +240 bp establish profitable growth.
+- **Quant (9):** +46.8% YTD and 23.5x forward earnings pair strong quality/momentum with a full but supportable multiple.
+- **Technical (10):** New high, +11.8% versus 50-day and +30.1% versus 200-day: the cleanest large-cap Stage 2 tape.
+- **Macro (8):** Manufacturing expansion and intermodal substitution help; fuel and trade volatility remain risks.
+- **Credit (7):** Approximately $18.1B debt is serviceable, but limits downside insulation versus net-cash logistics peers.
+- **Sentiment (8):** Expectations are elevated after the run, yet the earnings beat is fundamental confirmation.
+- **MomentumPulse (10):** Volume +6%, intermodal +9% and EPS +23% are simultaneous positive rate-of-change signals.
+- **Freight & Network (9):** Network density converted six points of volume growth into 17% operating-income growth.
+
+Primary: [CSX Q2 2026](https://investors.csx.com/news-and-events/news/news-details/2026/CSX-Corp--Announces-Second-Quarter-2026-Results/default.aspx).
+
+#### JBHT — intermodal recovery with operating leverage
+
+- **Fundamental (9):** Q2 revenue +19%, operating income +32% and EPS +45%; intermodal operating income +58% is the core proof.
+- **Quant (9):** +46.5% YTD and 28.5x forward earnings reflect strong revisions; valuation is high but not detached from growth.
+- **Technical (10):** +3.9% versus 50-day and +30.4% versus 200-day; durable Stage 2 without the extreme short interest of RXO.
+- **Macro (8):** Manufacturing and rail intermodal growth help; consumer and truckload pricing remain mixed.
+- **Credit (8):** Balance-sheet risk is moderate relative to airlines and parcel incumbents.
+- **Sentiment (8):** The recovery is recognized, but segment-level earnings proof reduces narrative risk.
+- **MomentumPulse (10):** Intermodal +22% revenue/+58% operating income and DCS +9%/+9% are fresh confirmation.
+- **Freight & Network (9):** Rail partnerships and drayage density are scaling; the brokerage/JBT margin drag is visible and containable.
+
+Primary: [J.B. Hunt Q2 2026](https://investor.jbhunt.com/news/2026/07-15-2026-210601104).
+
+#### UNP — high-quality railroad with merger overhang
+
+- **Fundamental (9):** Q2 revenue +12% and adjusted EPS +13%, supported by freight revenue ex-fuel +4%.
+- **Quant (8):** 21.8x forward P/E and +32.5% YTD are attractive versus slower parcel networks.
+- **Technical (10):** +11.7% versus 50-day and +23.4% versus 200-day, close to a new high.
+- **Macro (9):** Industrial expansion and domestic supply-chain investment favor the Western franchise.
+- **Credit (6):** Existing net debt near $29B plus potential merger financing/integration reduce the risk score.
+- **Sentiment (8):** Transcontinental-merger optionality is powerful but already a crowded narrative.
+- **MomentumPulse (9):** Adjusted EPS +13%, velocity +5% and dwell improvement +7% support high-single-digit EPS guidance.
+- **Freight & Network (10):** Best-in-class Western reach; a successful NSC combination could create end-to-end service but faces regulatory and execution hurdles.
+
+Primary: [Union Pacific Q2 2026](https://investor.unionpacific.com/news-releases/news-release-details/union-pacific-reports-second-quarter-2026-results).
+
+#### Next tier
+
+- **ODFL:** Premium LTL density, pricing discipline and net cash deserve high quality scores; 35.9x forward earnings makes it an add-on-pullback, not a top-three new entry.
+- **XPO:** Revenue growth and operating leverage remain strong, but 35.2x forward earnings and acquisition/operating execution create more downside asymmetry than JBHT.
+- **NSC:** Strong network/tape with possible merger consideration; deal path and reported earnings softness keep it just below UNP.
+- **DAL:** The best airline setup: Q3 adjusted margin guidance 11%–13%, EPS $2.00–$2.50 and full-year FCF $3B–$4B. Yet Q2 GAAP EPS fell 25% and fuel expense rose 67%, proving macro sensitivity.
+- **EXPD:** Net cash and asset-light forwarding quality are attractive; the multiple and normalized freight rates limit upside.
+- **MATX / SBLK / DAC:** Strong value and momentum, but spot-rate, geopolitical and vessel-cycle risks require smaller sizing.
+
+Primary: [Delta Q2 2026](https://ir.delta.com/news/news-details/2026/Delta-Air-Lines-Announces-June-Quarter-2026-Financial-Results/default.aspx); [XPO Q1 2026 filing](https://investors.xpo.com/static-files/54a8139a-4b6a-46c6-bdf0-1d87799fac80).
+
+### ROUND 1 CONSENSUS & DIVERGENCE TABLE — COMPLETE UNIVERSE
+
+Scores: Fundamental / Quant / Technical / Macro / Credit / Sentiment / MomentumPulse / Freight & Network.
+
+| # | Ticker | Scores | Avg | Dispersion | Flag |
+|---:|---|---|---:|---:|---|
+| 1 | CSX | 9/9/10/8/7/8/10/9 | 8.75 | 0.97 | OK |
+| 2 | JBHT | 9/9/10/8/8/8/10/9 | 8.88 | 0.78 | OK |
+| 3 | UNP | 9/8/10/9/6/8/9/10 | 8.63 | 1.22 | OK |
+| 4 | ODFL | 9/8/9/8/10/6/8/9 | 8.38 | 1.11 | OK |
+| 5 | NSC | 8/8/10/9/6/8/9/9 | 8.38 | 1.11 | OK |
+| 6 | XPO | 8/9/9/8/6/7/9/9 | 8.13 | 1.05 | OK |
+| 7 | DAC | 7/9/10/8/9/6/9/8 | 8.25 | 1.20 | OK |
+| 8 | MATX | 7/9/10/8/8/6/9/8 | 8.13 | 1.17 | OK |
+| 9 | SBLK | 7/9/10/8/7/6/9/8 | 8.00 | 1.22 | OK |
+| 10 | DAL | 8/8/9/8/6/7/8/9 | 7.88 | 0.93 | OK |
+| 11 | EXPD | 8/7/8/7/10/6/7/8 | 7.63 | 1.11 | OK |
+| 12 | HUBG | 7/7/9/7/9/6/7/8 | 7.50 | 1.00 | OK |
+| 13 | SNDR | 7/9/10/7/8/6/9/8 | 8.00 | 1.22 | OK |
+| 14 | KNX | 7/8/7/8/6/7/8/8 | 7.38 | 0.70 | OK |
+| 15 | SAIA | 8/7/7/7/9/6/7/8 | 7.38 | 0.86 | OK |
+| 16 | CHRW | 7/7/8/7/8/6/7/7 | 7.13 | 0.60 | OK |
+| 17 | FDX | 8/8/7/8/5/7/8/8 | 7.38 | 1.00 | OK |
+| 18 | WERN | 6/8/9/7/6/7/8/7 | 7.25 | 0.97 | OK |
+| 19 | UHAL | 7/8/10/7/5/6/8/7 | 7.25 | 1.39 | OK |
+| 20 | UAL | 7/7/8/8/5/7/7/8 | 7.13 | 0.93 | OK |
+| 21 | LUV | 6/7/7/7/8/6/7/7 | 6.88 | 0.60 | OK |
+| 22 | UPS | 7/7/8/7/5/7/7/7 | 6.88 | 0.78 | OK |
+| 23 | RXO | 5/9/6/8/7/4/8/7 | 6.75 | 1.56 | **HIGH** |
+| 24 | UBER | 8/5/4/8/7/7/4/9 | 6.50 | 1.80 | **HIGH** |
+| 25 | CPRT | 8/5/4/7/10/6/4/7 | 6.38 | 2.00 | **HIGH** |
+| 26 | CAAP | 7/5/6/8/6/6/5/8 | 6.38 | 1.11 | OK |
+| 27 | GXO | 7/6/6/7/4/6/6/7 | 6.13 | 0.93 | OK |
+| 28 | PAC | 8/4/3/8/7/6/3/8 | 5.88 | 2.09 | **HIGH** |
+| 29 | ASR | 8/4/3/8/7/6/3/8 | 5.88 | 2.09 | **HIGH** |
+| 30 | ALK | 6/5/6/7/5/6/5/7 | 5.88 | 0.78 | OK |
+| 31 | LYFT | 5/4/3/7/9/6/3/6 | 5.38 | 1.87 | **HIGH** |
+| 32 | ZIM | 4/6/7/8/3/5/6/6 | 5.63 | 1.49 | **MODERATE** |
+| 33 | AAL | 4/5/6/7/2/5/5/6 | 5.00 | 1.41 | **MODERATE** |
+| 34 | CAR | 3/6/5/7/1/3/6/5 | 4.50 | 1.80 | **HIGH** |
+| 35* | JBLU | 3/6/7/7/2/5/6/5 | 5.13 | 1.69 | **HIGH** |
+
+\*JBLU is the disclosed approximately $1.96B borderline inclusion and is included in the 35-name analyzed total because inactive screen constituents were removed before final count.
+
+### ROUND 2: ADVERSARIAL CROSS-EXAMINATION
+
+#### CSX — peak tape or accelerating earnings?
+
+**Bull (MomentumPulse):** Revenue +10%, operating income +17%, EPS +23%, margin +240 bp and intermodal +9% show broad, accelerating conversion.
+
+**Bear (Sentiment/Credit):** +47% YTD and a fresh high leave little room for a service stumble; leverage reduces buyback flexibility.
+
+**Resolution:** Bull wins. Paper BUY at $53.23; risk line $47.50. Q3 volume must remain positive and operating margin at least 37%.
+
+#### JBHT — clean intermodal inflection or mixed-segment recovery?
+
+**Bull (Freight):** Intermodal revenue +22% and operating income +58% prove rail conversion; DCS also grew revenue and profit 9%.
+
+**Bear (Fundamental):** Integrated Capacity Solutions grew revenue 49% but gross margin fell to 12.5% and JBT moved to a loss.
+
+**Resolution:** BUY, but the thesis requires intermodal operating-income growth above 20% and no further ICS gross-margin erosion.
+
+#### UNP — network moat or merger risk?
+
+**Bull (Network):** Velocity +5%, dwell +7%, revenue +12% and a transcontinental end-state create operating and service upside.
+
+**Bear (Credit):** Approximately $29B net debt precedes a complex regulatory/integration path; reported operating ratio worsened on fuel.
+
+**Resolution:** BUY with a smaller initial weight. The standalone railroad must sustain high-single-digit EPS growth; no merger synergy is required in the base case.
+
+#### DAL — best airline or fuel trap?
+
+**Bull (Fundamental):** Q3 margin and EPS guide plus $3B–$4B full-year FCF show pricing and premium demand.
+
+**Bear (Macro):** GAAP EPS -25% and fuel expense +67% prove that revenue growth cannot fully offset the energy shock.
+
+**Resolution:** BUY/monitor, below rails. Add only if Q3 operating margin reaches at least 11% and gross leverage remains near 2x.
+
+#### UBER / RXO — growth narratives versus the tape
+
+UBER's scalable network earns strong fundamental/network scores, but -20% YTD and weak technical/momentum readings prevent a BUY. RXO's +100% YTD and freight-cycle exposure score well quantitatively, but 26% short interest, a high multiple and integration risk create the highest broker dispersion. Both remain HOLD/monitor.
+
+#### AAL / CAR / JBLU — cheap for a reason?
+
+Headline forward multiples cannot offset debt, volatile cash conversion and weak competitive positions. CAR's public tape also contains an unresolved corporate-action normalization problem. All three are SELL/avoid rather than deep-value calls.
+
+### ROUND 3: POSITION UPDATES
+
+| Ticker | Specialist | Before | After | Evidence and effect |
+|---|---|---:|---:|---|
+| CSX | MomentumPulse | 9 | 10 | Q2 volume, margin and EPS accelerated together. |
+| JBHT | MomentumPulse | 9 | 10 | EPS +45% and intermodal operating income +58%. |
+| JBHT | Freight & Network | 8 | 9 | Intermodal + DCS profit conversion outweighed brokerage weakness. |
+| UNP | Macro | 8 | 9 | Manufacturing expansion and freight ex-fuel growth improve the demand read. |
+| UNP | Credit/Risk | 7 | 6 | Merger financing/integration and existing debt raise tail risk. |
+| DAL | Credit/Risk | 5 | 6 | Full-year FCF $3B–$4B and gross leverage near 2x improve solvency confidence. |
+| UBER | Technical | 5 | 4 | -20% YTD and below trend invalidate a tactical long despite network quality. |
+| AAL | Credit/Risk | 3 | 2 | Approximately $27B debt and fuel sensitivity dominate the cheap P/E. |
+| CAR | Credit/Risk | 2 | 1 | Approximately $27B net debt and short interest near 56% magnify normalization risk. |
+
+No specialist changed a top-three call after the evidence was integrated. The CIO ranking retains JBHT's highest raw average but selects CSX first because its evidence is broader, its data quality is cleaner, and the entry catalyst is more immediate.
+
+### ROUND 4: CIO SYNTHESIS — FINAL RANKINGS
+
+| Rank | Ticker | CIO score | Rating | Conviction | Paper size | Entry / risk line | Core reason |
+|---:|---|---:|---|---:|---:|---|---|
+| 1 | CSX | 8.9 | STRONG BUY | 5.0 | 1.50% | $53.23 / $47.50 | Volume, margin and EPS acceleration with clean tape |
+| 2 | JBHT | 8.8 | STRONG BUY | 4.5 | 1.25% | $288.30 / $255 | Intermodal operating leverage and improving demand |
+| 3 | UNP | 8.5 | STRONG BUY | 4.0 | 1.00% | $307.32 / $276 | Network quality plus standalone EPS growth; merger upside excluded |
+| 4 | ODFL | 8.3 | STRONG BUY | 3.5 | 0.75% | $232.99 / $207 | Best LTL quality, limited by valuation |
+| 5 | NSC | 8.2 | STRONG BUY | 3.5 | 0.75% | $350.66 / $316 | Rail momentum with deal optionality |
+| 6 | XPO | 8.0 | STRONG BUY | 3.5 | 0.75% | $213.01 / $187 | LTL operating leverage, valuation constrained |
+| 7 | DAL | 7.8 | BUY | 3.5 | 0.75% | $85.06 / $75 | Best airline FCF/guide, fuel is the falsifier |
+| 8 | DAC | 7.8 | BUY | 3.0 | 0.50% | $140.22 / $122 | Value plus strong tape, cycle-size controlled |
+| 9 | MATX | 7.7 | BUY | 3.0 | 0.50% | $210.57 / $181 | Domestic marine moat and momentum |
+| 10 | EXPD | 7.6 | BUY | 3.0 | 0.50% | $175.30 / $157 | Net cash and asset-light resilience |
+
+**Portfolio structure:** 2.5% rail/intermodal alpha sleeve (CSX/JBHT/UNP) plus no more than 0.5% aggregate marine cyclicals. Do not combine the airline and marine buys at full size because both share fuel/geopolitical shocks.
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+- **Regime:** Freight demand is expanding, but input inflation and financing costs remain elevated.
+- **Best mechanism:** Rail/intermodal network density converts modest volume growth into faster operating-income and EPS growth.
+- **Top picks:** CSX, JBHT, UNP.
+- **Biggest debate:** UNP's network moat versus merger regulatory/integration risk.
+- **Variant view:** The cleanest transportation alpha is not “cheap airlines”; it is operating leverage in networks with observable volume and service metrics.
+- **Bear case:** Manufacturing new orders roll over, fuel remains high, and freight volumes weaken before pricing/cost programs mature.
+- **Falsification:** CSX margin <37%; JBHT intermodal operating-income growth <20% or further ICS margin erosion; UNP standalone EPS guide below high single digits.
+
+## DETAILED STOCK ANALYSIS
+
+### 1. CSX
+
+**Thesis:** Q2 proves a real volume-to-margin inflection.  
+**Catalysts:** Q3 volume/service data, margin retention, intermodal share.  
+**Risks:** Fuel, labor, service deterioration, valuation.  
+**Paper action:** BUY 1.50% at $53.23; stop-review $47.50.  
+**Expected 12-month total return:** 12%–20% base; -11% risk-line loss.
+
+### 2. JBHT
+
+**Thesis:** Intermodal and DCS profit acceleration can outweigh brokerage normalization.  
+**Catalysts:** Peak-season intermodal, ICS gross-margin stabilization, EPS revisions.  
+**Risks:** Rail service, truckload pricing, integration.  
+**Paper action:** BUY 1.25% at $288.30; stop-review $255.  
+**Expected 12-month total return:** 14%–22% base; -12% risk-line loss.
+
+### 3. UNP
+
+**Thesis:** Western network productivity supports high-single-digit EPS growth without merger synergies.  
+**Catalysts:** Volume/service, fuel-normalized OR, regulatory milestones.  
+**Risks:** Merger rejection/delay, leverage, service integration.  
+**Paper action:** BUY 1.00% at $307.32; stop-review $276.  
+**Expected 12-month total return:** 10%–18% base; -10% risk-line loss.
+
+## HOLD / AVOID ZONE
+
+| Ticker | View | Falsifiable monitor |
+|---|---|---|
+| UBER | HOLD | Upgrade when price reclaims 200-day and two quarters show durable earnings quality. |
+| RXO | HOLD | Upgrade on integration proof and forward multiple below 35x without revision cuts. |
+| UPS | HOLD | Upgrade when U.S. volume turns positive and adjusted domestic margin exceeds 6%. |
+| AAL | SELL | Reconsider only after material debt reduction and positive through-cycle FCF. |
+| CAR | SELL | Reconsider only after corporate-action-normalized history and net-debt reduction are verified. |
+| JBLU | SELL | Reconsider only above $2B with liquidity runway and sustainable operating profit. |
+
+---
+
+## APPENDIX A: FULL SCORING MATRIX
+
+The complete 35-name matrix is the Round 1 consensus table. CIO weights are Fundamental 18%, Quant 14%, Technical 13%, Macro 15%, Credit 13%, Sentiment 10%, MomentumPulse 7%, Freight & Network 10%. Ratings follow: ≥8 Strong Buy; 6.5–7.9 Buy; 5.0–6.4 Hold; 3.5–4.9 Sell; <3 Strong Sell. CIO overrides for marine cyclicals and high-leverage carriers are explicitly size-constrained.
+
+## APPENDIX E: SPECIALIST CALLS LOG — 2026-07-27
+
+| Specialist | BUY 1 | BUY 2 | BUY 3 | SELL 1 | SELL 2 | SELL 3 |
+|---|---|---|---|---|---|---|
+| Fundamental | CSX | JBHT | ODFL | CAR | AAL | JBLU |
+| Quant/Factor | MATX | RXO | CSX | UBER | LYFT | PAC |
+| Technical | CSX | UNP | JBHT | UBER | LYFT | CAR |
+| Macro | UNP | NSC | DAL | UPS | CAR | CPRT |
+| Credit/Risk | ODFL | EXPD | DAC | CAR | AAL | ZIM |
+| Sentiment | CSX | JBHT | UNP | RXO | CAR | LYFT |
+| MomentumPulse | CSX | JBHT | UNP | UBER | LYFT | AAL |
+| Freight & Network | CSX | JBHT | UNP | AAL | CAR | JBLU |
+
+**Call count:** 48 total (8 specialists × 6 ranked calls).
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+First session: all realized 1w/4w/12w metrics are N/A. Default weights are retained until elapsed, benchmark-relative evidence exists. See `SpecialistPerformance_transportation.md`.
+
+## Analytical Ledger calls
+
+1. **CSX BUY at $53.23:** Q3 volume positive and operating margin ≥37%; falsified below either condition or $47.50 review line.
+2. **JBHT BUY at $288.30:** intermodal operating-income growth >20% with stable/improving ICS gross margin; risk line $255.
+3. **UNP BUY at $307.32:** standalone high-single-digit EPS growth and improving service; merger synergy excluded; risk line $276.
+
+## Methodology and exact blocked inputs
+
+- Used only public unauthenticated issuer releases, macro sources and deterministic local Yahoo/yfinance snapshots. No API key, paid terminal, token-backed source or other model was read or used.
+- **Blocked:** licensed consensus estimate histories and real-time Street revision breadth; no anonymous “consensus” numbers were fabricated.
+- **Blocked:** live options implied volatility/skew/open interest; no options score was inferred.
+- **Blocked:** insider transaction and 13F feeds normalized after 2026-07-24; sentiment relies on public tape/evidence only.
+- **Blocked:** reliable corporate-action-adjusted history for CAR; its technical and return history is treated as non-decision-grade.
+- **Blocked:** currency-normalized debt fields for PAC and ASR in the public snapshot; their credit scores are conservative and are not based on raw Yahoo debt values.
+- **Blocked:** exact intraday 2026-07-27 quotes; all entries use the verified 2026-07-24 close.
+- **Data-quality boundary:** JBLU was approximately $1.96B and is explicitly retained as a borderline comparator; ATSG and SAVE were inactive and excluded.
+
+---
+
+**Verdict:** Transportation is a selective overweight through **CSX, JBHT and UNP**. The alpha mechanism is measurable network operating leverage, not indiscriminate cyclical beta. Airline and marine exposure must remain subordinate to balance-sheet and fuel/geopolitical risk.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-07-28 16:32 · Not financial advice.</div>
+</footer>
+</body>
+</html>

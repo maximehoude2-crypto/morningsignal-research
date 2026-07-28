@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Food, Beverage & Tobacco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-07-28 16:32</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Food, Beverage & Tobacco</div>
+        <div class="hero-title">Food, Beverage & Tobacco — Committee Report</div>
+        <div class="hero-summary">
+          Staples have matched the S&P 500 YTD, so “defensive” is not itself an edge. The actionable dispersion is between companies creating mix through category transition or real unit demand (PM, KO) and companies using price to offset shrinking volume (large parts of packaged food). A 4.65% 10Y also means
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-07-27</span>
+          <span class="pill">25 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Food, Beverage & Tobacco yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-07-27</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">PM</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.35/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">KO</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.1/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">SJM</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>7.69/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">ADM</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.0/5</td>
+            <td>7.56/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">MNST</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.0/5</td>
+            <td>7.5/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">CELH's net cash and long-run energy-drink TAM conflict with a Stage 4 tape and negative revisions. The committee will not call the bottom.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--blue);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Where We Differ from Consensus</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">The PM preference is not “tobacco defensiveness”; it is a measurable product-mix transition. The SJM preference is not brand enthusiasm; it is a cash-flow/deleveraging call with a strict volume falsifier.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--red);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">What We're Probably Wrong About</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">An abrupt input-cost reversal could make the current volume-negative packaged-food cohort outperform before reported volumes heal. That would make today's conservative scores on HSY/MDLZ/MKC too low.</div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 5 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · PM — Philip Morris International</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q2 organic revenue +7.6%, smoke-free organic revenue +11.8%, organic operating income +10.7% and adjusted EPS +15.2% show mix-led growth with operating leverage. Smoke-free is 42% of revenue, and IQOS remains the global category leader. FY adjusted EPS of $8.26–$8.41 plus roughly $13.5B operating cash flow funds investment and deleveraging.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>US ZYN shipments were only +2%; regulatory/tax rules can change product economics abruptly. A 21x forward multiple and $43B net debt magnify any deceleration.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#2 · KO — Coca-Cola</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q1 volume +3%, organic revenue +10%, comparable margin 34.5% and comparable EPS +18% demonstrate pricing power without aggregate unit destruction.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>23.6x forward earnings and the near-high tape leave an asymmetric event bar. Q1 had six extra selling days, and Q4 will have six fewer.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#3 · SJM — J.M. Smucker</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q4 adjusted operating income +14%, EPS +20%, FCF $484M and $720M FY debt repayment establish a cash/deleveraging inflection. FY27 EPS growth of 7%–12% despite sales -3% to -4% makes cost/mix execution the catalyst.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Price +10 points with volume/mix -4 points is not a healthy revenue algorithm. Net debt around $7.1B and $345M expected interest make EV/EBITDA and deleveraging the controlling lens.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#4 · ADM — Archer-Daniels-Midland</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>FY EPS guide raised to $4.15–$4.70 on RVO clarity; Carbohydrate Solutions profit +48% and Nutrition +42% provide earnings breadth.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>AS&O profit -34%, $275M timing/mark-to-market noise and the +45.5% YTD rally leave little tolerance for a policy or crushing disappointment.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#5 · MNST — Monster Beverage</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Strong category growth, net cash and +22.8% YTD momentum deserve a premium.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>36x forward earnings and distribution/channel volatility make even a modest growth reset punitive.</p>
+      </div>
+      
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (37823 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Food, Beverage & Tobacco Industry Group Analysis — v3.0
+
+**Report Date:** 2026-07-27  
+**GICS Level / Code:** Level 2 — Food, Beverage & Tobacco (3020)  
+**Parent Sector:** Consumer Staples  
+**Universe:** 25 US-listed stocks; 24 above $2B market cap plus borderline SAM at $1.88B  
+**Analyst Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Consumer Staples Pricing Analyst  
+**Market Data As Of:** 2026-07-24 close; issuer evidence through 2026-07-27 09:00 EDT  
+**Scheduled Task:** InvestorDebate Weekly — authoritative seven-week rotation, week 3
+
+> **Decision view:** Overweight smoke-free conversion and global beverage pricing power; neutral packaged food; underweight structurally volume-negative US center-store and beer. The top three paper calls are **PM, KO, and SJM**, but KO is event-sized rather than chased one day before earnings.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT — FOOD, BEVERAGE & TOBACCO
+
+| Variable | Current evidence | Direct group transmission |
+|---|---:|---|
+| Fed funds target | 3.50%–3.75% | High dividend-duration multiples still face a real-rate ceiling; refinancing remains material for leveraged packaged-food names. |
+| US 10Y / 2Y | 4.65% / 4.03% at 2026-07-24 close | A positive, steep curve is less hostile to staples than 2025 inversion, but the 10Y limits multiple expansion. |
+| CPI / core CPI | 3.5% / 2.6% YoY in June | Headline food affordability remains tight even as monthly energy relief improves household cash flow. |
+| ISM Services PMI | 54.0 in June; prices 67.7 | Demand is expanding, but input/service inflation still argues for companies with demonstrated price/mix rather than hoped-for volume recovery. |
+| VIX | 18.58 on 2026-07-24 close | Defensive bid exists, but not at panic levels. |
+| XLP / SPY YTD | +8.3% / +8.2% through 2026-07-24 | Staples no longer offer a broad relative-value discount; stock selection must carry the alpha. |
+| 3020 mechanics | Cocoa/coffee and packaging remain margin swing factors; price elasticity is now visible in negative volume/mix at SJM, MDLZ and several center-store peers. | Reward businesses whose volume is stable or whose category transition creates mix, not price-only topline growth. |
+
+**Primary macro sources:** [Federal Reserve July 2026 Monetary Policy Report](https://www.federalreserve.gov/monetarypolicy/2026-07-mpr-summary.htm); [BLS June 2026 CPI](https://www.bls.gov/news.release/archives/cpi_07142026.htm); [ISM June 2026 Services Report](https://www.ismworld.org/globalassets/pub/research-and-surveys/rob/nmi/wtidrob202606svcs.pdf). Treasury, VIX and ETF prices are public unauthenticated Yahoo/yfinance closes.
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+| Discovery method | Stocks found | Notes |
+|---|---:|---|
+| Skill seed / S&P large-cap cross-check | 18 | KO, PEP, PM, MO, MDLZ, KHC, GIS, HSY, STZ, MKC, TSN, HRL, SJM, MNST, CAG, BG, ADM, TAP |
+| Packaged-food and beverage screen | 9 | KDP, BF.B, CPB, POST, SAM, CELH, FRPT plus KLG and NAPA |
+| Exclusions | 2 | KLG and NAPA returned no active public quote and are treated as delisted/acquired; no stale security is scored. |
+| Borderline inclusion | 1 | SAM at approximately $1.88B is retained and flagged because it is within the required $1.8B–$2.2B boundary. |
+| **Total analyzed** | **25** | Complete disclosed working universe; foreign ordinary shares without a clean US listing are excluded. |
+
+### Stock universe
+
+| Tier | Ticker | Company | Market cap ~$B | Price | YTD | Operating classification |
+|---|---|---|---:|---:|---:|---|
+| T1 | PM | Philip Morris International | 300.8 | $193.00 | +20.4% | Tobacco / smoke-free |
+| T1 | KO | Coca-Cola | 353.9 | $82.25 | +19.0% | Non-alcoholic beverages |
+| T1 | SJM | J.M. Smucker | 12.7 | $118.32 | +22.5% | Packaged food / coffee |
+| T1 | ADM | Archer-Daniels-Midland | 41.4 | $85.92 | +45.5% | Agricultural processing |
+| T1 | MDLZ | Mondelēz | 77.7 | $60.52 | +12.8% | Snacks / confectionery |
+| T1 | MNST | Monster Beverage | 91.4 | $93.49 | +22.8% | Energy beverages |
+| T1 | MO | Altria | 121.9 | $72.99 | +27.4% | US tobacco |
+| T2 | BG | Bunge | 23.6 | $121.53 | +31.2% | Agricultural processing |
+| T2 | KDP | Keurig Dr Pepper | 40.4 | $29.68 | +7.0% | Beverages / coffee systems |
+| T2 | HRL | Hormel | 13.9 | $25.31 | +8.2% | Packaged food / protein |
+| T2 | KHC | Kraft Heinz | 30.4 | $25.67 | +5.3% | Packaged food |
+| T2 | TSN | Tyson Foods | 20.2 | $57.45 | -1.0% | Protein |
+| T2 | PEP | PepsiCo | 186.7 | $136.64 | -3.9% | Snacks / beverages |
+| T2 | HSY | Hershey | 35.4 | $174.30 | -4.5% | Confectionery |
+| T2 | STZ | Constellation Brands | 22.2 | $130.16 | -7.8% | Beer / wine |
+| T2 | POST | Post Holdings | 4.1 | $90.91 | -8.8% | Packaged food |
+| T2 | BF.B | Brown-Forman | 12.0 | $26.08 | -0.2% | Spirits |
+| T2 | GIS | General Mills | 19.2 | $36.03 | -21.2% | Packaged food |
+| T2 | MKC | McCormick | 13.4 | $49.96 | -25.7% | Flavors / spices |
+| T2 | CELH | Celsius | 6.9 | $27.12 | -43.2% | Energy beverages |
+| T2 | CAG | Conagra | 7.1 | $14.77 | -14.6% | Packaged food |
+| T2 | TAP | Molson Coors | 7.7 | $40.95 | -13.6% | Beer |
+| T2 | CPB | Campbell's | 6.5 | $21.84 | -21.2% | Packaged food |
+| T2 | FRPT | Freshpet | 2.8 | $57.54 | -4.3% | Pet food |
+| T3* | SAM | Boston Beer | 1.88 | $180.15 | -9.9% | Beer / hard seltzer |
+
+Market caps, price history, trend and public consensus fields are deterministic Yahoo/yfinance snapshots. They are screening evidence, not issuer-reported financials.
+
+---
+
+## APPENDIX C: DARWINIAN ANALYST LEDGER + CIO SPECIALIST WEIGHTING
+
+**Pre-run evaluation:** No prior same-group report or `SpecialistPerformance_food-beverage-tobacco.md` existed. This is the first session. There are zero elapsed 1w/4w/12w observations, so hit rate, information coefficient, top-quintile alpha and drawdown discipline are **N/A**. The process remains in observation mode; no historical-performance multiplier is allowed.
+
+| Specialist | Prior weight | Track-record rank | Evidence | Multiplier | Current weight | Change |
+|---|---:|---:|---|---:|---:|---:|
+| Fundamental | 18% | N/A | First session | 1.00x | 18% | 0 |
+| Quant/Factor | 14% | N/A | First session | 1.00x | 14% | 0 |
+| Technical | 13% | N/A | First session | 1.00x | 13% | 0 |
+| Macro | 15% | N/A | First session | 1.00x | 15% | 0 |
+| Credit/Risk | 13% | N/A | First session | 1.00x | 13% | 0 |
+| Sentiment | 10% | N/A | First session | 1.00x | 10% | 0 |
+| MomentumPulse | 7% | N/A | First session | 1.00x | 7% | 0 |
+| Consumer Staples Pricing | 10% | N/A | First session | 1.00x | 10% | 0 |
+| **Total** | **100%** |  |  |  | **100%** |  |
+
+The current regime would normally raise the Pricing and Fundamental lenses because the dominant question is whether price/mix can offset commodity inflation without breaking volume. The first-run rule controls: default weights are retained so the performance loop begins from an auditable prior.
+
+---
+
+## THE DEBATE — FULL PROTOCOL
+
+### ROUND 1: Independent deep analysis
+
+#### PM — Philip Morris International
+
+- **Fundamental (8):** Q2 net revenue reached $11.2B, +10.4% reported and +7.6% organic; adjusted EPS rose 15.2% to $2.20. Smoke-free generated about 42% of revenue and is a measurable mix transition, not a narrative.
+- **Quant (8):** +20.4% YTD, close to the 52-week high, positive earnings/revenue momentum and a still-manageable 21.1x forward P/E form the best quality-momentum combination in the group.
+- **Technical (9):** Price is +5.4% versus 50-day and +14.2% versus 200-day averages: Weinstein Stage 2. Risk line is $178; first upside objective $215.
+- **Macro (8):** Combustible pricing and global exposure hedge weak US center-store volume, while a strong dollar is the principal translation drag.
+- **Credit (7):** Management targets net debt/adjusted EBITDA near 2.0x by year-end; operating cash flow around $13.5B covers the $1.4B–$1.6B capex plan. Leverage is bounded, not trivial.
+- **Sentiment (8):** Strong tape and broad positive coverage create crowding risk, but the thesis is being validated by reported smoke-free mix and cash flow.
+- **MomentumPulse (9):** Q2 beat and a $8.26–$8.41 adjusted-EPS range sustain upward revision breadth; the unchanged constant-currency framework is the only restraint.
+- **Pricing specialist (9):** IQOS shipments +7.6%, smoke-free revenue +11.7% and combustible organic revenue +6.4% prove three distinct growth engines. The weak link is US ZYN shipment growth of only 2%.
+
+Primary evidence: [PMI Q2 2026 release](https://www.pmi.com/investor-relations/press-releases-and-events/press-releases-overview/press-release-details?newsId=30296).
+
+#### KO — Coca-Cola
+
+- **Fundamental (8):** Q1 organic revenue grew 10%, unit cases 3%, comparable operating income 12% currency-neutral and comparable EPS 18%; that is genuine price, volume and margin alignment.
+- **Quant (8):** +19.0% YTD and 23.6x forward P/E embed quality. The security is not cheap enough to ignore tomorrow's binary event.
+- **Technical (9):** +8.9% versus the 200-day average, within 3.1% of the 52-week high. Stage 2; support $78, resistance/target $88.
+- **Macro (8):** Global route-to-market and local pricing are resilient, but currency and emerging-market consumer elasticity remain transmission risks.
+- **Credit (8):** High recurring FCF and bottler economics absorb modest leverage; a +100 bp refinancing shock is not thesis-breaking.
+- **Sentiment (7):** Defensive-quality ownership is crowded, and a merely in-line Q2 could de-rate the shares.
+- **MomentumPulse (8):** Q1 guidance update and price strength are constructive; no Q2 revision credit is taken before the July 28 print.
+- **Pricing specialist (8):** Q1 unit volume plus price/mix is the cleanest proof in beverages, but the six extra selling days distort the YoY cadence and reverse in Q4.
+
+Primary evidence: [KO Q1 2026 results](https://investors.coca-colacompany.com/news-events/press-releases/detail/1158/coca-cola-reports-first-quarter-2026-results-and-updates-full-year-guidance); [July 28 Q2 timing](https://investors.coca-colacompany.com/news-events/press-releases/detail/1163/the-coca-cola-company-announces-timing-of-second-quarter-2026-earnings-release).
+
+#### SJM — J.M. Smucker
+
+- **Fundamental (8):** Q4 sales rose 6%, adjusted operating profit 14%, adjusted EPS 20% and FCF to $484M, while FY debt repayment was $720M. The earnings/cash inflection is real.
+- **Quant (8):** 11.1x forward P/E and +22.5% YTD combine value and momentum.
+- **Technical (9):** Fresh 52-week high, +8.2% versus 50-day and +13.7% versus 200-day averages; support $108, target $132.
+- **Macro (7):** Coffee inflation remains a cost and elasticity risk; consumer trade-down supports at-home consumption but not branded volume.
+- **Credit (6):** Net debt near $7.1B and $345M FY27 interest expense require the promised $1B FCF to keep deleveraging on schedule. EV/EBITDA, not P/E, is the primary lens.
+- **Sentiment (7):** The rerating has started, reducing contrarian value.
+- **MomentumPulse (9):** FY27 EPS guidance of $9.75–$10.25 implies +7% to +12% despite sales down 3%–4%; margin delivery is the revision fulcrum.
+- **Pricing specialist (7):** Q4 price +10 points and volume/mix -4 points is not a durable demand win. Coffee price +21 points with volume -8 points is a red flag unless elasticity stabilizes.
+
+Primary evidence: [SJM FY26 Q4 and FY27 outlook](https://investors.jmsmucker.com/news/news-details/2026/The-J-M--Smucker-Co--Announces-Fiscal-Year-2026-Fourth-Quarter-Results-and-Provides-Full-Year-Fiscal-2027-Outlook/default.aspx).
+
+#### ADM — Archer-Daniels-Midland
+
+Fundamental sees only a 1% adjusted-EPS improvement, but Macro and Pricing see a policy-driven earnings inflection: Q1 AS&O profit fell 34% while Carbohydrate Solutions rose 48% and Nutrition 42%; the full-year EPS range was raised to $4.15–$4.70 after biofuel-policy clarity. Quant/Technical reward +45.5% YTD; Credit penalizes commodity working-capital and accounting complexity. The call is **BUY, not STRONG BUY**, because a large part of the move is multiple/expectation recovery ahead of proof in crushing and ethanol. Primary evidence: [ADM Q1 2026 results](https://investors.adm.com/news/news-details/2026/ADM-Reports-First-Quarter-2026-Results/default.aspx).
+
+#### MDLZ — Mondelēz
+
+Q1 net revenue grew 8.2%, but organic growth was only 3.0%, volume/mix -0.5%, adjusted gross margin -270 bp and constant-currency adjusted EPS -14.9%. Emerging-market volume is healthier than developed-market elasticity, and cocoa cost phasing can reverse, but tomorrow's Q2 must prove that the margin trough is timing rather than structure. **BUY with event risk; do not pre-emptively size above 1%.** Primary evidence: [MDLZ Q1 2026 results](https://ir.mondelezinternational.com/news-releases/news-release-details/mondelez-international-reports-q1-2026-results/); [Q2 timing](https://ir.mondelezinternational.com/news-releases/news-release-details/mondelez-international-report-q2-2026-financial-results-july-28).
+
+#### Condensed T2/T3 independent views
+
+| Ticker | Independent committee view |
+|---|---|
+| MNST | Best balance sheet and strong growth, but 36x forward earnings and recent consumer-distribution volatility cap conviction. |
+| MO | High cash yield and price/mix, but secular cigarette decline and weaker smoke-free optionality than PM make it a value/risk-control position. |
+| BG | Strong policy/commodity momentum but high working-capital and integration risk; prefer ADM's clearer public catalyst. |
+| KDP | Cheap beverage exposure, yet leverage and execution around coffee systems prevent a premium score. |
+| HRL | Net-cash-like balance sheet and improving trend; revenue/earnings growth remains too weak for an active overweight. |
+| KHC | 12x forward P/E is optically cheap; $17B net debt, limited organic growth and 11% short float make it a value-trap candidate. |
+| TSN | Protein-cycle recovery is offset by execution and commodity volatility; wait for sustained margin proof. |
+| PEP | Business quality survives, but -3.9% YTD, below both key moving averages and US snack elasticity make estimate momentum negative. |
+| HSY | Cocoa normalization is an eventual catalyst, not present proof; price remains below 50/200-day trends. |
+| FRPT | 13% public revenue-growth snapshot and low net debt are attractive; 32x forward earnings and capacity execution keep it HOLD. |
+| STZ | Cheap at 10.5x forward P/E, but beer-category pressure and leverage make the falling price signal informative. |
+| POST | Cheap but levered; deleveraging and integration must be the thesis. |
+| BF.B | Balance sheet resilience does not offset category weakness and earnings contraction. |
+| GIS | -21% YTD and weak growth indicate structural center-store pressure; a short-term bounce is not an estimate inflection. |
+| MKC | Category quality is good, but -25.7% YTD and earnings contraction require margin/volume evidence. |
+| CELH | Balance sheet and long-duration growth are strong; -43% YTD and -35% versus 200-day reveal a broken trend. Highest disagreement. |
+| CAG | Low valuation is overwhelmed by leverage, weak volume and negative trend. |
+| TAP | Cheap but structurally weak beer demand; short interest is elevated. |
+| SAM | Borderline-cap, net cash and optionality; -9.9% YTD and category instability limit investability. |
+| CPB | Leverage, weak volume, -21% YTD and 28% short float produce the clearest avoid. |
+
+### ROUND 1 CONSENSUS & DIVERGENCE TABLE
+
+Scores are Fundamental / Quant / Technical / Macro / Credit / Sentiment / MomentumPulse / Pricing.
+
+| Ticker | Tier | R1 scores | Avg | Std dev | Flag |
+|---|---|---|---:|---:|---|
+| PM | T1 | 8/8/9/8/7/8/8/9 | 8.13 | 0.60 | OK |
+| KO | T1 | 8/8/9/8/8/7/8/8 | 8.00 | 0.50 | OK |
+| SJM | T1 | 8/8/9/7/6/7/8/7 | 7.50 | 0.87 | OK |
+| ADM | T1 | 7/8/9/8/7/6/8/8 | 7.63 | 0.86 | OK |
+| MDLZ | T1 | 8/7/7/7/8/7/7/8 | 7.38 | 0.48 | OK |
+| MNST | T1 | 7/8/8/7/9/6/8/7 | 7.50 | 0.87 | OK |
+| MO | T1 | 8/7/9/7/7/6/8/7 | 7.38 | 0.86 | OK |
+| BG | T2 | 7/8/8/8/6/6/8/8 | 7.38 | 0.86 | OK |
+| KDP | T2 | 7/7/7/7/6/7/7/7 | 6.88 | 0.33 | OK |
+| HRL | T2 | 7/6/8/7/9/6/7/6 | 7.00 | 1.00 | OK |
+| KHC | T2 | 6/7/7/6/5/5/7/6 | 6.13 | 0.78 | OK |
+| TSN | T2 | 6/6/6/6/5/5/6/6 | 5.75 | 0.43 | OK |
+| PEP | T2 | 6/5/4/6/5/7/4/6 | 5.38 | 0.99 | OK |
+| HSY | T2 | 7/5/4/5/7/6/4/6 | 5.50 | 1.12 | OK |
+| FRPT | T2 | 6/5/6/6/9/6/6/6 | 6.25 | 1.09 | OK |
+| STZ | T2 | 7/6/4/5/5/7/4/6 | 5.50 | 1.12 | OK |
+| POST | T2 | 6/6/5/6/4/6/5/6 | 5.50 | 0.71 | OK |
+| BF.B | T2 | 6/5/5/5/8/5/5/5 | 5.50 | 1.00 | OK |
+| GIS | T2 | 5/5/6/5/6/4/5/5 | 5.13 | 0.60 | OK |
+| MKC | T2 | 6/4/5/5/7/5/4/5 | 5.13 | 0.93 | OK |
+| CELH | T2 | 6/5/4/5/9/8/3/6 | 5.75 | 1.85 | **MODERATE** |
+| CAG | T2 | 5/5/6/5/4/4/6/5 | 5.00 | 0.71 | OK |
+| TAP | T2 | 5/6/5/5/4/4/5/5 | 4.88 | 0.60 | OK |
+| SAM | T3* | 5/5/5/5/9/4/4/5 | 5.25 | 1.48 | OK |
+| CPB | T2 | 5/4/5/5/4/4/4/5 | 4.50 | 0.50 | OK |
+
+### ROUND 2: Adversarial cross-examination
+
+#### PM — smoke-free compounder or consensus crowd?
+
+**Bull (Pricing):** Q2 organic revenue +7.6%, organic operating income +10.7% and smoke-free revenue +11.8% make the transition self-funding. IQOS holds roughly three-quarters category share where present, while combustibles still supply pricing and cash.
+
+**Bear (Credit):** $43B net debt and a 21x forward multiple leave no room for regulatory surprise. US ZYN shipments rose only 2%, and the $511M RBH impairment is a reminder that tobacco regulation can destroy asset value suddenly.
+
+**Resolution:** Bull wins, but risk sizing remains 1.5% paper weight. **Watch:** Q3 adjusted EPS $2.20–$2.25; net leverage close to 2.0x at year-end; US ZYN volume.
+
+#### KO — compounder or pre-earnings asymmetry trap?
+
+**Bull (Fundamental):** Q1 volume +3%, organic revenue +10%, margin expansion and EPS +18% are broad, high-quality evidence.
+
+**Bear (Sentiment):** At 23.6x forward earnings and near the high, even a good quarter can miss the embedded bar. Q1 had six extra days that reverse in Q4.
+
+**Resolution:** Maintain STRONG BUY score but cap entry at 1% before July 28. Add only if Q2 organic revenue ≥6%, unit cases non-negative and comparable margin does not contract more than 50 bp.
+
+#### SJM — margin inflection or price-elasticity mirage?
+
+**Bull (MomentumPulse):** Q4 adjusted EPS +20%, FCF +62% and $720M FY debt repayment prove that the Hostess integration and cost base are turning.
+
+**Bear (Pricing):** Q4 price +10 points against volume/mix -4 points; coffee price +21 points against volume -8 points. FY27 sales guide is -3% to -4%. This is margin harvesting, not yet a healthy consumer franchise.
+
+**Resolution:** BUY, not STRONG BUY. The $1B FCF and debt path carry the security; volume stabilization is required for a higher score.
+
+#### ADM — policy alpha or late-cycle momentum?
+
+**Bull (Macro):** Final 2026/2027 RVO clarity improves crushing and ethanol economics and already drove the guide raise.
+
+**Bear (Credit):** Q1 AS&O profit fell 34%; $275M of timing/mark-to-market effects and commodity working capital obscure earnings quality. At +45.5% YTD, policy upside may be capitalized.
+
+**Resolution:** BUY with $78 risk line; Q2 must show AS&O normalization and guide retention.
+
+#### CELH — fallen growth or broken distribution?
+
+**Bull (Credit/Sentiment):** Net cash, 100%+ public revenue-growth snapshot and 16% short float create asymmetric squeeze potential.
+
+**Bear (Technical/Momentum):** -43% YTD, -35% versus 200-day and negative estimate momentum are a Stage 4 signal. Cheap relative to peak is not a catalyst.
+
+**Resolution:** HOLD/watch only. Upgrade requires a close above $31 plus distributor inventory normalization in the next reported quarter; break below $24 is a sell signal.
+
+#### CPB/CAG — value or value traps?
+
+The bull case is single-digit forward P/E and defensive categories. The bear case wins: negative volume, high leverage, weak 200-day trends and high short interest mean equity value is the residual of a shrinking earnings base. Both remain SELL until organic volume turns positive and net leverage declines.
+
+### ROUND 3: Position updates post-cross-examination
+
+| Specialist | Ticker | R1 | R3 | Delta | Explicit reason |
+|---|---|---:|---:|---:|---|
+| Fundamental | PM | 8 | 9 | +1 | Q2 smoke-free and combustible organic profit both advanced; dual engine is stronger than assumed. |
+| MomentumPulse | PM | 8 | 9 | +1 | $2.20 Q2 adjusted EPS and maintained FY range preserve revision momentum. |
+| MomentumPulse | KO | 8 | 9 | +1 | Price held near highs into the dated July 28 catalyst; event control caps position, not score. |
+| MomentumPulse | SJM | 8 | 9 | +1 | FCF and debt-paydown evidence outweigh the negative sales guide for the next one to two quarters. |
+| Pricing | SJM | 7 | 8 | +1 | Away-from-home volume +6% and Uncrustables partially offset the aggregate elasticity concern. |
+| Credit | ADM | 7 | 6 | -1 | Working-capital and mark-to-market opacity deserve a permanent discount after the 45% YTD move. |
+| Technical | CELH | 4 | 3 | -1 | Stage 4 is confirmed by -35% distance to the 200-day average. |
+| MomentumPulse | CAG | 6 | 5 | -1 | No catalyst strong enough to override the negative trend. |
+| Credit | CPB | 4 | 3 | -1 | Leverage plus shrinking volume makes the equity tail more nonlinear. |
+
+All other specialists held scores because Round 2 did not invalidate their mechanism.
+
+### ROUND 4: CIO synthesis
+
+| Rank | Ticker | R3 scores F/Q/T/M/C/S/Mom/Pricing | Composite | Rating | Conviction |
+|---:|---|---|---:|---|---:|
+| 1 | PM | 9/8/9/8/7/8/9/9 | 8.35 | STRONG BUY | 5 |
+| 2 | KO | 8/8/9/8/8/7/9/8 | 8.10 | STRONG BUY | 4 |
+| 3 | SJM | 8/8/9/7/6/7/9/8 | 7.69 | BUY | 4 |
+| 4 | ADM | 7/8/9/8/6/6/9/8 | 7.56 | BUY | 3 |
+| 5 | MNST | 7/8/8/7/9/6/8/7 | 7.50 | BUY | 3 |
+| 6 | MDLZ | 8/7/7/7/8/7/8/8 | 7.48 | BUY | 3 |
+| 7 | MO | 8/7/9/7/7/6/8/7 | 7.41 | BUY | 3 |
+| 8 | BG | 7/8/8/8/5/6/8/8 | 7.23 | BUY | 3 |
+| 9 | HRL | 7/6/8/7/9/6/7/6 | 7.05 | BUY | 2 |
+| 10 | KDP | 7/7/7/7/6/7/7/7 | 6.87 | BUY | 2 |
+| 11 | FRPT | 6/5/6/6/9/6/6/6 | 6.25 | HOLD | 2 |
+| 12 | KHC | 6/7/7/6/5/5/7/6 | 6.11 | HOLD | 2 |
+| 13 | TSN | 6/6/6/6/5/5/6/6 | 5.77 | HOLD | 2 |
+| 14 | CELH | 6/5/3/5/9/8/3/6 | 5.70 | HOLD | 2 |
+| 15 | HSY | 7/5/4/5/7/6/4/6 | 5.62 | HOLD | 2 |
+| 16 | STZ | 7/6/4/5/5/7/4/6 | 5.60 | HOLD | 2 |
+| 17 | BF.B | 6/5/5/5/8/5/5/5 | 5.57 | HOLD | 2 |
+| 18 | POST | 6/6/5/6/4/6/5/6 | 5.54 | HOLD | 2 |
+| 19 | PEP | 6/5/4/6/5/7/4/6 | 5.43 | HOLD | 2 |
+| 20 | SAM | 5/5/5/5/9/4/4/5 | 5.35 | HOLD | 1 |
+| 21 | MKC | 6/4/5/5/7/5/4/5 | 5.23 | HOLD | 2 |
+| 22 | GIS | 5/5/6/5/6/4/5/5 | 5.16 | HOLD | 2 |
+| 23 | TAP | 5/6/5/5/4/4/5/5 | 4.91 | SELL | 2 |
+| 24 | CAG | 5/5/6/5/4/4/5/5 | 4.90 | SELL | 3 |
+| 25 | CPB | 5/4/5/5/3/4/4/5 | 4.30 | SELL | 3 |
+
+#### CIO alpha opportunity analysis
+
+- **Consensus vs committee:** The committee prefers PM over “defensive staples” because its smoke-free mix is an observable secular growth engine. It prefers SJM's cash/debt inflection to more popular snack brands, but refuses to call price-led revenue healthy volume.
+- **Most contrarian overweight:** SJM, sized below PM/KO because volume elasticity and leverage remain live.
+- **Most important underweight:** CPB/CAG; low P/E does not compensate for negative volume plus leverage.
+- **Biggest disagreement:** CELH. Balance-sheet optionality is real; price/revision evidence says the business must prove distributor normalization first.
+- **What the committee is probably wrong about:** It may be underweighting a rapid cocoa/coffee cost reversal that would make HSY, MDLZ and SJM earnings recover faster than volume data imply. Conversely, it may be overestimating PM's ability to sustain combustible pricing as smoke-free regulation tightens.
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+### Macro context
+
+Staples have matched the S&P 500 YTD, so “defensive” is not itself an edge. The actionable dispersion is between companies creating mix through category transition or real unit demand (PM, KO) and companies using price to offset shrinking volume (large parts of packaged food). A 4.65% 10Y also means duration-rich staples must deliver earnings, not merely stable dividends.
+
+June energy deflation improves household cash flow, but CPI is still 3.5% and ISM service prices 67.7. Commodity inputs and tariffs therefore remain two-sided: margin relief can arrive, but consumers are already showing elasticity. Tomorrow's KO and MDLZ results are the most immediate falsification events.
+
+### Top five ranked stocks
+
+| Rank | Ticker | Rating | Conviction | Composite | One-line thesis |
+|---:|---|---|---:|---:|---|
+| 1 | PM | STRONG BUY | 5 | 8.35 | Smoke-free mix plus combustible pricing compounds organic profit while leverage falls. |
+| 2 | KO | STRONG BUY | 4 | 8.10 | Q1 aligned volume, price and margin; July 28 controls entry timing. |
+| 3 | SJM | BUY | 4 | 7.69 | FCF/debt inflection is real, but negative volume prevents a quality-premium call. |
+| 4 | ADM | BUY | 3 | 7.56 | Biofuel-policy clarity improves crushing/ethanol, with proof required after a 45% rally. |
+| 5 | MNST | BUY | 3 | 7.50 | Net cash and growth are strong; valuation/distribution volatility cap sizing. |
+
+### Key industry-group call
+
+**Selective overweight.** Use PM and event-sized KO as the alpha sleeve; use SJM/ADM as catalyst-specific secondary positions. Do not own the basket indiscriminately.
+
+### Biggest disagreement
+
+CELH's net cash and long-run energy-drink TAM conflict with a Stage 4 tape and negative revisions. The committee will not call the bottom.
+
+### Where we differ from consensus
+
+The PM preference is not “tobacco defensiveness”; it is a measurable product-mix transition. The SJM preference is not brand enthusiasm; it is a cash-flow/deleveraging call with a strict volume falsifier.
+
+### What we're probably wrong about
+
+An abrupt input-cost reversal could make the current volume-negative packaged-food cohort outperform before reported volumes heal. That would make today's conservative scores on HSY/MDLZ/MKC too low.
+
+---
+
+## DETAILED STOCK ANALYSIS
+
+### 1. PM — Philip Morris International
+
+**Price / cap:** $193.00 / $300.8B  
+**Rating / conviction / composite:** STRONG BUY / 5 / 8.35
+
+**Bull case:** Q2 organic revenue +7.6%, smoke-free organic revenue +11.8%, organic operating income +10.7% and adjusted EPS +15.2% show mix-led growth with operating leverage. Smoke-free is 42% of revenue, and IQOS remains the global category leader. FY adjusted EPS of $8.26–$8.41 plus roughly $13.5B operating cash flow funds investment and deleveraging.
+
+**Bear case:** US ZYN shipments were only +2%; regulatory/tax rules can change product economics abruptly. A 21x forward multiple and $43B net debt magnify any deceleration.
+
+**Catalysts:** Q3 EPS $2.20–$2.25; ZYN ULTRA rollout through Q3; year-end leverage close to 2.0x.  
+**Falsification:** Smoke-free organic revenue below 7%, US ZYN shipments negative, or year-end leverage above 2.4x.  
+**Scenario targets:** Bear $165 (-15%); base $218 (+13%); bull $240 (+24%).  
+**Paper action:** BUY at $193, 1.5% tracking weight; risk line $178. Not a live portfolio instruction.
+
+### 2. KO — Coca-Cola
+
+**Price / cap:** $82.25 / $353.9B  
+**Rating / conviction / composite:** STRONG BUY / 4 / 8.10
+
+**Bull case:** Q1 volume +3%, organic revenue +10%, comparable margin 34.5% and comparable EPS +18% demonstrate pricing power without aggregate unit destruction.
+
+**Bear case:** 23.6x forward earnings and the near-high tape leave an asymmetric event bar. Q1 had six extra selling days, and Q4 will have six fewer.
+
+**Catalyst:** Q2 results July 28 before open.  
+**Falsification:** Q2 unit cases negative, organic growth below 4%, or comparable margin contraction >50 bp.  
+**Scenario targets:** Bear $72 (-12%); base $90 (+9%); bull $98 (+19%).  
+**Paper action:** BUY 1% before print only; add to 2% if the falsification tests clear. Not a live portfolio instruction.
+
+### 3. SJM — J.M. Smucker
+
+**Price / cap:** $118.32 / $12.7B  
+**Rating / conviction / composite:** BUY / 4 / 7.69
+
+**Bull case:** Q4 adjusted operating income +14%, EPS +20%, FCF $484M and $720M FY debt repayment establish a cash/deleveraging inflection. FY27 EPS growth of 7%–12% despite sales -3% to -4% makes cost/mix execution the catalyst.
+
+**Bear case:** Price +10 points with volume/mix -4 points is not a healthy revenue algorithm. Net debt around $7.1B and $345M expected interest make EV/EBITDA and deleveraging the controlling lens.
+
+**Catalyst:** Fiscal Q1 FY27 in late August/early September; FY27 FCF run-rate and volume/mix.  
+**Falsification:** Comparable volume/mix below -4% again, FCF outlook below $900M, or leverage fails to decline.  
+**Scenario targets:** Bear $96 (-19%); base $135 (+14%); bull $150 (+27%).  
+**Paper action:** BUY 1%, add only below $110 or after volume/mix improves to -2% or better.
+
+### 4. ADM — Archer-Daniels-Midland
+
+**Price / cap:** $85.92 / $41.4B  
+**Rating / conviction / composite:** BUY / 3 / 7.56
+
+**Bull case:** FY EPS guide raised to $4.15–$4.70 on RVO clarity; Carbohydrate Solutions profit +48% and Nutrition +42% provide earnings breadth.
+
+**Bear case:** AS&O profit -34%, $275M timing/mark-to-market noise and the +45.5% YTD rally leave little tolerance for a policy or crushing disappointment.
+
+**Catalyst:** Q2 results in early August and updated crushing/ethanol margin commentary.  
+**Falsification:** Guide midpoint cut below $4.25 or AS&O fails to recover sequentially.  
+**Scenario targets:** Bear $70 (-19%); base $94 (+9%); bull $105 (+22%).
+
+### 5. MNST — Monster Beverage
+
+**Price / cap:** $93.49 / $91.4B  
+**Rating / conviction / composite:** BUY / 3 / 7.50
+
+**Bull case:** Strong category growth, net cash and +22.8% YTD momentum deserve a premium.  
+**Bear case:** 36x forward earnings and distribution/channel volatility make even a modest growth reset punitive.  
+**Catalyst:** Q2 results, international growth and gross-margin update.  
+**Falsification:** Organic growth below 8% or gross margin contracts >150 bp.  
+**Scenario targets:** Bear $74 (-21%); base $102 (+9%); bull $118 (+26%).
+
+## HOLD ZONE
+
+| Ticker | Composite | What would change the view |
+|---|---:|---|
+| FRPT | 6.25 | BUY if revenue stays >12% and capacity ramp lifts EBITDA without FCF deterioration. |
+| KHC | 6.11 | BUY only with positive organic volume and net leverage below 3x. |
+| TSN | 5.77 | BUY after two quarters of normalized protein margins and positive FCF. |
+| CELH | 5.70 | BUY above $31 with distributor inventory normalization; SELL below $24. |
+| HSY | 5.62 | BUY when cocoa cost relief reaches reported gross margin and volume is no worse than -2%. |
+| STZ | 5.60 | BUY below $120 only if beer depletion stabilizes and leverage falls. |
+| BF.B | 5.57 | BUY after organic sales and US spirits volume turn positive. |
+| POST | 5.54 | BUY when leverage is below 4x and integration synergies reach cash. |
+| PEP | 5.43 | BUY if North America snack volume stabilizes and price/mix is not the sole growth engine. |
+| SAM | 5.35 | Re-enter above $200 with positive depletion growth. |
+| MKC | 5.23 | BUY after gross-margin recovery and positive volume. |
+| GIS | 5.16 | BUY only with North America organic volume stabilization and guide retention. |
+
+## BOTTOM RATINGS
+
+### TAP — SELL
+Cheap at 8.2x forward P/E, but falling beer volume, leverage and a weak Stage 4/late-Stage 3 chart make the low multiple a warning. **Falsification of sell:** Americas brand volume positive for two quarters and price above $46.
+
+### CAG — SELL
+The issue is not one bad quarter; it is negative center-store volume against a levered capital structure. **Falsification of sell:** organic volume turns positive and net leverage falls below 3.5x. Risk line for shorts: $17.
+
+### CPB — SELL
+At 11.2x forward earnings, the stock is not cheap enough for negative volume, high leverage and -21% YTD. **Falsification of sell:** Meals & Beverages volume positive, Snacks stable and debt/EBITDA below 3.5x. Base downside $18.
+
+---
+
+## APPENDIX A: FULL SCORING MATRIX
+
+The Round 1 matrix is above. Round 3 changes are limited to the nine explicit changes shown; all other scores are unchanged. Composite uses the audited 18/14/13/15/13/10/7/10 weights.
+
+## APPENDIX E: SPECIALIST CALLS LOG — 2026-07-27
+
+Entry prices are 2026-07-24 closes. These are observation-mode paper calls and do not change the live portfolio.
+
+| Specialist | Side | Rank | Ticker | Entry | Conviction | One-line mechanism |
+|---|---|---:|---|---:|---:|---|
+| Fundamental | BUY | 1 | PM | $193.00 | 5 | Smoke-free mix compounds organic profit. |
+| Fundamental | BUY | 2 | KO | $82.25 | 4 | Volume, price and margin aligned in Q1. |
+| Fundamental | BUY | 3 | SJM | $118.32 | 4 | FCF and deleveraging inflected. |
+| Fundamental | SELL | 1 | CPB | $21.84 | 3 | Negative volume plus leverage. |
+| Fundamental | SELL | 2 | CAG | $14.77 | 3 | Shrinking earnings base and debt. |
+| Fundamental | SELL | 3 | TAP | $40.95 | 2 | Beer decline makes low P/E a trap. |
+| Quant/Factor | BUY | 1 | PM | $193.00 | 4 | Quality plus momentum. |
+| Quant/Factor | BUY | 2 | ADM | $85.92 | 3 | Value/revision/momentum combination. |
+| Quant/Factor | BUY | 3 | SJM | $118.32 | 3 | Low P/E with improving momentum. |
+| Quant/Factor | SELL | 1 | CPB | $21.84 | 3 | Weak quality and momentum. |
+| Quant/Factor | SELL | 2 | MKC | $49.96 | 2 | Negative momentum and earnings. |
+| Quant/Factor | SELL | 3 | GIS | $36.03 | 2 | Negative revisions and trend. |
+| Technical | BUY | 1 | PM | $193.00 | 5 | Clean Stage 2. |
+| Technical | BUY | 2 | KO | $82.25 | 4 | Near-high Stage 2. |
+| Technical | BUY | 3 | ADM | $85.92 | 4 | Strongest YTD relative strength. |
+| Technical | SELL | 1 | CELH | $27.12 | 4 | Stage 4, far below 200-day. |
+| Technical | SELL | 2 | PEP | $136.64 | 3 | Below 50/200-day trends. |
+| Technical | SELL | 3 | HSY | $174.30 | 3 | Persistent lower trend. |
+| Macro | BUY | 1 | PM | $193.00 | 4 | Global mix and pricing. |
+| Macro | BUY | 2 | ADM | $85.92 | 4 | RVO policy improves economics. |
+| Macro | BUY | 3 | BG | $121.53 | 3 | Commodity-policy operating leverage. |
+| Macro | SELL | 1 | CPB | $21.84 | 3 | Rates and inflation transmit through debt/elasticity. |
+| Macro | SELL | 2 | CAG | $14.77 | Same adverse macro mix. |
+| Macro | SELL | 3 | STZ | $130.16 | Affordability and beer demand. |
+| Credit/Risk | BUY | 1 | MNST | $93.49 | 4 | Net cash and high resilience. |
+| Credit/Risk | BUY | 2 | FRPT | $57.54 | 3 | Low net debt. |
+| Credit/Risk | BUY | 3 | KO | $82.25 | 4 | Durable FCF coverage. |
+| Credit/Risk | SELL | 1 | CPB | $21.84 | 4 | Leverage plus volume decline. |
+| Credit/Risk | SELL | 2 | CAG | $14.77 | 3 | Thin equity cushion. |
+| Credit/Risk | SELL | 3 | POST | $90.91 | 3 | Leverage controls equity. |
+| Sentiment | BUY | 1 | PM | $193.00 | 4 | Narrative confirmed by earnings. |
+| Sentiment | BUY | 2 | CELH | $27.12 | 2 | Contrarian squeeze optionality only. |
+| Sentiment | BUY | 3 | STZ | $130.16 | 2 | Crowding reset creates optionality. |
+| Sentiment | SELL | 1 | CPB | $21.84 | 3 | Short interest confirms skepticism. |
+| Sentiment | SELL | 2 | CAG | $14.77 | 3 | No ownership catalyst. |
+| Sentiment | SELL | 3 | TAP | $40.95 | 2 | Category narrative deteriorating. |
+| MomentumPulse | BUY | 1 | PM | $193.00 | 5 | Fresh Q2 positive revisions. |
+| MomentumPulse | BUY | 2 | KO | $82.25 | 4 | Price strength into catalyst. |
+| MomentumPulse | BUY | 3 | ADM | $85.92 | 4 | Guide raise plus price confirmation. |
+| MomentumPulse | SELL | 1 | CELH | $27.12 | 4 | Negative revision/price loop. |
+| MomentumPulse | SELL | 2 | PEP | $136.64 | 3 | Weak estimate and price momentum. |
+| MomentumPulse | SELL | 3 | HSY | $174.30 | 3 | No earnings inflection yet. |
+| Pricing Specialist | BUY | 1 | PM | $193.00 | 5 | Mix transition and pricing. |
+| Pricing Specialist | BUY | 2 | KO | $82.25 | 4 | Volume plus price. |
+| Pricing Specialist | BUY | 3 | ADM | $85.92 | 3 | Biofuel and crush spread leverage. |
+| Pricing Specialist | SELL | 1 | CPB | $21.84 | 4 | Price cannot cover volume indefinitely. |
+| Pricing Specialist | SELL | 2 | CAG | $14.77 | Center-store elasticity. |
+| Pricing Specialist | SELL | 3 | TAP | $40.95 | Structural beer volume pressure. |
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+No leaderboard is statistically available before this first session. All eight specialists start with one pending session and zero evaluated horizons.
+
+## Analytical Ledger calls from this report
+
+- **PM paper BUY at $193.00:** catalyst Q3 results / year-end leverage; falsified by smoke-free organic growth below 7%, US ZYN shipment contraction or leverage above 2.4x.
+- **KO paper BUY at $82.25:** catalyst July 28 Q2; falsified by negative unit cases, organic growth below 4% or comparable-margin contraction greater than 50 bp.
+- **SJM paper BUY at $118.32:** catalyst FY27 Q1; falsified by volume/mix below -4% again, FCF guide below $900M or stalled deleveraging.
+
+## Methodology, limitations and exact blocked inputs
+
+Issuer releases and filings control operating facts. Public unauthenticated Yahoo/yfinance provides the point-in-time close, trend, approximate market cap and public consensus snapshot; it is not used to invent issuer KPIs. Scores are relative within this industry group and the weighted composite uses the disclosed session weights.
+
+**Exact blocked inputs:** consolidated real-time 2026-07-27 tape before the open; licensed point-in-time sell-side consensus and revision breadth; options positioning/put-call by ticker; institutional flow and prime-broker crowding; complete insider Form 4 normalization; proprietary scanner data for cocoa, coffee, sugar and private-label share. These fields are N/A and no proxy is presented as exact.
+
+This is research and an observation-mode paper portfolio, not a live trade instruction.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-07-28 16:32 · Not financial advice.</div>
+</footer>
+</body>
+</html>

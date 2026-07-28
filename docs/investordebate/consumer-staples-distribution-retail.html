@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Consumer Staples Distribution & Retail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-07-28 16:32</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Consumer Staples Distribution & Retail</div>
+        <div class="hero-title">Consumer Staples Distribution & Retail — Committee Report</div>
+        <div class="hero-summary">
+          Multi-specialist committee review covering every US-listed stock above $2B market cap in the Consumer Staples Distribution & Retail GICS industry group.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-07-27</span>
+          <span class="pill">13 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Consumer Staples Distribution & Retail yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-07-27</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">CASY</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.64/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">USFD</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.38/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">PFGC</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.19/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">PSMT</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>3.0/5</td>
+            <td>8.11/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">TGT</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>3.0/5</td>
+            <td>7.31/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">WMT's higher-margin profit mix is improving while its stock trend is broken. The committee waits for technical/earnings confirmation rather than forcing a mega-cap quality overweight.</div>
+      </div>
+      
+      
+      
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 5 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · CASY — Casey's</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#2 · USFD — US Foods</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#3 · PFGC — Performance Food Group</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#4 · PSMT — PriceSmart</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#5 · COST — Costco</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (26482 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Consumer Staples Distribution & Retail Industry Group Analysis — v3.0
+
+**Report Date:** 2026-07-27  
+**GICS Level / Code:** Level 2 — Consumer Staples Distribution & Retail (3010)  
+**Parent Sector:** Consumer Staples  
+**Universe:** 13 US-listed stocks above $2B market cap  
+**Analyst Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Grocery & Wholesale Analyst  
+**Market Data As Of:** 2026-07-24 close; issuer evidence through 2026-07-27 09:25 EDT  
+**Scheduled Task:** InvestorDebate Weekly — authoritative seven-week rotation, week 3
+
+> **Decision view:** Overweight foodservice share-gainers and convenience-store unit economics; neutral warehouse clubs at current valuations; underweight levered conventional grocery. Top three paper calls: **CASY, USFD, PFGC**.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT
+
+| Variable | Current | Group transmission |
+|---|---:|---|
+| Fed funds / US 10Y | 3.50%–3.75% / 4.65% | High lease/debt capitalization punishes weak grocery operators; strong FCF compounds faster when leverage is falling. |
+| June CPI / core | 3.5% / 2.6% YoY | Food affordability keeps traffic in value and club formats, but price gaps and private label matter more than headline inflation. |
+| ISM Services | 54.0; prices 67.7 | Restaurant end-demand expands, while labor/freight inflation tests foodservice distributor margin conversion. |
+| XLP / SPY YTD | +8.3% / +8.2% | No broad “defensive discount”; alpha must come from traffic, cases and margin mix. |
+| Fuel / convenience | Energy fell 5.7% MoM in June | Lower pump prices can lift gallons and inside-store discretionary traffic; fuel-margin normalization is a downside risk after unusually strong spreads. |
+| SNAP / low-income | Licensed real-time household scanner and SNAP tender-share data unavailable | Exact low-income basket trade-down is a blocked input; private-label/traffic evidence must come from issuers. |
+
+Sources: [Federal Reserve July report](https://www.federalreserve.gov/monetarypolicy/2026-07-mpr-summary.htm); [BLS June CPI](https://www.bls.gov/news.release/archives/cpi_07142026.htm); [ISM June Services](https://www.ismworld.org/globalassets/pub/research-and-surveys/rob/nmi/wtidrob202606svcs.pdf). Market prices are public unauthenticated Yahoo/yfinance closes.
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+| Method | Count | Notes |
+|---|---:|---|
+| S&P / index and skill seed | 10 | WMT, COST, TGT, KR, SYY, USFD, PFGC, BJ, ACI, CASY |
+| Food/club retailer cross-check | 3 | SFM, PSMT, UNFI |
+| Exclusions | 5 | MUSA is GICS Consumer Discretionary Automotive Retail; GO, IMKTA and NGVC are below $1.8B; WBA has no active quote. |
+| **Total analyzed** | **13** | No unrelated retailer added to enlarge the universe. |
+
+| Tier | Ticker | Company | Cap ~$B | Price | YTD | 50/200-day setup |
+|---|---|---|---:|---:|---:|---|
+| T1 | CASY | Casey's General Stores | 31.9 | $861.63 | +54.9% | +4.5% / +25.9% |
+| T1 | USFD | US Foods | 21.4 | $97.17 | +30.2% | +5.9% / +13.5% |
+| T1 | PFGC | Performance Food Group | 17.5 | $111.49 | +26.6% | +6.9% / +16.4% |
+| T1 | PSMT | PriceSmart | 5.7 | $186.24 | +51.0% | Stage 2 |
+| T1 | COST | Costco | 414.7 | $935.03 | +9.4% | -3.6% / -2.3% |
+| T1 | TGT | Target | 62.1 | $136.78 | +36.1% | +4.8% / +21.1% |
+| T1 | WMT | Walmart | 871.2 | $109.47 | -2.9% | -7.0% / -7.0% |
+| T2 | SYY | Sysco | 39.7 | $83.11 | +14.5% | +5.1% / +6.0% |
+| T2 | BJ | BJ's Wholesale Club | 11.9 | $92.94 | +1.1% | +3.5% / flat |
+| T2 | SFM | Sprouts Farmers Market | 7.0 | $74.89 | -7.1% | mixed |
+| T2 | KR | Kroger | 34.8 | $56.87 | -9.7% | -7.1% / -13.1% |
+| T2 | UNFI | United Natural Foods | 3.0 | $49.67 | +48.6% | flat / +17.6% |
+| T2 | ACI | Albertsons | 5.4 | $11.03 | -36.3% | -26.2% / -34.4% |
+
+Caps and trends are deterministic Yahoo/yfinance snapshots; issuer results control operating claims.
+
+---
+
+## APPENDIX C: DARWINIAN ANALYST LEDGER + CIO WEIGHTING
+
+No same-group prior report or performance log exists. With zero elapsed observations, all performance statistics are N/A and the run remains in observation mode.
+
+| Specialist | Prior | Rank | Evidence | Multiplier | Current | Change |
+|---|---:|---:|---|---:|---:|---:|
+| Fundamental | 18% | N/A | First session | 1.00x | 18% | 0 |
+| Quant/Factor | 14% | N/A | First session | 1.00x | 14% | 0 |
+| Technical | 13% | N/A | First session | 1.00x | 13% | 0 |
+| Macro | 15% | N/A | First session | 1.00x | 15% | 0 |
+| Credit/Risk | 13% | N/A | First session | 1.00x | 13% | 0 |
+| Sentiment | 10% | N/A | First session | 1.00x | 10% | 0 |
+| MomentumPulse | 7% | N/A | First session | 1.00x | 7% | 0 |
+| Grocery & Wholesale | 10% | N/A | First session | 1.00x | 10% | 0 |
+| **Total** | **100%** |  |  |  | **100%** |  |
+
+The regime argument would raise the group specialist because traffic, case mix and membership economics dominate. The first-run rule controls; defaults create the auditable baseline.
+
+---
+
+## THE DEBATE — FULL PROTOCOL
+
+### ROUND 1: Independent deep analysis
+
+#### CASY — Casey's General Stores
+
+- **Fundamental (9):** Fiscal Q4 EPS +66%, EBITDA +33%, inside same-store sales +5.5%, inside margin 42.4% and fuel gross profit +29% show multiple independent profit engines.
+- **Quant (9):** +54.9% YTD, positive quality and earnings momentum; valuation at roughly 36.6x forward earnings is the constraint.
+- **Technical (9):** Stage 2, +25.9% above the 200-day average. Support $790; upside objective $930.
+- **Macro (8):** Rural/secondary-market traffic and prepared food are resilient, but fuel-margin normalization is the key macro sensitivity.
+- **Credit (7):** Net debt near $2.4B is serviceable against $1.48B FY EBITDA; acquisition integration and lease-adjusted leverage matter.
+- **Sentiment (8):** Crowded winner, but earnings validate the narrative.
+- **MomentumPulse (9):** EPS, EBITDA, inside comps and gallons all accelerated into the most recent print.
+- **Grocery/Wholesale (9):** Prepared food and private-label inside margin turn a fuel stop into a high-frequency food retailer. This is the best operating mechanism in the group.
+
+Primary evidence: [Casey's FY26 Q4 results](https://investor.caseys.com/news-releases/news-release-details/caseys-announces-fourth-quarter-and-fiscal-year-results-1).
+
+#### USFD — US Foods
+
+- **Fundamental (8):** Q1 sales +2.8%, adjusted EBITDA +6.2%, adjusted EPS +14.7%; independent-restaurant cases +4.6% create mix-led margin growth.
+- **Quant (8):** +30.2% YTD and 17.8x forward earnings balance growth and valuation.
+- **Technical (9):** Stage 2, +13.5% above 200-day; support $90, target $108.
+- **Macro (8):** Restaurant demand risk is offset by share gain and healthcare/hospitality volumes.
+- **Credit (7):** Net debt $5.1B / 2.6x EBITDA, down from 2.7x. EV/EBITDA is primary; each 100 bp on variable/refinanced debt is a bounded but real FCF headwind.
+- **Sentiment (8):** Buy-side consensus is positive, but repurchases and relative price strength are confirmed by operations.
+- **MomentumPulse (9):** FY EBITDA +9%–13% and EPS +18%–24% guide remains intact.
+- **Grocery/Wholesale (9):** Independent cases grow faster and carry more service/gross profit; this mix is the core alpha mechanism.
+
+Primary evidence: [US Foods Q1 FY26 results](https://ir.usfoods.com/newsroom/news/news-details/2026/US-Foods-Reports-First-Quarter-Fiscal-Year-2026-Earnings/default.aspx).
+
+#### PFGC — Performance Food Group
+
+- **Fundamental (8):** Q3 sales +6.4%, EBITDA +6.6% and nine-month FCF $806M; independent cases +7.3% reveal share gain.
+- **Quant (8):** +26.6% YTD and 19.5x forward earnings with improving FCF.
+- **Technical (9):** Stage 2, +16.4% above 200-day; support $103, target $124.
+- **Macro (8):** Food inflation of 4.5% adds revenue but pressures customers; distribution scale and independent mix offset.
+- **Credit (6):** Net debt near $7.8B and acquisition/lease obligations make EV/EBITDA and FCF conversion controlling.
+- **Sentiment (8):** Positive consensus is justified by case growth, not merely multiple expansion.
+- **MomentumPulse (9):** EBITDA above the prior guide high end and management expects acceleration in FY27.
+- **Grocery/Wholesale (9):** Organic independent cases +6.5% and Convenience EBITDA +34.1% are the cleanest share/mix proof.
+
+Primary evidence: [PFGC Q3 FY26 results](https://investors.pfgc.com/press-releases/press-release-details/2026/Performance-Food-Group-Company-Reports-Third-Quarter-and-First-Nine-Months-Fiscal-2026-Results/default.aspx).
+
+#### PSMT — PriceSmart
+
+Q3 merchandise sales +12.5%, comparable sales +10.7% (+6.9% constant currency), EBITDA +14% and EPS +12% show true traffic/currency-assisted growth. The first Chile club and additional Costa Rica capacity expand the runway. The bear case is +51% YTD, FX contribution of 3.8 points to comps and emerging-market currency/political risk. **BUY, 3/5**, not a chase. Primary evidence: [PriceSmart Q3 FY26](https://investors.pricesmart.com/financials/quarterly-results/default.aspx).
+
+#### COST — Costco
+
+June net sales +10.6%, adjusted comps +7.0% and digitally enabled comps +21.5% prove traffic/member-wallet share. Fundamental and Credit give top scores; Quant/Technical/Sentiment penalize 41x forward earnings and the price below 50/200-day averages. **BUY quality, HOLD security above $950.** Primary evidence: [Costco June sales](https://investor.costco.com/news/news-details/2026/Costco-Wholesale-Corporation-Reports-June-Sales-Results-and-Announces-Quarterly-Cash-Dividend/default.aspx).
+
+#### WMT / TGT
+
+Walmart Q1 revenue +7.3%, e-commerce +26%, advertising +37% and membership fees +17.4% make the profit mix better than the headline 33x P/E suggests, but the stock is below both key moving averages. Target's +36% YTD bounce and Stage 2 tape conflict with Q1 EPS of $1.71 versus $2.27 GAAP a year earlier. **WMT BUY/hold for quality; TGT BUY only as a turnaround with an August earnings falsifier.** Sources: [Walmart Q1 FY27](https://corporate.walmart.com/news/2026/05/21/walmart-releases-q1-fy27-earnings); [Target Q1 2026](https://corporate.target.com/press/release/2026/05/target-corporation-reports-first-quarter-earnings).
+
+#### Condensed T2 views
+
+| Ticker | Independent committee view |
+|---|---|
+| SYY | Global scale and improving chart; adjusted earnings growth must reaccelerate and leverage decline. |
+| BJ | Membership model is sound and valuation below COST, but traffic/renewal evidence is less dominant. |
+| SFM | Healthy-food differentiation and clean balance sheet; current negative momentum blocks a BUY. |
+| KR | Q1 identical sales +1.0% and e-commerce +19% are constructive; weak price trend and debt prevent an active overweight. |
+| UNFI | +48.6% YTD turnaround, but net debt and negative public revenue-growth snapshot make this a speculative HOLD. |
+| ACI | -36% YTD, -34% versus 200-day, 15% short float and ~$15B net debt create a nonlinear equity downside. |
+
+### ROUND 1 CONSENSUS & DIVERGENCE TABLE
+
+Scores: Fundamental / Quant / Technical / Macro / Credit / Sentiment / MomentumPulse / Grocery & Wholesale.
+
+| Ticker | Tier | R1 scores | Average | Std dev | Flag |
+|---|---|---|---:|---:|---|
+| CASY | T1 | 9/9/9/8/7/8/9/9 | 8.50 | 0.71 | OK |
+| USFD | T1 | 8/8/9/8/7/8/8/9 | 8.13 | 0.60 | OK |
+| PFGC | T1 | 8/8/9/8/7/8/8/9 | 8.13 | 0.60 | OK |
+| PSMT | T1 | 8/8/9/7/8/7/9/9 | 8.13 | 0.78 | OK |
+| COST | T1 | 9/7/6/8/9/6/6/9 | 7.50 | 1.30 | OK |
+| TGT | T1 | 7/7/9/7/6/8/8/7 | 7.38 | 0.86 | OK |
+| WMT | T1 | 9/6/4/8/8/8/4/9 | 7.00 | 1.87 | **MODERATE** |
+| SYY | T2 | 7/6/8/7/6/7/7/8 | 7.00 | 0.71 | OK |
+| BJ | T2 | 7/6/7/7/7/6/7/8 | 6.88 | 0.60 | OK |
+| SFM | T2 | 8/5/5/7/9/7/5/8 | 6.75 | 1.48 | OK |
+| UNFI | T2 | 5/7/8/6/3/7/8/5 | 6.13 | 1.62 | **MODERATE** |
+| KR | T2 | 7/6/4/7/5/6/4/7 | 5.75 | 1.20 | OK |
+| ACI | T2 | 4/3/2/5/2/4/2/5 | 3.38 | 1.22 | OK |
+
+### ROUND 2: Adversarial cross-examination
+
+#### CASY — elite compounder or peak fuel margin?
+
+**Bull (Grocery specialist):** Inside comps +5.5%, 42.4% inside margin and total inside gross profit +10.5% mean prepared food/private label, not fuel, is compounding wallet share. Fuel gallons also rose 1.5%.
+
+**Bear (Quant):** 36.6x forward P/E and +55% YTD embed a long integration and margin runway. Fuel margin of 46.9 cpg is unlikely to be a permanent base.
+
+**Resolution:** Bull wins; score stays highest but paper size is 1%, not 3%. Falsified by inside comps below 3%, inside margin below 41%, or fuel gallons negative.
+
+#### USFD vs PFGC — cleaner self-help or faster share gain?
+
+**USFD bull:** 2.6x leverage, EPS +14.7% and the +18%–24% FY guide create cleaner equity conversion.
+
+**PFGC bull:** Independent cases +7.3%, Convenience EBITDA +34% and $806M nine-month FCF show faster share/mix.
+
+**Credit bear:** Both are lease/debt intensive; PFGC's net income -28.5% and opex +8.6% reveal integration friction.
+
+**Resolution:** USFD ranks second on cleaner leverage; PFGC third on faster case/mix growth. Both are BUY.
+
+#### COST — best company, wrong security price?
+
+**Fundamental:** Adjusted comps +7%, e-commerce +21.5%, membership annuity and net cash justify exceptional quality.
+
+**Quant/Sentiment:** 41x forward earnings is a security-price problem. Great business does not erase duration.
+
+**Resolution:** Composite remains BUY, but action is WAIT below $875 or after EPS catches up. This respects the BQS/security firewall.
+
+#### WMT — profit-mix transformation or broken mega-cap trend?
+
+**Fundamental:** E-commerce +26%, advertising +37% and memberships +17.4% shift profit toward higher-margin streams.
+
+**Technical:** -7% versus both 50/200-day averages after only -2.9% YTD signals distribution, and 33x forward earnings leaves no technical margin.
+
+**Resolution:** HOLD/B﻿UY-quality, no active add until price recaptures $116 or Q2 operating income clears +7%.
+
+#### UNFI / ACI — turnaround optionality or equity traps?
+
+UNFI has positive tape but weak revenue and leverage; HOLD with a $44 stop. ACI's negative tape, debt and short interest align; STRONG SELL. ACI is only upgraded if price recaptures $16, identical sales turn positive and net leverage falls below 4x.
+
+### ROUND 3: Position updates
+
+| Specialist | Ticker | R1 | R3 | Delta | Reason |
+|---|---|---:|---:|---:|---|
+| MomentumPulse | CASY | 9 | 10 | +1 | Q4 EPS/EBITDA and all core KPIs accelerated. |
+| Credit/Risk | USFD | 7 | 8 | +1 | Leverage declined to 2.6x while repurchasing shares. |
+| MomentumPulse | USFD | 8 | 9 | +1 | FY EPS growth guide remains 18%–24%. |
+| Credit/Risk | PFGC | 7 | 6 | -1 | GAAP net income decline and acquisition opex deserve a discount. |
+| MomentumPulse | PFGC | 8 | 9 | +1 | EBITDA beat and FY27 acceleration statement are fresh. |
+| Sentiment | COST | 6 | 5 | -1 | 41x forward valuation and sub-200-day price create asymmetric bar risk. |
+| Technical | WMT | 4 | 3 | -1 | Failed 50/200-day trends despite good operations. |
+| Credit/Risk | UNFI | 3 | 2 | -1 | Turnaround equity remains highly levered. |
+| Technical | ACI | 2 | 1 | -1 | Stage 4 and -34% versus 200-day confirm broken security. |
+
+### ROUND 4: CIO SYNTHESIS
+
+| Rank | Ticker | R3 scores F/Q/T/M/C/S/Mom/Group | Composite | Rating | Conviction |
+|---:|---|---|---:|---|---:|
+| 1 | CASY | 9/9/9/8/7/8/10/9 | 8.64 | STRONG BUY | 5 |
+| 2 | USFD | 8/8/9/8/8/8/9/9 | 8.38 | STRONG BUY | 4 |
+| 3 | PFGC | 8/8/9/8/6/8/9/9 | 8.19 | STRONG BUY | 4 |
+| 4 | PSMT | 8/8/9/7/8/7/9/9 | 8.11 | STRONG BUY | 3 |
+| 5 | TGT | 7/7/9/7/6/8/8/7 | 7.31 | BUY | 3 |
+| 6 | COST | 9/7/6/8/9/5/6/9 | 7.51 | BUY | 3 |
+| 7 | SYY | 7/6/8/7/6/7/7/8 | 6.98 | BUY | 2 |
+| 8 | BJ | 7/6/7/7/7/6/7/8 | 6.87 | BUY | 2 |
+| 9 | WMT | 9/6/3/8/8/8/4/9 | 6.79 | BUY | 2 |
+| 10 | SFM | 8/5/5/7/9/7/5/8 | 6.78 | BUY | 2 |
+| 11 | UNFI | 5/7/8/6/2/7/8/5 | 5.98 | HOLD | 2 |
+| 12 | KR | 7/6/4/7/5/6/4/7 | 5.83 | HOLD | 2 |
+| 13 | ACI | 4/3/1/5/2/4/2/5 | 3.32 | STRONG SELL | 4 |
+
+#### CIO alpha analysis
+
+- **Most differentiated overweight:** CASY. The market may see a high-multiple fuel retailer; the committee sees a prepared-food/private-label gross-profit compounder.
+- **Cleaner pair trade:** Long USFD / underweight ACI: independent restaurant share gain and deleveraging versus levered conventional grocery.
+- **Biggest disagreement:** WMT. Operations score like a top-five name; valuation and tape rank it ninth.
+- **What we are probably wrong about:** Fuel margins may normalize faster than CASY's inside economics can offset, or a broad low-income consumer squeeze may hit restaurant cases before distributor self-help can protect EBITDA.
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+### Top five
+
+| Rank | Ticker | Rating | Composite | Conviction | One-line thesis |
+|---:|---|---|---:|---:|---|
+| 1 | CASY | STRONG BUY | 8.64 | 5 | Prepared food/private label compounds margin beyond fuel. |
+| 2 | USFD | STRONG BUY | 8.38 | 4 | Independent-restaurant mix plus deleveraging drives EPS faster than sales. |
+| 3 | PFGC | STRONG BUY | 8.19 | 4 | Case share and Convenience margin outweigh integration friction. |
+| 4 | PSMT | STRONG BUY | 8.11 | 3 | Constant-currency club comps and unit growth create emerging-market runway. |
+| 5 | COST | BUY | 7.51 | 3 | Best membership engine, but 41x earnings makes entry price the issue. |
+
+### Key call
+
+**Overweight operators that turn local traffic or independent cases into mix margin.** Do not treat all food retail as defensive: leverage and price competition make conventional grocery equities much more cyclical than their revenue.
+
+### Biggest disagreement
+
+WMT's higher-margin profit mix is improving while its stock trend is broken. The committee waits for technical/earnings confirmation rather than forcing a mega-cap quality overweight.
+
+### Where we differ
+
+CASY, USFD and PFGC rank ahead of COST/WMT because current earnings revisions and security-price asymmetry are better, not because their businesses have stronger absolute moats.
+
+---
+
+## DETAILED STOCK ANALYSIS
+
+### 1. CASY — Casey's
+
+**Price/cap:** $861.63 / $31.9B  
+**Rating:** STRONG BUY, 5/5, 8.64
+
+**Bull:** Q4 inside comps +5.5%, inside margin 42.4%, fuel gallons +1.5%, EPS +66% and EBITDA +33%. Prepared food and distribution density create local scale.
+
+**Bear:** 36.6x forward earnings and 46.9 cpg fuel margin imply a high embedded bar; acquisition integration can lift opex.
+
+**Catalysts:** Fiscal Q1 in September; new-store/integration cadence; inside margin.  
+**Falsification:** Inside comp <3%, inside margin <41%, or gallons negative.  
+**Targets:** Bear $710 (-18%); base $930 (+8%); bull $1,020 (+18%).  
+**Paper action:** BUY 1% at $861.63; add only below $800 or after another >4% inside comp.
+
+### 2. USFD — US Foods
+
+**Price/cap:** $97.17 / $21.4B  
+**Rating:** STRONG BUY, 4/5, 8.38
+
+**Bull:** Independent cases +4.6%, EBITDA +6.2%, EPS +14.7%; FY EPS guide +18%–24%. Leverage declined to 2.6x.
+
+**Bear:** Chain cases -2.3% and restaurant macro can deteriorate. At 17.8x forward earnings, self-help must continue.
+
+**Catalyst:** Q2 August; independent cases; EBITDA margin.  
+**Falsification:** Independent cases <2%, FY EPS growth guide below 15%, or leverage above 3x.  
+**Targets:** Bear $82; base $112; bull $125.
+
+### 3. PFGC — Performance Food Group
+
+**Price/cap:** $111.49 / $17.5B  
+**Rating:** STRONG BUY, 4/5, 8.19
+
+**Bull:** Independent cases +7.3%, Convenience EBITDA +34%, nine-month FCF $806M and FY27 acceleration expectation.
+
+**Bear:** GAAP income -28.5%, opex +8.6%, net debt around $7.8B and acquisition/lease risk.
+
+**Catalyst:** Fiscal Q4 August; independent cases and integration savings.  
+**Falsification:** Organic independent cases <4%, EBITDA growth <5%, or FCF guide cut.  
+**Targets:** Bear $92; base $128; bull $142.
+
+### 4. PSMT — PriceSmart
+
+**Price/cap:** $186.24 / $5.7B  
+**Rating:** STRONG BUY, 3/5, 8.11
+
+**Bull:** Q3 constant-currency comps +6.9%, EBITDA +14%, club expansion.  
+**Bear:** 3.8 points of reported comp came from FX; +51% YTD compresses asymmetry.  
+**Catalyst:** July monthly sales; Q4 and Chile capex update.  
+**Falsification:** Constant-currency comp <4% or operating margin contracts >50 bp.  
+**Targets:** Bear $150; base $202; bull $225.
+
+### 5. COST — Costco
+
+**Price/cap:** $935.03 / $414.7B  
+**Rating:** BUY score, WAIT security, 3/5, 7.51
+
+**Bull:** June adjusted comps +7%, digital +21.5%, membership economics and net cash.  
+**Bear:** 41x forward earnings and price below both 50/200-day averages.  
+**Entry rule:** WAIT ≤$875 or until EPS growth catches the multiple.  
+**Catalysts:** August 5 July sales; September 24 Q4.  
+**Falsification:** Adjusted comp below 5% or renewal-rate erosion.  
+**Targets:** Bear $790; base $1,000; bull $1,080.
+
+## HOLD / LOWER-CONVICTION ZONE
+
+| Ticker | Composite | Action trigger |
+|---|---:|---|
+| TGT | 7.31 | BUY only if August EPS/margin confirms the turnaround; risk $122. |
+| SYY | 6.98 | Add with local-case acceleration and net leverage below 2.5x. |
+| BJ | 6.87 | Add below $85 or with renewal/member growth acceleration. |
+| WMT | 6.79 | Add above $116 or after Q2 adjusted operating income +7% or better. |
+| SFM | 6.78 | Add when price recaptures 200-day and comps remain positive. |
+| UNFI | 5.98 | Speculative HOLD; stop $44; leverage must fall. |
+| KR | 5.83 | HOLD; identical sales need >2% and price must recapture $64. |
+
+## BOTTOM — ACI STRONG SELL
+
+Price -36% YTD and -34% versus 200-day, net debt around $15B and 15% short float all point the same way. Low forward P/E is not a margin of safety when leverage capitalizes shrinking cash flow. **Falsification:** identical sales positive, leverage below 4x and close above $16. Bear/base/bull: $8 / $10 / $16.
+
+---
+
+## APPENDIX A: FULL SCORING MATRIX
+
+Round 1 and Round 3 matrices are above. Composite uses the audited default weights. All non-listed Round 3 scores are held unchanged.
+
+## APPENDIX E: SPECIALIST CALLS LOG — 2026-07-27
+
+Observation-mode paper calls; entry prices are 2026-07-24 closes.
+
+| Specialist | Side | Rank | Ticker | Entry | Conv. | Mechanism |
+|---|---|---:|---|---:|---:|---|
+| Fundamental | BUY | 1 | CASY | $861.63 | 5 | Multi-engine gross profit. |
+| Fundamental | BUY | 2 | COST | $935.03 | 4 | Membership moat. |
+| Fundamental | BUY | 3 | WMT | $109.47 | 4 | Higher-margin digital mix. |
+| Fundamental | SELL | 1 | ACI | $11.03 | 4 | Levered grocery equity. |
+| Fundamental | SELL | 2 | UNFI | $49.67 | 2 | Fragile turnaround. |
+| Fundamental | SELL | 3 | KR | $56.87 | 2 | Low structural growth. |
+| Quant/Factor | BUY | 1 | CASY | $861.63 | 4 | Quality/momentum. |
+| Quant/Factor | BUY | 2 | PFGC | $111.49 | 4 | Growth plus FCF. |
+| Quant/Factor | BUY | 3 | USFD | $97.17 | 4 | Revisions/value. |
+| Quant/Factor | SELL | 1 | ACI | $11.03 | 4 | Negative quality/momentum. |
+| Quant/Factor | SELL | 2 | SFM | $74.89 | 2 | Weak momentum. |
+| Quant/Factor | SELL | 3 | WMT | $109.47 | 2 | Rich/weak tape. |
+| Technical | BUY | 1 | CASY | $861.63 | 5 | Stage 2. |
+| Technical | BUY | 2 | PFGC | $111.49 | 4 | Strong 200-day spread. |
+| Technical | BUY | 3 | USFD | $97.17 | 4 | Confirmed uptrend. |
+| Technical | SELL | 1 | ACI | $11.03 | 5 | Stage 4. |
+| Technical | SELL | 2 | WMT | $109.47 | 3 | Below key averages. |
+| Technical | SELL | 3 | KR | $56.87 | 3 | Negative trend. |
+| Macro | BUY | 1 | CASY | $861.63 | 4 | Fuel/inside diversification. |
+| Macro | BUY | 2 | USFD | $97.17 | 4 | Restaurant share gain. |
+| Macro | BUY | 3 | PFGC | $111.49 | 4 | Case/mix inflation hedge. |
+| Macro | SELL | 1 | ACI | $11.03 | 4 | Rates hit leverage. |
+| Macro | SELL | 2 | KR | $56.87 | 2 | Price competition. |
+| Macro | SELL | 3 | UNFI | $49.67 | 2 | Thin margin cyclicality. |
+| Credit/Risk | BUY | 1 | COST | $935.03 | 5 | Net cash. |
+| Credit/Risk | BUY | 2 | SFM | $74.89 | 4 | Clean balance sheet. |
+| Credit/Risk | BUY | 3 | USFD | $97.17 | 4 | Deleveraging. |
+| Credit/Risk | SELL | 1 | ACI | $11.03 | 5 | Nonlinear debt risk. |
+| Credit/Risk | SELL | 2 | UNFI | $49.67 | 4 | Thin cushion. |
+| Credit/Risk | SELL | 3 | PFGC | $111.49 | 3 | Acquisition leverage. |
+| Sentiment | BUY | 1 | CASY | $861.63 | 4 | Narrative validated. |
+| Sentiment | BUY | 2 | TGT | $136.78 | 3 | Turnaround rerating. |
+| Sentiment | BUY | 3 | PSMT | $186.24 | 3 | Underfollowed growth. |
+| Sentiment | SELL | 1 | ACI | $11.03 | 4 | Persistent skepticism. |
+| Sentiment | SELL | 2 | COST | $935.03 | 2 | Crowded quality. |
+| Sentiment | SELL | 3 | KR | $56.87 | 2 | No catalyst ownership. |
+| MomentumPulse | BUY | 1 | CASY | $861.63 | 5 | Fresh EPS acceleration. |
+| MomentumPulse | BUY | 2 | USFD | $97.17 | 4 | FY guide. |
+| MomentumPulse | BUY | 3 | PFGC | $111.49 | 4 | FY27 acceleration. |
+| MomentumPulse | SELL | 1 | ACI | $11.03 | 5 | Negative loop. |
+| MomentumPulse | SELL | 2 | WMT | $109.47 | 3 | Price confirmation absent. |
+| MomentumPulse | SELL | 3 | KR | $56.87 | 3 | Weak revisions. |
+| Grocery Specialist | BUY | 1 | CASY | $861.63 | 5 | Inside margin engine. |
+| Grocery Specialist | BUY | 2 | PFGC | $111.49 | 4 | Independent case mix. |
+| Grocery Specialist | BUY | 3 | USFD | $97.17 | 4 | Independent share. |
+| Grocery Specialist | SELL | 1 | ACI | $11.03 | 5 | Weak equity structure. |
+| Grocery Specialist | SELL | 2 | KR | $56.87 | 3 | Low identical sales. |
+| Grocery Specialist | SELL | 3 | UNFI | $49.67 | 3 | Thin distribution margin. |
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+First session: no evaluated leader. All eight lenses start with one pending observation.
+
+## Analytical Ledger calls
+
+- **CASY paper BUY at $861.63:** catalyst fiscal Q1; falsified by inside comp <3%, inside margin <41% or gallons negative.
+- **USFD paper BUY at $97.17:** catalyst Q2; falsified by independent cases <2%, FY EPS guide <15% growth or leverage >3x.
+- **PFGC paper BUY at $111.49:** catalyst fiscal Q4; falsified by organic independent cases <4%, EBITDA growth <5% or FCF guide cut.
+
+## Methodology and exact blocked inputs
+
+Primary issuer releases control KPIs. Public Yahoo/yfinance supplies point-in-time price, trend, approximate cap and public consensus fields. Ratings are relative and composite weights are disclosed.
+
+**Exact blocked inputs:** licensed point-in-time consensus/revision breadth; real-time 2026-07-27 consolidated tape; SNAP tender share; retailer loyalty-card basket data; private-label share by income quintile; renewal cohorts not disclosed by issuers; prime-broker crowding, options flow and normalized insider activity. Missing fields are N/A, not estimated.
+
+Observation-mode research only; no live portfolio change.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-07-28 16:32 · Not financial advice.</div>
+</footer>
+</body>
+</html>

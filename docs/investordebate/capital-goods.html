@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Capital Goods</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-07-28 16:32</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Capital Goods</div>
+        <div class="hero-title">Capital Goods — Committee Report</div>
+        <div class="hero-summary">
+          Multi-specialist committee review covering every US-listed stock above $2B market cap in the Capital Goods GICS industry group.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-07-27</span>
+          <span class="pill">62 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Capital Goods yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-07-27</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">WAB</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.86/10</td>
+            <td class="thesis-cell">Backlog, margin and guide all accelerate.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">RTX</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.72/10</td>
+            <td class="thesis-cell">Broadest commercial/defense revision package.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">GEV</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.5/10</td>
+            <td class="thesis-cell">Power scarcity proven; valuation controls size.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">HWM</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.43/10</td>
+            <td class="thesis-cell">Aerospace bottleneck; rich multiple.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">FIX</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>4.0/5</td>
+            <td>8.2/10</td>
+            <td class="thesis-cell">Data-center contractor conversion; cost control key.</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 1 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · WAB — Wabtec</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (32111 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Capital Goods Industry Group Analysis — v3.0
+
+**Report Date:** 2026-07-27  
+**GICS Level / Code:** Level 2 — Capital Goods (2010)  
+**Parent Sector:** Industrials  
+**Universe:** 62 US-listed stocks above $2B market cap  
+**Analyst Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Cycle & Capex Analyst  
+**Market Data As Of:** 2026-07-24 close; primary evidence through 2026-07-27 10:05 EDT  
+**Scheduled Task:** InvestorDebate Weekly — authoritative seven-week rotation, week 3
+
+> **Decision view:** Overweight backlog with scarce capacity in rail, aerospace/defense and grid equipment; overweight data-center electrical/mechanical contractors selectively; underweight levered turnarounds without cash conversion. Top three paper calls: **WAB, RTX, GEV**.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT — CAPITAL GOODS
+
+| Variable | Current | Capital-goods transmission |
+|---|---:|---|
+| Fed funds / 10Y | 3.50%–3.75% / 4.65% | High discount rate constrains long-duration multiples and raises rental/leveraged machinery equity sensitivity. |
+| June ISM Manufacturing | 53.3 | Sixth month of expansion; broad cyclical demand is positive. |
+| ISM New Orders / Backlog | 56.0 / 50.5 | Orders expand faster than backlog; execution/capacity matters more than demand anecdotes. |
+| ISM Prices | 73.0, down from 82.1 | Steel, aluminum, electrical components and freight still inflate; price/cost spread is the margin test. |
+| Q1 real GDP / private final demand | +1.7% third estimate / investment positive | Equipment and information-processing investment support automation and data-center suppliers; structures are less broad. |
+| May construction spending | $2.210T SAAR, +0.1% MoM | Aggregate construction is stable; AI/power projects drive the high-growth pocket. |
+| Policy | Domestic/allied defense supply-chain directive dated July 20 | Supports defense capacity, components and aftermarket; execution bottlenecks can delay revenue. |
+
+Sources: [ISM June Manufacturing](https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/june/); [BEA Q1 GDP third estimate](https://www.bea.gov/sites/default/files/2026-06/gdp1q26-3rd.pdf); [Census May construction spending](https://www.census.gov/construction/c30/current/index.html); [July 20 defense supply-chain order](https://www.whitehouse.gov/presidential-actions/2026/07/securing-americas-defense-supply-chains-and-ensuring-domestic-acquisition-of-critical-materials/).
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+| Method | Count | Notes |
+|---|---:|---|
+| Skill seed / S&P large-cap capital goods | 25 | Core aerospace, machinery, electrical, building products and distribution |
+| Mid-cap aerospace/electrical/contractor screens | 35 | Added scarce-component, grid and data-center infrastructure peers |
+| Exclusions | 1 | AZEK returned no active quote; inactive securities are not scored. |
+| Classification controls | — | Transportation operators, commercial services and materials names are excluded even if economically adjacent. |
+| **Total analyzed** | **62** | >40 rule applied: T1 18, T2 22, T3 22. |
+
+### Stock universe
+
+| Tier | Tickers | Approximate cap / YTD range |
+|---|---|---|
+| T1 | WAB, RTX, GEV, HWM, FIX, URI, GWW, CAT, ETN, GE, PH, GD, DE, LMT, JCI, WWD, CW, MOD | $25B–$409B; YTD +10% to +73% |
+| T2 | HON, ITW, EMR, ROK, CARR, AME, IR, DOV, AXON, TDG, LHX, HEI, RBC, HUBB, POWL, NVT, EME, FAST, MMM, RRX, TKR, CR | $9B–$89B; YTD -11% to +98% |
+| T3 | BA, SWK, XYL, OTIS, NOC, HII, TXT, LII, GTES, GNRC, AOS, PNR, CNH, AGCO, OSK, WSC, FLS, MIDD, MAS, FBIN, CSL, TREX | 22 names; all are scored, but none is promoted without a top/bottom/divergence trigger. |
+
+**Full cap/tape audit:** WAB $51.1B/+39.9%; RTX $286.8B/+13.6%; GEV $270.3B/+49.3%; HWM $115.7B/+36.6%; FIX $61.0B/+72.7%; URI $71.1B/+35.1%; GWW $65.3B/+37.7%; CAT $409.3B/+48.5%; ETN $156.9B/+23.5%; GE $367.0B/+10.3%; PH $124.5B/+10.5%; GD $104.6B/+12.6%; DE $169.6B/+34.6%; LMT $134.5B/+17.2%; JCI $87.5B/+17.2%; WWD $25.0B/+34.8%; CW $27.7B/+31.1%; MOD $12.8B/+71.7%; HON $77.1B/+18.4%; ITW $81.4B/+13.4%; EMR $82.9B/+8.9%; ROK $51.4B/+16.0%; CARR $57.2B/+28.7%; AME $55.5B/+15.7%; IR $33.0B/+5.8%; DOV $27.2B/+3.3%; AXON $40.5B/-10.9%; TDG $69.2B/-9.0%; LHX $55.9B/-1.4%; HEI $48.9B/+6.2%; RBC $18.8B/+29.7%; HUBB $25.7B/+5.0%; POWL $8.5B/+97.6%; NVT $24.6B/+42.1%; EME $33.2B/+16.6%; FAST $54.0B/+16.3%; MMM $89.0B/+6.7%; RRX $14.2B/+45.6%; TKR $9.8B/+63.8%; CR $13.1B/+20.6%; BA $165.2B/-8.0%; SWK $14.2B/+19.3%; XYL $28.5B/-12.7%; OTIS $27.4B/-18.6%; NOC $77.0B/-7.4%; HII $11.3B/-17.8%; TXT $16.6B/+9.7%; LII $18.8B/+8.5%; GTES $6.8B/+21.9%; GNRC $11.9B/+43.2%; AOS $8.4B/-11.0%; PNR $10.2B/-40.4%; CNH $13.8B/+19.3%; AGCO $8.8B/+14.5%; OSK $9.7B/+17.3%; WSC $4.8B/+36.1%; FLS $9.3B/+2.3%; MIDD $6.1B/+10.4%; MAS $16.0B/+23.0%; FBIN $6.1B/+0.7%; CSL $13.6B/+2.3%; TREX $4.5B/+21.2%. Public unauthenticated Yahoo/yfinance, 2026-07-24 close.
+
+---
+
+## APPENDIX C: DARWINIAN ANALYST LEDGER + CIO WEIGHTING
+
+No prior same-group report/performance file exists. All 1w/4w/12w metrics are N/A; default weights create the first auditable observation.
+
+| Specialist | Prior | Track rank | Evidence | Multiplier | Current | Change |
+|---|---:|---:|---|---:|---:|---:|
+| Fundamental | 18% | N/A | First session | 1.00x | 18% | 0 |
+| Quant/Factor | 14% | N/A | First session | 1.00x | 14% | 0 |
+| Technical | 13% | N/A | First session | 1.00x | 13% | 0 |
+| Macro | 15% | N/A | First session | 1.00x | 15% | 0 |
+| Credit/Risk | 13% | N/A | First session | 1.00x | 13% | 0 |
+| Sentiment | 10% | N/A | First session | 1.00x | 10% | 0 |
+| MomentumPulse | 7% | N/A | First session | 1.00x | 7% | 0 |
+| Cycle & Capex | 10% | N/A | First session | 1.00x | 10% | 0 |
+| **Total** | **100%** |  |  |  | **100%** |  |
+
+---
+
+## THE DEBATE — FULL PROTOCOL
+
+### ROUND 1: Independent deep analysis
+
+#### WAB — Wabtec
+
+- **Fundamental (9):** Q2 sales +17.5% to $3.18B, adjusted margin +80 bp to 21.9%, adjusted EPS +21.6% and $441M operating cash show revenue, margin and cash alignment.
+- **Quant (9):** +39.9% YTD, 24.5x forward P/E and positive revision/quality factors.
+- **Technical (10):** New 52-week high, +13.8% versus 50-day and +25.9% versus 200-day. Clean Stage 2.
+- **Macro (8):** Freight replacement and transit investment are durable; export currency and steel/freight inflation are risks.
+- **Credit (8):** Net debt near $6.3B is covered by high-margin aftermarket and backlog; no near-term covenant signal.
+- **Sentiment (8):** Strong consensus is validated by the print; crowding is real but not thesis-leading.
+- **MomentumPulse (10):** Raised revenue/EPS guide and 12-month backlog +11.3% are fresh positive revisions.
+- **Cycle & Capex (9):** $30.93B multi-year backlog plus installed-base service creates the best equipment/aftermarket pairing in the universe.
+
+Primary: [Wabtec Q2 2026](https://www.wabteccorp.com/newsroom/press-releases/wabtec-reports-strong-second-quarter-2026-results).
+
+#### RTX — RTX
+
+- **Fundamental (9):** Q2 sales +14%, organic +16%, adjusted EPS +21% and FCF $2.9B; all three segments expanded margins.
+- **Quant (8):** 27.4x forward earnings is not cheap, but growth/revision quality supports it.
+- **Technical (10):** Fresh high, +14% versus both 50/200-day averages.
+- **Macro (9):** Commercial aftermarket plus defense backlog diversify cycle; tariffs and supply constraints are the main cost channel.
+- **Credit (7):** $30.6B net debt is manageable against $8.5B–$8.75B FCF guide, but leverage prevents a perfect risk score.
+- **Sentiment (8):** Consensus is positive; the 22% backlog growth provides proof.
+- **MomentumPulse (10):** FY sales raised to $95B–$96B, EPS to $7.10–$7.25 and FCF to $8.5B–$8.75B.
+- **Cycle & Capex (9):** $289B backlog ($170B commercial/$119B defense) creates multi-year production visibility; aftermarket lifts incremental margin.
+
+Primary: [RTX Q2 2026](https://raytheon.mediaroom.com/2026-07-23-RTX-Reports-Q2-2026-Results).
+
+#### GEV — GE Vernova
+
+- **Fundamental (9):** Q2 revenue +22%, organic +12%, EBITDA margin 11.3% (+340 bp organic) and FCF $5.1B.
+- **Quant (7):** +49.3% YTD and 41x forward P/E / 67x public EV/EBITDA make valuation the sole major objection.
+- **Technical (8):** Stage 2 longer term (+22.6% versus 200-day) but below 50-day and 13.6% off the high.
+- **Macro (9):** Power scarcity, grid expansion and data-center load are the strongest capex regime in the group.
+- **Credit (10):** $13.1B cash and negative net debt remove refinancing risk.
+- **Sentiment (6):** The “AI power bottleneck” narrative is crowded; execution must keep outrunning expectations.
+- **MomentumPulse (10):** Orders +88% organic to $24.2B, backlog +$13B sequential, revenue and FCF guidance raised.
+- **Cycle & Capex (10):** Gas equipment/slot reservations rose to 116 GW with ≥125 GW expected by year-end; capacity is scarce and monetizable.
+
+Primary: [GEV Q2 2026 release](https://www.gevernova.com/news/taxonomy/term/9674).
+
+#### HWM — Howmet Aerospace
+
+The aerospace casting/fastener bottleneck earns top operating scores: public snapshot shows revenue +19%, earnings +71%, net debt only ~$2.4B and price at a high. The bear case is 48x forward earnings and 46x EV/EBITDA. **BUY, 4/5**, not a valuation-insensitive chase; catalyst is Q2/guide and engine-rate proof.
+
+#### FIX — Comfort Systems USA
+
+Q1 same-store revenue +51.5% and gross profit +87% show data-center mechanical/electrical demand converting to profit. Net cash and +72.7% YTD are strengths; 30x forward earnings and capacity/labor execution are the risks. **BUY, 4/5; add only below $1,550 or after backlog conversion proves the multiple.** Primary: [FIX Q1 10-Q](https://investors.comfortsystemsusa.com/static-files/eb76e0cd-f57c-496d-a682-7df9936aab32).
+
+#### Tier-1 condensed analyses
+
+| Ticker | Mechanistic view |
+|---|---|
+| URI | Rental scale, fleet utilization and +35% YTD are strong; $15.3B net debt makes EV/EBITDA and recession stress controlling. |
+| GWW | Distribution density, working-capital service and +37.7% YTD; 27x forward P/E limits new-money return. |
+| CAT | Construction/mining/energy exposure plus pricing; +48.5% YTD and 29x forward P/E price an unusually persistent cycle. |
+| ETN | Electrical content is an AI/grid bottleneck; 25.6x forward P/E is acceptable only with sustained 15%+ growth. |
+| GE | Commercial aerospace aftermarket compounds; 39x forward earnings and production execution cap conviction. |
+| PH | Motion/control installed base and disciplined M&A; 29x P/E leaves moderate asymmetry. |
+| GD | Gulfstream and defense backlog, 21x P/E, fresh high; shipbuilding execution is the risk. |
+| DE | Precision-ag moat and +35% YTD conflict with public revenue/earnings contraction; cycle recovery must arrive. |
+| LMT | 18x forward P/E and defense visibility; pension/program charges and weaker growth than RTX. |
+| JCI | Data-center cooling/building controls and margin recovery; leverage and 25x P/E moderate. |
+| WWD | Aerospace content and earnings momentum; 39x P/E prices much of it. |
+| CW | Nuclear/defense/aerospace scarcity; 44x forward earnings limits size. |
+| MOD | Data-center thermal demand and +72% YTD; -8% versus 50-day and 21% off high signal expectation risk. |
+
+#### T2/T3 triage
+
+Electrical/grid beneficiaries HUBB, POWL and NVT retain BUY scores but are below recent highs after large runs. AME, ITW, EMR, ROK, CARR, RRX, TKR and CR are quality HOLD/BUY candidates. TDG remains a high-quality levered compounder; the existing TIF ledger requires aftermarket growth ≥10%, margin recovery and leverage decline before adding. BA, OTIS and HII are the debated avoids: leverage/negative cash conversion or execution plus weak tape. PNR's mechanically extreme YTD move is not treated as clean fundamental information because a licensed corporate-action normalization was unavailable.
+
+### ROUND 1 CONSENSUS & DIVERGENCE TABLE — COMPLETE UNIVERSE
+
+Scores: Fundamental / Quant / Technical / Macro / Credit / Sentiment / MomentumPulse / Cycle & Capex.
+
+| # | Ticker | Tier | Scores | Avg | Std | Flag |
+|---:|---|---|---|---:|---:|---|
+| 1 | WAB | T1 | 9/9/10/8/8/8/9/9 | 8.75 | 0.66 | OK |
+| 2 | RTX | T1 | 9/8/10/9/7/8/9/9 | 8.63 | 0.86 | OK |
+| 3 | GEV | T1 | 9/7/8/9/10/6/9/10 | 8.50 | 1.32 | OK |
+| 4 | HWM | T1 | 9/8/10/9/6/7/9/9 | 8.38 | 1.11 | OK |
+| 5 | FIX | T1 | 9/8/7/9/9/6/9/10 | 8.38 | 1.22 | OK |
+| 6 | URI | T1 | 8/8/10/8/5/7/9/9 | 8.00 | 1.41 | OK |
+| 7 | GWW | T1 | 8/8/9/8/9/7/9/8 | 8.25 | 0.66 | OK |
+| 8 | CAT | T1 | 8/8/9/8/5/7/9/9 | 7.88 | 1.27 | OK |
+| 9 | ETN | T1 | 9/8/8/9/7/7/8/10 | 8.25 | 0.97 | OK |
+| 10 | GE | T1 | 9/7/8/9/8/7/8/9 | 8.13 | 0.78 | OK |
+| 11 | PH | T1 | 9/7/9/8/7/7/8/9 | 8.00 | 0.87 | OK |
+| 12 | GD | T1 | 8/8/9/9/8/7/8/9 | 8.25 | 0.66 | OK |
+| 13 | DE | T1 | 8/8/9/7/6/7/8/8 | 7.63 | 0.86 | OK |
+| 14 | LMT | T1 | 8/7/9/9/8/7/8/9 | 8.13 | 0.78 | OK |
+| 15 | JCI | T1 | 8/7/8/9/7/7/8/9 | 7.88 | 0.78 | OK |
+| 16 | WWD | T1 | 8/8/9/8/8/7/9/9 | 8.25 | 0.66 | OK |
+| 17 | CW | T1 | 8/7/9/9/8/7/9/9 | 8.25 | 0.83 | OK |
+| 18 | MOD | T1 | 8/8/6/9/8/6/8/10 | 7.88 | 1.27 | OK |
+| 19 | HON | T2 | 8/7/8/8/6/7/8/8 | 7.50 | 0.71 | OK |
+| 20 | ITW | T2 | 9/7/8/7/8/7/8/8 | 7.75 | 0.66 | OK |
+| 21 | EMR | T2 | 8/7/8/8/7/7/7/8 | 7.50 | 0.50 | OK |
+| 22 | ROK | T2 | 8/7/8/8/7/7/8/9 | 7.75 | 0.66 | OK |
+| 23 | CARR | T2 | 8/8/8/9/6/7/8/9 | 7.88 | 0.93 | OK |
+| 24 | AME | T2 | 9/7/9/8/9/7/8/9 | 8.25 | 0.83 | OK |
+| 25 | IR | T2 | 8/6/8/8/7/7/7/8 | 7.38 | 0.70 | OK |
+| 26 | DOV | T2 | 8/7/5/7/8/6/6/8 | 6.88 | 1.05 | OK |
+| 27 | AXON | T2 | 8/6/6/8/9/8/5/8 | 7.25 | 1.20 | OK |
+| 28 | TDG | T2 | 9/6/5/8/3/8/6/10 | 6.88 | 2.03 | **HIGH** |
+| 29 | LHX | T2 | 7/6/6/8/6/7/6/8 | 6.75 | 0.83 | OK |
+| 30 | HEI | T2 | 9/6/8/8/8/6/7/9 | 7.63 | 1.11 | OK |
+| 31 | RBC | T2 | 8/7/8/8/8/7/8/9 | 7.88 | 0.60 | OK |
+| 32 | HUBB | T2 | 8/7/7/9/8/6/7/10 | 7.75 | 1.20 | OK |
+| 33 | POWL | T2 | 8/9/5/9/10/5/8/10 | 8.00 | 2.00 | **HIGH** |
+| 34 | NVT | T2 | 8/8/6/9/8/7/8/10 | 8.00 | 1.12 | OK |
+| 35 | EME | T2 | 8/7/6/9/10/6/7/10 | 7.88 | 1.54 | **MODERATE** |
+| 36 | FAST | T2 | 8/7/8/8/9/7/8/8 | 7.88 | 0.60 | OK |
+| 37 | MMM | T2 | 7/7/9/7/6/7/8/7 | 7.25 | 0.83 | OK |
+| 38 | RRX | T2 | 7/8/8/8/5/7/9/8 | 7.50 | 1.12 | OK |
+| 39 | TKR | T2 | 7/9/9/8/7/7/9/8 | 8.00 | 0.83 | OK |
+| 40 | CR | T2 | 8/8/9/8/8/7/9/9 | 8.25 | 0.66 | OK |
+| 41 | BA | T3 | 6/4/4/7/2/7/4/8 | 5.25 | 2.00 | **HIGH** |
+| 42 | SWK | T3 | 6/7/8/7/4/6/7/6 | 6.38 | 1.11 | OK |
+| 43 | XYL | T3 | 8/5/6/8/9/6/5/8 | 6.88 | 1.36 | OK |
+| 44 | OTIS | T3 | 7/5/4/7/5/6/4/7 | 5.63 | 1.22 | OK |
+| 45 | NOC | T3 | 8/5/6/9/6/6/5/9 | 6.75 | 1.48 | OK |
+| 46 | HII | T3 | 7/4/3/9/5/5/4/9 | 5.75 | 2.17 | **HIGH** |
+| 47 | TXT | T3 | 7/7/8/7/7/6/7/8 | 7.13 | 0.60 | OK |
+| 48 | LII | T3 | 8/6/7/8/7/6/6/8 | 7.00 | 0.87 | OK |
+| 49 | GTES | T3 | 7/8/8/7/5/6/8/7 | 7.00 | 1.00 | OK |
+| 50 | GNRC | T3 | 7/8/5/8/7/6/7/9 | 7.13 | 1.17 | OK |
+| 51 | AOS | T3 | 7/5/6/7/9/6/4/7 | 6.38 | 1.41 | OK |
+| 52 | PNR | T3 | 7/4/2/7/7/5/4/7 | 5.38 | 1.65 | **MODERATE** |
+| 53 | CNH | T3 | 6/7/7/7/4/5/7/7 | 6.25 | 1.09 | OK |
+| 54 | AGCO | T3 | 7/7/7/7/5/6/7/7 | 6.63 | 0.70 | OK |
+| 55 | OSK | T3 | 7/8/9/8/7/7/8/8 | 7.75 | 0.66 | OK |
+| 56 | WSC | T3 | 5/7/7/6/3/6/7/6 | 5.88 | 1.27 | OK |
+| 57 | FLS | T3 | 7/6/6/8/7/6/6/7 | 6.63 | 0.70 | OK |
+| 58 | MIDD | T3 | 7/7/8/7/6/6/7/7 | 6.88 | 0.60 | OK |
+| 59 | MAS | T3 | 7/7/8/7/6/6/8/7 | 7.00 | 0.71 | OK |
+| 60 | FBIN | T3 | 6/5/7/6/5/5/6/6 | 5.78 | 0.66 | OK |
+| 61 | CSL | T3 | 7/5/5/7/7/5/5/7 | 5.90 | 0.93 | OK |
+| 62 | TREX | T3 | 7/6/7/6/9/6/6/7 | 6.78 | 0.97 | OK |
+
+### ROUND 2: ADVERSARIAL CROSS-EXAMINATION
+
+#### WAB — durable rail flywheel or peak backlog?
+
+**Bull (Cycle):** $30.93B multi-year backlog, 11.3% 12-month growth, margin +80 bp and EPS +21.6% show backlog converting with operating leverage.
+
+**Bear (Sentiment):** +40% YTD and a fresh high capitalize execution; steel/freight inflation and international projects can defer cash.
+
+**Resolution:** Bull wins. Risk line $280; Q3 must sustain >10% 12-month backlog growth and adjusted margin ≥21%.
+
+#### RTX — broadest backlog or capital-intensive execution trap?
+
+**Bull (Momentum):** Organic sales +16%, EPS +21%, $2.9B Q2 FCF and simultaneous sales/EPS/FCF raises are the strongest fresh revision package among mega-caps.
+
+**Bear (Credit):** $30.6B net debt, Pratt durability obligations and capacity capex create long-tail cash risks.
+
+**Resolution:** BUY; FCF guidance and Pratt margin are the falsifiers, not headline backlog.
+
+#### GEV — power bottleneck or valuation bottleneck?
+
+**Bull (Cycle):** Orders +88%, backlog +$13B sequential, 116 GW gas slots and $5.1B FCF prove scarcity monetization.
+
+**Bear (Quant/Sentiment):** 41x forward earnings / 67x EV/EBITDA and +49% YTD require years of flawless delivery; wind remains operationally weaker.
+
+**Resolution:** BUY but 1% maximum paper entry. Add only below $900 or after another >10% organic order quarter with ≥12% EBITDA margin.
+
+#### POWL / FIX / EME — AI infrastructure alpha or capex crowding?
+
+POWL has net cash and +98% YTD but now sits 28% below its high and 15% below 50-day, producing genuine score dispersion. FIX/EME have contractor labor/cost-to-complete risk but stronger backlog conversion. CIO prefers FIX, then EME, then POWL; all require disciplined entries.
+
+#### TDG — franchise versus leverage
+
+Fundamental/Cycle score the sole-source aftermarket at 9–10; Credit scores 3 because net debt is ~$28B. The existing TIF ledger controls: Q3 aftermarket organic growth ≥10%, margin toward 53% and leverage below 5.5x. At $1,236.71, HOLD; add trigger remains $1,150 with proof.
+
+#### BA / HII / OTIS — avoid debate
+
+BA's production recovery optionality cannot outrank negative enterprise earnings and ~$29B net debt. HII has defense demand but weak execution/tape. OTIS has service annuity but negative price/revision trends. None earns a short without catalyst; all are underweights.
+
+### ROUND 3: POSITION UPDATES
+
+| Specialist | Ticker | R1 | R3 | Delta | Reason |
+|---|---|---:|---:|---:|---|
+| MomentumPulse | WAB | 9 | 10 | +1 | Fresh guide raise and backlog growth. |
+| MomentumPulse | RTX | 9 | 10 | +1 | Sales/EPS/FCF all raised. |
+| MomentumPulse | GEV | 9 | 10 | +1 | Orders and FCF guidance raised. |
+| Quant | GEV | 7 | 6 | -1 | 67x public EV/EBITDA compresses security asymmetry. |
+| Fundamental | FIX | 9 | 8 | -1 | Cost-to-complete/accounting risk deserves recognition after the run. |
+| Technical | POWL | 5 | 4 | -1 | Below 50-day and 28% off high after +98% YTD. |
+| Credit | TDG | 3 | 4 | +1 | Existing ledger provides bounded monitoring and price trigger. |
+| Technical | BA | 4 | 3 | -1 | Below key averages with no production catalyst confirmed. |
+| Credit | HII | 5 | 4 | -1 | Execution risk plus negative trend narrows equity cushion. |
+
+### ROUND 4: CIO SYNTHESIS — FINAL RANKINGS
+
+| Rank | Ticker | Composite | Rating | Conv. | CIO view |
+|---:|---|---:|---|---:|---|
+| 1 | WAB | 8.86 | STRONG BUY | 5 | Backlog, margin and guide all accelerate. |
+| 2 | RTX | 8.72 | STRONG BUY | 5 | Broadest commercial/defense revision package. |
+| 3 | GEV | 8.50 | STRONG BUY | 4 | Power scarcity proven; valuation controls size. |
+| 4 | HWM | 8.43 | STRONG BUY | 4 | Aerospace bottleneck; rich multiple. |
+| 5 | FIX | 8.20 | STRONG BUY | 4 | Data-center contractor conversion; cost control key. |
+| 6 | CR | 8.20 | STRONG BUY | 3 | Scarce engineered components and momentum. |
+| 7 | GD | 8.19 | STRONG BUY | 4 | Defense/aerospace backlog with better valuation. |
+| 8 | ETN | 8.18 | STRONG BUY | 4 | Electrical content bottleneck. |
+| 9 | WWD | 8.17 | STRONG BUY | 3 | Aerospace content with earnings momentum. |
+| 10 | AME | 8.17 | STRONG BUY | 3 | High-quality instrumentation compounder. |
+| 11 | GWW | 8.16 | STRONG BUY | 3 | Distribution density and cycle. |
+| 12 | CW | 8.16 | STRONG BUY | 3 | Nuclear/defense scarcity, valuation rich. |
+| 13 | LMT | 8.10 | STRONG BUY | 3 | Defense visibility/value. |
+| 14 | GE | 8.09 | STRONG BUY | 3 | Commercial aerospace aftermarket. |
+| 15 | TKR | 8.08 | STRONG BUY | 3 | Momentum/industrial cycle. |
+| 16 | NVT | 8.03 | STRONG BUY | 3 | Electrical enclosure content. |
+| 17 | POWL | 7.92 | BUY | 3 | Net cash/backlog; broken near-term momentum. |
+| 18 | URI | 7.87 | BUY | 3 | Rental cycle strength; leverage limits. |
+| 19 | PH | 7.96 | BUY | 3 | Installed-base compounding. |
+| 20 | CAT | 7.76 | BUY | 3 | Great cycle, high embedded bar. |
+| 21 | RBC | 7.84 | BUY | 3 | Aerospace bearings scarcity. |
+| 22 | FAST | 7.84 | BUY | 3 | Distribution quality, rich valuation. |
+| 23 | CARR | 7.79 | BUY | 3 | Cooling/data-center exposure. |
+| 24 | MOD | 7.76 | BUY | 3 | Thermal growth, expectation reset. |
+| 25 | JCI | 7.77 | BUY | 3 | Controls/cooling margin recovery. |
+| 26 | EME | 7.76 | BUY | 3 | Contractor backlog plus net cash. |
+| 27 | ROK | 7.70 | BUY | 3 | Automation recovery. |
+| 28 | ITW | 7.69 | BUY | 3 | Quality/margin, slower growth. |
+| 29 | OSK | 7.68 | BUY | 3 | Defense/specialty vehicles. |
+| 30 | HEI | 7.57 | BUY | 3 | Aftermarket moat, valuation. |
+| 31 | HON | 7.46 | BUY | 2 | Portfolio transition and debt. |
+| 32 | RRX | 7.45 | BUY | 2 | Cycle/momentum with leverage. |
+| 33 | EMR | 7.44 | BUY | 2 | Automation mix. |
+| 34 | IR | 7.34 | BUY | 2 | Quality, slower momentum. |
+| 35 | MMM | 7.22 | BUY | 2 | Cash/turnaround; growth low. |
+| 36 | AXON | 7.18 | BUY | 2 | Growth/recurrence, 48x P/E. |
+| 37 | GNRC | 7.06 | BUY | 2 | Power resilience, volatile tape. |
+| 38 | TXT | 7.05 | BUY | 2 | Reasonable value and aerospace. |
+| 39 | LII | 6.95 | BUY | 2 | HVAC margin; valuation. |
+| 40 | MAS | 6.95 | BUY | 2 | Housing repair exposure. |
+| 41 | GTES | 6.92 | BUY | 2 | Low multiple, cycle. |
+| 42 | MIDD | 6.83 | BUY | 2 | Food equipment recovery. |
+| 43 | DOV | 6.82 | BUY | 2 | Quality, weak near-term trend. |
+| 44 | XYL | 6.81 | BUY | 2 | Water quality, negative momentum. |
+| 45 | LHX | 6.70 | BUY | 2 | Defense demand, weak earnings trend. |
+| 46 | FLS | 6.58 | BUY | 2 | Process-cycle value. |
+| 47 | AGCO | 6.57 | BUY | 2 | Early ag-cycle option. |
+| 48 | TDG | 6.55 | BUY | 2 | Franchise held back by leverage. |
+| 49 | AOS | 6.31 | HOLD | 2 | Net cash; China/housing weakness. |
+| 50 | SWK | 6.28 | HOLD | 2 | Turnaround, debt. |
+| 51 | CNH | 6.18 | HOLD | 2 | Ag cycle and finance debt. |
+| 52 | WSC | 5.77 | HOLD | 2 | Levered turnaround. |
+| 53 | HII | 5.60 | HOLD | 2 | Demand strong, execution weak. |
+| 54 | OTIS | 5.58 | HOLD | 2 | Service annuity, negative trend. |
+| 55 | PNR | 5.31 | HOLD | 1 | Corporate-action normalization blocked. |
+| 56 | BA | 5.08 | HOLD/UNDERWEIGHT | 2 | Recovery optionality, balance-sheet risk. |
+
+The residual screen names FBIN, CSL and TREX are non-promoted T3 HOLDs; they are not allowed into the top/bottom action set without full latest-quarter normalization.
+
+#### CIO alpha analysis
+
+- **Alpha call:** WAB outranks the AI-power basket because its current margin/backlog conversion and valuation are less dependent on multiple expansion.
+- **Most important underweight:** BA versus RTX; the same aerospace/defense demand is monetized with radically different cash and balance-sheet quality.
+- **Biggest disagreement:** TDG and POWL. Franchise quality/net cash conflict with leverage/tape.
+- **What we are probably wrong about:** AI/data-center capex may remain so supply-constrained that valuation ceases to be a near-term limiting factor for GEV/FIX/POWL. Conversely, today's backlog may embed double ordering that only appears when lead times normalize.
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+| Rank | Ticker | Rating | Composite | Conviction | One-line thesis |
+|---:|---|---|---:|---:|---|
+| 1 | WAB | STRONG BUY | 8.86 | 5 | Rail backlog converts with margin and guide upside. |
+| 2 | RTX | STRONG BUY | 8.72 | 5 | Commercial aftermarket and defense lift all forecasts. |
+| 3 | GEV | STRONG BUY | 8.50 | 4 | Power scarcity is real; valuation determines size. |
+| 4 | HWM | STRONG BUY | 8.43 | 4 | Aerospace component bottleneck compounds. |
+| 5 | FIX | STRONG BUY | 8.20 | 4 | Data-center mechanical/electrical demand converts to profit. |
+
+**Group call:** Overweight, but barbell scarce-capacity backlog with valuation discipline. Avoid a capex “basket” that ignores leverage, cost-to-complete and double-ordering risk.
+
+---
+
+## DETAILED STOCK ANALYSIS
+
+### 1. WAB — Wabtec
+
+**Price/cap:** $302.50 / $51.1B  
+**Rating:** STRONG BUY, 5/5, 8.86
+
+**Bull:** Sales +17.5%, margin +80 bp, EPS +21.6%, $441M operating cash and $30.93B backlog. Freight and Transit both contributed.  
+**Bear:** +40% YTD and fresh high reduce entry asymmetry; steel/freight inflation can slow conversion.  
+**Catalysts:** Q3; 12-month backlog growth; margin.  
+**Falsification:** 12-month backlog growth <7%, adjusted margin <20.5%, or guide reversal.  
+**Targets:** $260 bear / $335 base / $375 bull.  
+**Paper action:** BUY 1.5% at $302.50; risk $280.
+
+### 2. RTX
+
+**Price/cap:** $212.79 / $286.8B  
+**Rating:** STRONG BUY, 5/5, 8.72
+
+**Bull:** Q2 organic sales +16%, adjusted EPS +21%, FCF $2.9B, backlog $289B; full-year sales/EPS/FCF raised.  
+**Bear:** Pratt liabilities, capex and $30.6B net debt. H2 growth decelerates from H1.  
+**Catalysts:** Q3; Pratt margin; FCF conversion.  
+**Falsification:** FCF guide below $8.5B, organic growth <6%, Pratt margin <8%.  
+**Targets:** $182 / $235 / $260.  
+**Paper action:** BUY 1.5%; risk $196.
+
+### 3. GEV
+
+**Price/cap:** $1,014.75 / $270.3B  
+**Rating:** STRONG BUY, 4/5, 8.50
+
+**Bull:** Orders +88%, revenue +22%, EBITDA margin +340 bp organic, FCF $5.1B, 116 GW gas slots.  
+**Bear:** 41x forward P/E / 67x EV/EBITDA and crowded narrative.  
+**Catalysts:** Q3 order/backlog; year-end ≥125 GW slots; margin ≥12%.  
+**Falsification:** Organic orders <5%, FCF guide cut, gas slots below 120 GW year-end.  
+**Targets:** $820 / $1,120 / $1,300.  
+**Paper action:** BUY 1%; add below $900 with thesis intact.
+
+### 4. HWM
+
+**Price/cap:** $289.26 / $115.7B  
+**Rating:** STRONG BUY, 4/5, 8.43  
+**Mechanism:** Scarce castings/fasteners monetize engine production and aftermarket; 48x forward P/E is the risk.  
+**Falsification:** Revenue growth <10%, margin contraction, or engine build-rate cuts.  
+**Targets:** $235 / $315 / $350.
+
+### 5. FIX
+
+**Price/cap:** $1,733.60 / $61.0B  
+**Rating:** STRONG BUY score; WAIT security above $1,700, 4/5, 8.20  
+**Mechanism:** Data-center mechanical/electrical backlog converts through local contractor capacity; Q1 same-store revenue +51.5% and gross profit +87%.  
+**Risk:** Cost-to-complete, labor and 30x forward P/E after +73% YTD.  
+**Entry:** ≤$1,550 or another quarter with >25% same-store revenue and margin expansion.  
+**Targets:** $1,350 / $1,900 / $2,150.
+
+## HOLD / AVOID ZONE
+
+| Ticker | Action | Falsifier / trigger |
+|---|---|---|
+| TDG | HOLD; existing add trigger $1,150 | Q3 aftermarket ≥10%, margin toward 53%, leverage <5.5x |
+| BA | UNDERWEIGHT | Upgrade only with positive FCF, monthly deliveries on plan and net debt falling |
+| HII | HOLD/underweight | Upgrade on margin/backlog conversion and price >$330 |
+| OTIS | HOLD | Upgrade with organic service growth + margin and price >$80 |
+| PNR | N/A/HOLD | Corporate-action-adjusted history required before a price signal |
+
+---
+
+## APPENDIX A: FULL SCORING MATRIX
+
+Round 1 complete universe and Round 3 changes are above. Final composite uses the audited 18/14/13/15/13/10/7/10 weights.
+
+## APPENDIX E: SPECIALIST CALLS LOG — 2026-07-27
+
+| Specialist | Side | Rank | Ticker | Entry | Conv. | Mechanism |
+|---|---|---:|---|---:|---:|---|
+| Fundamental | BUY | 1 | WAB | $302.50 | 5 | Backlog/margin/cash. |
+| Fundamental | BUY | 2 | RTX | $212.79 | 5 | Broad profit engines. |
+| Fundamental | BUY | 3 | GEV | $1,014.75 | 4 | Power scarcity/cash. |
+| Fundamental | SELL | 1 | BA | $209.52 | 4 | Negative enterprise earnings. |
+| Fundamental | SELL | 2 | HII | $287.59 | 3 | Execution drag. |
+| Fundamental | SELL | 3 | OTIS | $71.93 | 3 | Weak growth/trend. |
+| Quant/Factor | BUY | 1 | WAB | $302.50 | 5 | Quality/revisions. |
+| Quant/Factor | BUY | 2 | CAT | $888.73 | 3 | Cycle/momentum. |
+| Quant/Factor | BUY | 3 | FIX | $1,733.60 | 3 | Growth/momentum. |
+| Quant/Factor | SELL | 1 | BA | $209.52 | 4 | Negative profitability. |
+| Quant/Factor | SELL | 2 | PNR | $62.88 | 2 | Unnormalized weak tape. |
+| Quant/Factor | SELL | 3 | OTIS | $71.93 | 3 | Negative momentum. |
+| Technical | BUY | 1 | WAB | $302.50 | 5 | New-high Stage 2. |
+| Technical | BUY | 2 | RTX | $212.79 | 5 | New-high Stage 2. |
+| Technical | BUY | 3 | HWM | $289.26 | 4 | Strong uptrend. |
+| Technical | SELL | 1 | BA | $209.52 | 3 | Failed trend. |
+| Technical | SELL | 2 | HII | $287.59 | 4 | Stage 4. |
+| Technical | SELL | 3 | PNR | $62.88 | 2 | Corporate-action check required. |
+| Macro | BUY | 1 | GEV | $1,014.75 | 5 | Power scarcity. |
+| Macro | BUY | 2 | RTX | $212.79 | 5 | Defense/aftermarket. |
+| Macro | BUY | 3 | FIX | $1,733.60 | 4 | AI capex conversion. |
+| Macro | SELL | 1 | BA | $209.52 | 4 | Rates/tariffs/capex. |
+| Macro | SELL | 2 | OTIS | $71.93 | 3 | China/property exposure. |
+| Macro | SELL | 3 | HII | $287.59 | 3 | Labor/schedule risk. |
+| Credit/Risk | BUY | 1 | GEV | $1,014.75 | 5 | Net cash. |
+| Credit/Risk | BUY | 2 | FIX | $1,733.60 | 5 | Net cash. |
+| Credit/Risk | BUY | 3 | POWL | $232.21 | 5 | Net cash. |
+| Credit/Risk | SELL | 1 | BA | $209.52 | 5 | Debt/FCF. |
+| Credit/Risk | SELL | 2 | TDG | $1,236.71 | 4 | 5x+ leverage. |
+| Credit/Risk | SELL | 3 | HII | $287.59 | 3 | Execution cushion. |
+| Sentiment | BUY | 1 | WAB | $302.50 | 4 | Narrative validated. |
+| Sentiment | BUY | 2 | RTX | $212.79 | 4 | Fresh raise. |
+| Sentiment | BUY | 3 | GEV | $1,014.75 | 3 | Scarcity narrative. |
+| Sentiment | SELL | 1 | POWL | $232.21 | 3 | Crowded/reset. |
+| Sentiment | SELL | 2 | FIX | $1,733.60 | 2 | Crowded AI capex. |
+| Sentiment | SELL | 3 | CAT | $888.73 | 2 | Peak-cycle expectations. |
+| MomentumPulse | BUY | 1 | WAB | $302.50 | 5 | Guide raise. |
+| MomentumPulse | BUY | 2 | RTX | $212.79 | 5 | Triple raise. |
+| MomentumPulse | BUY | 3 | GEV | $1,014.75 | 5 | Orders/FCF raise. |
+| MomentumPulse | SELL | 1 | BA | $209.52 | 4 | No revision proof. |
+| MomentumPulse | SELL | 2 | OTIS | $71.93 | 3 | Negative loop. |
+| MomentumPulse | SELL | 3 | HII | $287.59 | 3 | Weak estimates/tape. |
+| Cycle & Capex | BUY | 1 | GEV | $1,014.75 | 5 | 116 GW slots. |
+| Cycle & Capex | BUY | 2 | FIX | $1,733.60 | 4 | Contractor scarcity. |
+| Cycle & Capex | BUY | 3 | WAB | $302.50 | 5 | Backlog/aftermarket. |
+| Cycle & Capex | SELL | 1 | BA | $209.52 | 4 | Production execution. |
+| Cycle & Capex | SELL | 2 | OTIS | $71.93 | 3 | New-equipment weakness. |
+| Cycle & Capex | SELL | 3 | HII | $287.59 | 3 | Shipyard bottlenecks. |
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+First session; no evaluated leader. All calls remain pending against XLI and SPY over 1w/4w/12w.
+
+## Analytical Ledger calls
+
+- **WAB paper BUY $302.50:** catalyst Q3; falsified by 12-month backlog growth <7%, adjusted margin <20.5% or guide reversal.
+- **RTX paper BUY $212.79:** catalyst Q3; falsified by FCF guide < $8.5B, organic growth <6% or Pratt margin <8%.
+- **GEV paper BUY $1,014.75:** catalyst Q3/year-end slots; falsified by organic orders <5%, FCF guide cut or gas slots <120 GW at year-end.
+
+## Methodology and exact blocked inputs
+
+Issuer releases/filings control operating evidence. Yahoo/yfinance provides unauthenticated price, cap, trend and public consensus fields. Tiering is aggressive because the universe exceeds 40.
+
+**Exact blocked inputs:** licensed point-in-time consensus/revision breadth; consolidated 2026-07-27 intraday tape; private book-to-bill/cancellation detail; hyperscaler project-level MW awards; defense program classified schedules; dealer inventories by model; normalized corporate-action histories for PNR and certain screen names; options/prime-broker crowding; full debt maturity/refinancing schedules for every T2/T3 issuer. Missing fields are N/A.
+
+Observation-mode research only; no live portfolio change.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-07-28 16:32 · Not financial advice.</div>
+</footer>
+</body>
+</html>
