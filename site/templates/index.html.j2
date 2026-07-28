@@ -75,8 +75,8 @@
           </div>
           <div class="hero-mini-card">
             <div class="hero-mini-label">Tape Source</div>
-            <div class="hero-mini-value">{{ 'Fallback' if narrative_source == 'fallback' else 'GPT-5.4' }}</div>
-            <div class="hero-mini-meta">{{ 'Data-derived commentary' if narrative_source == 'fallback' else 'OpenAI-generated narrative' }}</div>
+            <div class="hero-mini-value">{{ 'Fallback' if narrative_source == 'fallback' else ('Codex' if narrative_source == 'codex' else 'OpenAI') }}</div>
+            <div class="hero-mini-meta">{{ 'Data-derived commentary' if narrative_source == 'fallback' else ('Active-task narrative' if narrative_source == 'codex' else 'OpenAI-generated narrative') }}</div>
           </div>
           <div class="hero-mini-card">
             <div class="hero-mini-label">Breakout Scan</div>
@@ -147,7 +147,7 @@
       </div>
       {% endif %}
       <div class="tape-meta">
-        {{ 'Data-derived fallback commentary' if narrative_source == 'fallback' else 'GPT-5.4-generated market commentary' }} · Not financial advice
+        {{ 'Data-derived fallback commentary' if narrative_source == 'fallback' else ('Active Codex task market commentary' if narrative_source == 'codex' else 'OpenAI-generated market commentary') }} · Not financial advice
       </div>
     {% else %}
       <div class="note-card">Narrative commentary is unavailable for this date, but the rest of the market data and setup scan remain fully intact.</div>

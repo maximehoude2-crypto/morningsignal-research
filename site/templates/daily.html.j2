@@ -302,7 +302,7 @@
         <div class="section-kicker">Narrative</div>
         <div class="section-title">Sector Commentary</div>
       </div>
-      <div class="section-note">GPT-5.4 commentary grounded in the market inputs for this session.</div>
+      <div class="section-note">{{ 'Active Codex task commentary' if narrative.get('source') == 'codex' else 'OpenAI commentary' }} grounded in the market inputs for this session.</div>
     </div>
     <div class="tape-summary">{{ narrative.get('summary', '') }}</div>
     <div class="tape-bullets">
