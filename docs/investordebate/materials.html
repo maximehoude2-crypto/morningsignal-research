@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Materials</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-08-03 16:38</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Materials</div>
+        <div class="hero-title">Materials — Committee Report</div>
+        <div class="hero-summary">
+          Multi-specialist committee review covering every US-listed stock above $2B market cap in the Materials GICS industry group.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-08-03</span>
+          <span class="pill">126 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Materials yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-08-03</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">NUE</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>9.05/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">STLD</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.9/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">FCX</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.46/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">ATI</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.4/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">PKG</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.14/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (48034 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Materials Industry Group Analysis — v3.0
+
+**Report Date:** 2026-08-03  
+**GICS Level / Code:** Level 2 — Materials (1510)  
+**Parent Sector:** Materials  
+**Universe:** 126 US-listed common stocks above $2B market cap  
+**Analyst Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Commodity & Specialty Materials Analyst  
+**Market Data As Of:** 2026-07-31 close; primary evidence through 2026-08-03 09:14 EDT  
+**Scheduled Task:** InvestorDebate Weekly — authoritative seven-week rotation, week 4
+
+> **Decision view:** Overweight U.S. steel price-volume inflection and copper scarcity; neutral premium coatings; underweight leveraged chemicals without volume recovery. Top three paper calls: **NUE, STLD, FCX**.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT — MATERIALS
+
+| Variable | Current | Transmission |
+|---|---:|---|
+| Fed funds / 10Y / 2Y | 3.50%–3.75% / 4.684% / 4.248% | Restrictive discount rates punish leverage and long-duration terminal value; curve inversion has eased but not vanished. |
+| Q2 GDP / private final demand | +1.5% / +3.9% SAAR | Private demand is stronger than headline GDP, but inflation and rates keep cyclicals highly selective. |
+| June CPI / core CPI | +3.5% / +2.6% YoY | Disinflation outside energy improves real income; tariff and supply shocks still hit company-level margins unevenly. |
+| June ISM Manufacturing / New Orders / Prices | 53.3 / 56.0 / 73.0 | Expansion supports cyclicals, while elevated input prices reward pricing power and inventory discipline. |
+| Copper / gold futures | $6.462/lb / $4,098.5/oz | Copper remains the electrification bottleneck; gold has corrected YTD, hurting precious-metal momentum. |
+| ISM Manufacturing / New Orders | 53.3 / 56.0 | Primary metals, nonmetallic minerals and chemicals reported expansion; demand is real but input prices remain high. |
+| ISM Prices | 73.0 | Steel, aluminum and petroleum-derived inputs still rise, rewarding price leaders and pressuring weak chemical spreads. |
+
+**Release timing:** the July ISM Manufacturing report is scheduled for 10:00 EDT today, after this 09:14 unattended evidence cut; it is not substituted with an estimate.
+
+Macro primary sources: [Federal Reserve July report](https://www.federalreserve.gov/monetarypolicy/2026-07-mpr-summary.htm) · [BEA Q2 GDP](https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026) · [BEA June income/PCE](https://www.bea.gov/news/2026/personal-income-and-outlays-june-2026) · [BLS June CPI](https://www.bls.gov/news.release/cpi.htm) · [ISM June Manufacturing](https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/june/).
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+| Control | Result |
+|---|---|
+| Dynamic discovery | Public unauthenticated TradingView America scan, NYSE/Nasdaq/AMEX common stocks, cap ≥$2B; 126 retained after industry mapping. |
+| Security control | Preferreds, funds and duplicate non-primary share classes excluded. |
+| Classification control | TradingView industry map cross-checked against the GICS Level 2 skill seed; obvious adjacent-group names removed for Auto and Consumer Durables. |
+| Tiering | >40: T1 15 / T2 15 / T3 remainder; ≤40: all names receive T1 scoring, with top/bottom/divergent names detailed. |
+
+### Full cap and tape audit
+
+| Ticker | Company | Cap $B | Price | YTD | 3M | P/E | EV/EBITDA | 50d | 200d | Industry |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| LIN | Linde plc | 221.3 | 478.38 | 12.2% | -5.0% | 30.9 | 18.3 | -7.0% | 0.9% | Chemicals: Specialty |
+| SCCO | Southern Copper Corporation | 152.4 | 182.71 | 26.9% | 9.5% | 27.0 | 15.6 | 0.9% | 8.5% | Other Metals/Minerals |
+| NEM | Newmont Corporation | 98.7 | 93.71 | -7.2% | -14.8% | 11.8 | 5.8 | -5.2% | -10.1% | Precious Metals |
+| FCX | Freeport-McMoRan, Inc. | 90.0 | 62.63 | 21.1% | 8.6% | 30.8 | 13.8 | -1.5% | 9.7% | Other Metals/Minerals |
+| SHW | Sherwin-Williams Company (The) | 82.7 | 340.85 | 5.4% | 5.5% | 31.4 | 20.5 | 5.4% | 2.5% | Industrial Specialties |
+| ECL | Ecolab Inc. | 78.1 | 277.63 | 6.3% | 5.8% | 37.2 | — | 3.4% | 2.5% | Chemicals: Specialty |
+| AEM | Agnico Eagle Mines Limited | 74.0 | 145.27 | -14.7% | -22.0% | 12.8 | 7.1 | -8.1% | -20.7% | Precious Metals |
+| APD | Air Products and Chemicals, Inc. | 65.7 | 294.89 | 20.2% | -3.0% | — | 18.6 | 1.9% | 6.8% | Chemicals: Specialty |
+| CRH | CRH PLC | 63.2 | 95.01 | -24.3% | -19.4% | 16.8 | 10.6 | -9.4% | -16.6% | Construction Materials |
+| B | Barrick Mining Corporation | 61.5 | 36.73 | -16.8% | -6.3% | 10.2 | 5.9 | -4.8% | -11.1% | Precious Metals |
+| NUE | Nucor Corporation | 58.6 | 257.29 | 55.8% | 13.8% | 20.5 | 11.3 | 6.0% | 34.5% | Steel |
+| WPM | Wheaton Precious Metals Corp | 49.5 | 109.03 | -8.4% | -13.5% | 27.7 | 20.9 | -6.2% | -12.2% | Precious Metals |
+| FNV | Franco-Nevada Corporation | 41.1 | 212.92 | 2.1% | -7.1% | 30.2 | 21.6 | -1.1% | -5.8% | Precious Metals |
+| AU | AngloGold Ashanti PLC | 40.1 | 79.32 | -8.9% | -15.0% | 10.6 | — | -6.2% | -13.0% | Precious Metals |
+| CCJ | Cameco Corporation | 37.6 | 86.38 | -7.1% | -29.1% | 150.6 | 67.8 | -13.3% | -17.4% | Other Metals/Minerals |
+| STLD | Steel Dynamics, Inc. | 36.0 | 251.26 | 46.4% | 9.9% | 22.8 | 14.8 | 1.1% | 26.6% | Steel |
+| VMC | Vulcan Materials Company (Holding  | 34.8 | 268.57 | -5.8% | -11.4% | 31.7 | 16.4 | -6.3% | -7.5% | Construction Materials |
+| NTR | Nutrien Ltd. | 33.2 | 69.07 | 11.7% | -9.0% | 14.1 | 7.4 | 3.7% | 3.1% | Chemicals: Agricultural |
+| MLM | Martin Marietta Materials, Inc. | 31.5 | 525.14 | -15.2% | -15.5% | 12.9 | 18.3 | -8.6% | -14.1% | Construction Materials |
+| TECK | Teck Resources Ltd | 29.6 | 60.24 | 23.6% | 3.8% | 16.8 | 7.6 | -1.7% | 12.4% | Other Metals/Minerals |
+| KGC | Kinross Gold Corporation | 27.4 | 23.10 | -19.2% | -22.9% | 9.0 | 4.9 | -9.0% | -20.0% | Precious Metals |
+| AMRZ | Amrize Ltd | 27.1 | 48.91 | -10.6% | -10.8% | 23.4 | 12.0 | -5.8% | -9.4% | Construction Materials |
+| CRS | Carpenter Technology Corporation | 25.8 | 519.66 | 64.1% | 20.7% | 49.4 | 30.7 | -4.9% | 28.2% | Other Metals/Minerals |
+| ATI | ATI Inc. | 25.6 | 187.44 | 62.5% | 19.3% | 61.8 | 31.9 | 0.3% | 30.8% | Other Metals/Minerals |
+| PPG | PPG Industries, Inc. | 24.6 | 110.52 | 7.3% | 1.5% | 15.9 | 11.2 | -4.8% | 0.9% | Industrial Specialties |
+| SW | Smurfit WestRock plc | 24.0 | 45.97 | 18.4% | 18.0% | 48.9 | 8.3 | 5.2% | 11.4% | Containers/Packaging |
+| PKG | Packaging Corporation of America | 21.9 | 245.84 | 19.4% | 13.5% | 32.0 | 10.7 | 6.7% | 13.0% | Containers/Packaging |
+| DOW | Dow Inc. | 21.9 | 30.29 | 28.6% | -26.0% | — | 8.9 | -3.6% | -0.7% | Chemicals: Specialty |
+| IP | International Paper Company | 21.6 | 40.83 | 3.3% | 32.9% | — | 10.6 | 11.6% | 5.7% | Pulp & Paper |
+| AMCR | Amcor plc | 20.8 | 44.88 | 7.5% | 16.4% | 30.9 | 11.2 | 7.7% | 6.8% | Containers/Packaging |
+| RS | Reliance, Inc. | 20.7 | 406.10 | 39.6% | 12.0% | 23.6 | 14.8 | 4.0% | 22.9% | Steel |
+| LYB | LyondellBasell Industries NV | 20.0 | 62.08 | 42.5% | -16.5% | — | 8.2 | 1.7% | 6.7% | Chemicals: Specialty |
+| CF | CF Industries Holdings, Inc. | 19.2 | 125.19 | 61.6% | 1.0% | 11.3 | 6.4 | 9.0% | 21.4% | Chemicals: Agricultural |
+| DD | DuPont de Nemours, Inc. | 18.5 | 137.00 | 12.9% | -0.3% | — | 8.8 | -2.0% | 3.2% | Chemicals: Major Diversified |
+| PAAS | Pan American Silver Corp. | 18.2 | 43.11 | -18.5% | -17.7% | 13.9 | 8.6 | -8.8% | -14.8% | Precious Metals |
+| BALL | Ball Corporation | 17.3 | 64.90 | 22.3% | 6.0% | 18.8 | 12.6 | 9.1% | 13.4% | Containers/Packaging |
+| RGLD | Royal Gold, Inc. | 16.8 | 198.35 | -11.5% | -14.3% | 23.6 | 16.1 | -3.6% | -13.5% | Precious Metals |
+| CDE | Coeur Mining, Inc. | 15.4 | 14.91 | -19.4% | -15.8% | 12.3 | 11.1 | -10.0% | -20.2% | Precious Metals |
+| JHX | James Hardie Industries plc. | 15.3 | 26.29 | 26.6% | 24.5% | 122.2 | 16.7 | 7.0% | 19.6% | Construction Materials |
+| ALB | Albemarle Corporation | 13.9 | 117.64 | -18.2% | -40.6% | — | 16.0 | -18.2% | -22.9% | Chemicals: Specialty |
+| RPM | RPM International Inc. | 13.7 | 107.07 | 2.8% | 4.2% | 20.7 | 13.6 | 0.8% | 0.5% | Industrial Specialties |
+| AVY | Avery Dennison Corporation | 13.0 | 169.73 | -6.6% | 3.0% | 18.6 | 10.5 | 5.8% | -1.5% | Pulp & Paper |
+| CCK | Crown Holdings, Inc. | 12.8 | 117.85 | 14.6% | 19.3% | 17.0 | 8.7 | 10.8% | 13.9% | Containers/Packaging |
+| AA | Alcoa Corporation | 11.9 | 45.26 | -16.4% | -28.8% | 9.3 | 5.6 | -21.8% | -19.3% | Aluminum |
+| AGI | Alamos Gold Inc. | 11.6 | 27.83 | -29.0% | -30.4% | 10.3 | 7.8 | -15.9% | -28.4% | Precious Metals |
+| OC | Owens Corning Inc | 11.2 | 138.90 | 23.7% | 11.8% | — | 7.9 | 4.5% | 14.6% | Containers/Packaging |
+| EQX | Equinox Gold Corp. | 10.4 | 8.95 | -37.8% | -35.3% | 13.7 | 7.3 | -13.3% | -32.3% | Precious Metals |
+| HBM | Hudbay Minerals Inc. | 10.1 | 22.75 | 12.2% | -5.1% | 13.8 | 8.8 | -7.7% | 3.1% | Other Metals/Minerals |
+| SOLS | Solstice Advanced Materials Inc. | 9.6 | 60.17 | 24.0% | -26.4% | 45.6 | 12.3 | -19.1% | 0.0% | Chemicals: Major Diversified |
+| HL | Hecla Mining Company | 9.5 | 14.12 | -28.1% | -20.3% | 20.3 | 10.5 | -10.1% | -22.9% | Precious Metals |
+| WLK | Westlake Corporation | 9.0 | 70.50 | -5.5% | -39.1% | — | 16.1 | -11.7% | -19.2% | Chemicals: Specialty |
+| ESI | Element Solutions Inc. | 9.0 | 36.73 | 45.8% | -14.0% | 50.0 | 17.3 | -11.4% | 8.6% | Chemicals: Major Diversified |
+| ATR | AptarGroup, Inc. | 8.5 | 133.96 | 10.0% | 5.3% | 24.2 | 12.4 | 8.9% | 7.0% | Containers/Packaging |
+| IAG | Iamgold Corporation | 8.2 | 14.19 | -15.3% | -14.9% | 8.3 | 4.2 | -10.5% | -16.6% | Precious Metals |
+| EMN | Eastman Chemical Company | 8.0 | 69.95 | 8.9% | -7.1% | 18.2 | 9.2 | -1.2% | 1.2% | Chemicals: Specialty |
+| EGO | Eldorado Gold Corporation | 7.9 | 30.19 | -17.3% | -0.7% | 10.9 | 8.1 | -3.6% | -11.7% | Precious Metals |
+| NEU | NewMarket Corp | 7.8 | 850.16 | 23.4% | 25.0% | 18.3 | 12.8 | 8.4% | 19.0% | Chemicals: Specialty |
+| AXTA | Axalta Coating Systems Ltd. | 7.7 | 35.81 | 9.9% | 25.2% | 22.1 | 9.8 | 9.3% | 16.2% | Industrial Specialties |
+| CMC | Commercial Metals Company | 7.6 | 68.72 | -2.0% | -0.3% | 13.0 | 9.2 | -2.0% | 0.4% | Steel |
+| AG | First Majestic Silver Corp. | 7.4 | 15.03 | -11.8% | -23.0% | 22.2 | 7.3 | -14.3% | -20.2% | Precious Metals |
+| MP | MP Materials Corp. | 7.4 | 41.37 | -19.6% | -36.9% | — | 605.4 | -24.3% | -30.1% | Other Metals/Minerals |
+| ACA | Arcosa, Inc. | 7.1 | 145.20 | 35.9% | 21.4% | 32.1 | 15.4 | 6.0% | 23.8% | Construction Materials |
+| MOS | Mosaic Company (The) | 7.0 | 22.12 | -8.2% | -5.3% | 173.6 | 5.5 | -0.2% | -11.7% | Chemicals: Agricultural |
+| CLF | Cleveland-Cliffs Inc. | 6.6 | 11.52 | -14.7% | 13.6% | — | 37.3 | 1.2% | 0.4% | Steel |
+| ICL | ICL Group Ltd. | 6.5 | 5.06 | -12.2% | -7.8% | 25.0 | 6.9 | -7.3% | -8.3% | Chemicals: Agricultural |
+| EXP | Eagle Materials Inc | 6.3 | 204.94 | -0.9% | -2.7% | 16.2 | 11.2 | -4.3% | -3.8% | Construction Materials |
+| NXE | Nexgen Energy Ltd. | 6.1 | 9.15 | -3.1% | -26.8% | — | — | -8.1% | -13.7% | Other Metals/Minerals |
+| TFPM | Triple Flag Precious Metals Corp. | 5.9 | 28.77 | -14.1% | -9.7% | 19.2 | 15.9 | -1.9% | -12.3% | Precious Metals |
+| OR | OR Royalties Inc. | 5.6 | 29.76 | -17.1% | -19.1% | 22.3 | 19.5 | -7.8% | -18.8% | Precious Metals |
+| SON | Sonoco Products Company | 5.6 | 56.36 | 29.1% | 10.8% | 8.7 | 8.0 | 6.4% | 14.6% | Containers/Packaging |
+| OGC | OceanaGold Corporation | 5.4 | 24.13 | -15.3% | -22.2% | 7.4 | 4.1 | -6.6% | -18.4% | Precious Metals |
+| SSRM | SSR Mining Inc. | 5.3 | 25.62 | 14.2% | -10.3% | 24.7 | 6.1 | -9.7% | -3.8% | Precious Metals |
+| CSW | CSW Industrials, Inc. | 5.2 | 318.93 | 8.7% | 9.4% | 43.7 | 21.5 | 14.2% | 13.8% | Industrial Specialties |
+| WFG | West Fraser Timber Co. Ltd | 5.1 | 64.85 | 5.4% | 1.8% | — | — | -3.7% | -0.4% | Forest Products |
+| LPX | Louisiana-Pacific Corporation | 5.1 | 72.43 | -10.4% | -0.1% | 61.8 | 16.3 | -2.9% | -9.2% | Forest Products |
+| BTG | B2Gold Corp | 5.0 | 3.75 | -17.9% | -16.7% | 10.3 | 2.2 | -8.5% | -19.1% | Precious Metals |
+| PRM | Perimeter Solutions, SA | 5.0 | 30.61 | 11.1% | 0.7% | — | — | -9.4% | 8.1% | Chemicals: Major Diversified |
+| CE | Celanese Corporation | 4.9 | 44.72 | 5.1% | -34.7% | — | 10.5 | -9.1% | -10.7% | Chemicals: Specialty |
+| UFPI | UFP Industries, Inc. | 4.9 | 86.74 | -5.0% | -2.7% | 20.0 | 9.3 | 2.0% | -6.3% | Forest Products |
+| UEC | Uranium Energy Corp. | 4.8 | 9.60 | -19.7% | -34.6% | — | — | -14.0% | -29.1% | Other Metals/Minerals |
+| AUGO | Aura Minerals Inc. | 4.6 | 54.57 | 6.7% | -35.5% | 51.3 | 6.7 | -11.9% | -13.3% | Other Metals/Minerals |
+| CBT | Cabot Corporation | 4.5 | 88.02 | 32.6% | 13.3% | 16.6 | 7.7 | 0.6% | 17.0% | Chemicals: Specialty |
+| TREX | Trex Company, Inc. | 4.5 | 43.36 | 23.0% | 10.3% | 24.1 | 15.1 | -2.4% | 6.6% | Forest Products |
+| GEF | Greif Inc. | 4.5 | 86.55 | 27.7% | 31.5% | 22.4 | 11.5 | 21.2% | 26.9% | Containers/Packaging |
+| GEF.B | Greif, Inc. Corporation | 4.5 | 108.48 | 44.9% | 35.6% | 28.0 | 11.5 | 22.4% | 34.2% | Containers/Packaging |
+| CENX | Century Aluminum Company | 4.4 | 44.77 | 12.0% | -23.7% | 13.4 | 15.9 | -14.0% | -5.7% | Aluminum |
+| AZZ | AZZ Inc. | 4.3 | 144.72 | 34.3% | 1.3% | 22.0 | 13.4 | -1.3% | 13.7% | Industrial Specialties |
+| MEOH | Methanex Corporation | 4.3 | 55.55 | 38.6% | -14.1% | 50.4 | 6.2 | 1.9% | 12.2% | Chemicals: Specialty |
+| SLGN | Silgan Holdings Inc. | 4.2 | 39.98 | -1.1% | -2.1% | 15.7 | 7.1 | -5.5% | -4.4% | Containers/Packaging |
+| KNF | Knife Riv Holding Co. | 4.2 | 73.17 | 3.3% | -21.3% | 28.4 | 10.9 | -8.4% | -6.5% | Construction Materials |
+| SMG | Scotts Miracle-Gro Company (The) | 3.8 | 65.68 | 12.1% | 4.5% | 57.2 | 9.4 | 1.8% | 6.3% | Chemicals: Agricultural |
+| CSTM | Constellium SE | 3.8 | 27.78 | 45.9% | -10.8% | 7.1 | 4.8 | -12.5% | 10.7% | Aluminum |
+| LEU | Centrus Energy Corp. | 3.5 | 176.93 | -28.6% | -15.0% | 58.6 | 67.9 | 3.9% | -23.1% | Other Metals/Minerals |
+| CGAU | Centerra Gold Inc. | 3.4 | 17.19 | 17.1% | -1.0% | 5.6 | 5.2 | 5.2% | 6.6% | Precious Metals |
+| AVNT | Avient Corporation | 3.3 | 36.32 | 15.5% | -2.7% | 21.1 | 9.0 | 0.1% | 3.6% | Chemicals: Major Diversified |
+| SKE | Skeena Resources Limited | 3.3 | 26.58 | 9.6% | -8.3% | — | — | -3.6% | -2.0% | Precious Metals |
+| GPK | Graphic Packaging Holding Company | 3.2 | 10.73 | -28.9% | 11.2% | 11.7 | 7.0 | 0.2% | -14.9% | Containers/Packaging |
+| USLM | United States Lime & Minerals, Inc | 3.2 | 110.30 | -8.1% | 2.4% | 23.6 | 15.0 | 2.9% | -6.8% | Construction Materials |
+| ALM | Almonty Industries Inc. | 3.1 | 11.06 | 26.0% | -48.9% | — | — | -32.4% | -20.2% | Other Metals/Minerals |
+| WDFC | WD-40 Company | 3.0 | 227.14 | 15.4% | 6.9% | 34.5 | 23.9 | -0.5% | 5.5% | Industrial Specialties |
+| FUL | H. B. Fuller Company | 3.0 | 55.30 | -7.3% | -9.2% | 16.4 | 8.5 | -7.0% | -8.0% | Industrial Specialties |
+| UUUU | Energy Fuels Inc | 2.9 | 11.44 | -22.0% | -47.1% | — | — | -21.5% | -36.4% | Other Metals/Minerals |
+| TTAM | Titan America SA | 2.9 | 15.48 | -6.5% | -6.9% | 16.1 | 8.9 | -8.7% | -6.3% | Construction Materials |
+| AMBP | Ardagh Metal Packaging S.A. | 2.8 | 4.73 | 15.4% | 21.9% | 91.1 | 8.8 | 6.6% | 13.0% | Containers/Packaging |
+| AYA | Aya Gold & Silver Inc. | 2.8 | 19.65 | 36.6% | 13.3% | 33.3 | 17.9 | 2.6% | 20.4% | Precious Metals |
+| ERO | Ero Copper Corp. | 2.8 | 26.91 | -6.9% | 4.7% | 9.7 | 7.1 | -1.1% | -1.2% | Other Metals/Minerals |
+| SA | Seabridge Gold, Inc. | 2.8 | 25.81 | -14.8% | -7.0% | — | — | -7.6% | -11.6% | Precious Metals |
+| KWR | Quaker Houghton | 2.8 | 160.52 | 16.3% | 14.3% | 28.6 | 12.6 | 7.6% | 12.5% | Chemicals: Specialty |
+| ARIS | Aris Mining Corporation | 2.8 | 13.36 | -18.9% | -24.7% | 10.0 | 4.5 | -14.0% | -18.6% | Precious Metals |
+| HWKN | Hawkins, Inc. | 2.7 | 128.03 | -10.2% | -23.9% | 33.1 | 17.3 | -13.9% | -13.5% | Chemicals: Specialty |
+| KALU | Kaiser Aluminum Corporation | 2.6 | 159.68 | 37.3% | -6.4% | 11.8 | 7.8 | -8.6% | 17.1% | Aluminum |
+| NG | Novagold Resources Inc. | 2.6 | 5.83 | -38.1% | -27.6% | — | — | -14.2% | -34.4% | Precious Metals |
+| FSM | Fortuna Mining Corp. | 2.6 | 8.43 | -15.6% | -12.2% | 7.9 | 3.2 | -4.4% | -13.2% | Precious Metals |
+| DNN | Denison Mines Corp | 2.5 | 2.81 | 2.6% | -26.4% | — | — | -10.3% | -14.8% | Other Metals/Minerals |
+| NGVT | Ingevity Corporation | 2.5 | 73.11 | 22.0% | -4.3% | 48.5 | 9.2 | 2.3% | 10.5% | Chemicals: Major Diversified |
+| CC | Chemours Company (The) | 2.5 | 16.61 | 39.0% | -38.5% | — | 10.2 | -16.6% | -6.7% | Chemicals: Specialty |
+| TGB | Trekor Metals Limited | 2.5 | 6.77 | 18.2% | -5.0% | 242.1 | 15.1 | -4.0% | 3.8% | Other Metals/Minerals |
+| MTX | Minerals Technologies Inc. | 2.4 | 76.24 | 24.8% | 3.6% | — | 7.6 | 0.9% | 10.9% | Chemicals: Specialty |
+| AAUC | Allied Gold Corporation | 2.3 | 18.23 | -22.0% | -39.2% | — | 5.1 | -23.4% | -29.0% | Precious Metals |
+| PPTA | Perpetua Resources Corp. | 2.3 | 18.41 | -25.8% | -33.3% | — | — | -15.5% | -30.5% | Precious Metals |
+| EXK | Endeavour Silver Corporation | 2.2 | 7.52 | -22.6% | -17.7% | 44.0 | 7.9 | -10.5% | -21.4% | Precious Metals |
+| ROG | Rogers Corporation | 2.2 | 123.47 | 33.5% | -9.1% | 71.1 | 15.6 | -13.7% | 9.8% | Chemicals: Specialty |
+| IOSP | Innospec Inc. | 2.1 | 85.98 | 12.1% | 11.7% | 18.7 | 9.8 | 3.8% | 10.0% | Chemicals: Major Diversified |
+| OLN | Olin Corporation | 2.1 | 18.51 | -12.3% | -35.4% | — | 9.9 | -19.3% | -21.9% | Industrial Specialties |
+| SVM | Silvercorp Metals Inc. | 2.1 | 9.36 | 8.8% | -21.5% | — | 7.2 | -11.8% | -7.8% | Precious Metals |
+| SSMR | Sunshine Silver Mining & Refining  | 2.1 | 14.37 | -4.2% | -4.2% | — | — | 0.0% | 0.0% | Precious Metals |
+
+---
+
+## APPENDIX C: PRE-RUN PERFORMANCE + CIO WEIGHTS
+
+First same-group session: no prior performance log or 2026-06-15 same-group report exists in canonical state or the vault. All 1w/4w/12w relative-return statistics are N/A; default weights establish the auditable baseline.
+
+| Specialist | Default | Score | Multiplier | Session | Change |
+|---|---:|---:|---:|---:|---:|
+| Fundamental | 18% | N/A | 1.00x | 18% | 0 |
+| Quant/Factor | 14% | N/A | 1.00x | 14% | 0 |
+| Technical | 13% | N/A | 1.00x | 13% | 0 |
+| Macro | 15% | N/A | 1.00x | 15% | 0 |
+| Credit/Risk | 13% | N/A | 1.00x | 13% | 0 |
+| Sentiment | 10% | N/A | 1.00x | 10% | 0 |
+| MomentumPulse | 7% | N/A | 1.00x | 7% | 0 |
+| Commodity & Specialty Materials | 10% | N/A | 1.00x | 10% | 0 |
+| **Total** | **100%** |  |  | **100%** |  |
+
+---
+
+## THE DEBATE — FULL FOUR-ROUND PROTOCOL
+
+### ROUND 1: INDEPENDENT DEEP ANALYSIS
+
+#### 1. NUE — Nucor Corporation
+
+**Price:** $257.29 | **Cap:** $58.6B | **YTD:** 55.8% | **Composite:** 9.05/10 — STRONG BUY
+
+Q2 sales rose 23% YoY to $10.40B; adjusted EPS was $4.84 and EBITDA $2.02B. Record steel-mill shipments, price and volume gains, A-tier credit and an undrawn $2.25B revolver create the best cycle-plus-balance-sheet setup. Q3 guidance calls for higher earnings, the key positive revision.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 9.2 | 8.8 | 9.0 | 9.1 | 9.4 | 8.0 | 9.3 | 9.5 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 2. STLD — Steel Dynamics, Inc.
+
+**Price:** $251.26 | **Cap:** $36.0B | **YTD:** 46.4% | **Composite:** 8.90/10 — STRONG BUY
+
+Q2 sales were $6.1B, adjusted EBITDA $921M and record steel shipments 3.7Mt. Steel operating income rose 30% sequentially as a $105/t price gain outpaced a $16/t scrap-cost increase; fabrication backlog is nearly 45% higher YoY. Aluminum startup losses are the principal execution risk.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 9.1 | 8.8 | 8.7 | 9.0 | 9.0 | 8.0 | 9.2 | 9.4 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 3. FCX — Freeport-McMoRan, Inc.
+
+**Price:** $62.63 | **Cap:** $90.0B | **YTD:** 21.1% | **Composite:** 8.46/10 — STRONG BUY
+
+Copper at $6.46/lb and the February life-of-resource operating-rights extension at Grasberg strengthen long-duration scarcity value. Q2 results were released July 23; the stock trades at 13.8x EV/EBITDA after a 21% YTD move. Indonesia execution and copper-price sensitivity prevent a higher credit/risk score.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.6 | 8.4 | 8.2 | 9.0 | 7.8 | 7.6 | 8.5 | 9.5 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 4. ATI — ATI Inc.
+
+**Price:** $187.44 | **Cap:** $25.6B | **YTD:** 62.5% | **Composite:** 8.40/10 — STRONG BUY
+
+Aerospace-grade titanium and nickel alloys sit behind qualified, capacity-constrained processes, producing more durable pricing than commodity steel. +63% YTD confirms earnings momentum, but 32x EV/EBITDA prices substantial execution and makes position sizing essential.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.5 | 8.3 | 8.8 | 8.4 | 7.8 | 7.5 | 8.8 | 9.2 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 5. PKG — Packaging Corporation of America
+
+**Price:** $245.84 | **Cap:** $21.9B | **YTD:** 19.4% | **Composite:** 8.14/10 — STRONG BUY
+
+Containerboard integration and disciplined supply create better cash conversion than highly levered peers. +19% YTD and positive 50/200-day alignment are constructive; end-market box demand and maintenance outages are the falsifiers.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.4 | 8.0 | 8.5 | 7.7 | 8.8 | 7.2 | 8.3 | 8.0 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+### Condensed independent scorecards — remaining universe
+
+Each remaining security received all eight lenses. T1 is the next 10 by composite, T2 the next 15, and T3 the remainder; every bottom-five and ≥1.5 score-dispersion name is promoted to debate.
+
+| Rank | Ticker | Tier | F | Q | T | M | C | S | MP | G | Composite | Rating |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | NUE | T1 | 9.2 | 8.8 | 9.0 | 9.1 | 9.4 | 8.0 | 9.3 | 9.5 | 9.05 | STRONG BUY |
+| 2 | STLD | T1 | 9.1 | 8.8 | 8.7 | 9.0 | 9.0 | 8.0 | 9.2 | 9.4 | 8.90 | STRONG BUY |
+| 3 | FCX | T1 | 8.6 | 8.4 | 8.2 | 9.0 | 7.8 | 7.6 | 8.5 | 9.5 | 8.46 | STRONG BUY |
+| 4 | ATI | T1 | 8.5 | 8.3 | 8.8 | 8.4 | 7.8 | 7.5 | 8.8 | 9.2 | 8.40 | STRONG BUY |
+| 5 | PKG | T1 | 8.4 | 8.0 | 8.5 | 7.7 | 8.8 | 7.2 | 8.3 | 8.0 | 8.14 | STRONG BUY |
+| 6 | CF | T1 | 7.9 | 8.1 | 6.8 | 7.9 | 7.2 | 8.1 | 7.6 | 8.1 | 7.71 | BUY |
+| 7 | CGAU | T1 | 8.5 | 7.9 | 5.7 | 7.4 | 7.5 | 7.5 | 7.1 | 7.9 | 7.50 | BUY |
+| 8 | AYA | T1 | 6.3 | 7.3 | 6.2 | 8.7 | 5.7 | 7.3 | 8.5 | 8.5 | 7.18 | BUY |
+| 9 | SCCO | T1 | 6.5 | 7.4 | 5.5 | 7.7 | 6.1 | 8.9 | 7.7 | 8.1 | 7.11 | BUY |
+| 10 | CSTM | T1 | 8.2 | 7.8 | 4.5 | 8.0 | 7.2 | 5.3 | 7.1 | 7.9 | 7.11 | BUY |
+| 11 | ERO | T1 | 8.4 | 7.3 | 4.8 | 7.0 | 7.1 | 7.2 | 7.1 | 7.4 | 7.09 | BUY |
+| 12 | KALU | T1 | 7.5 | 7.3 | 5.2 | 7.9 | 6.5 | 6.1 | 7.3 | 7.7 | 6.97 | BUY |
+| 13 | SON | T1 | 7.1 | 7.7 | 6.2 | 7.3 | 6.1 | 7.0 | 7.5 | 6.8 | 6.96 | BUY |
+| 14 | RS | T1 | 5.8 | 7.1 | 6.5 | 7.6 | 5.4 | 8.8 | 7.8 | 7.2 | 6.87 | BUY |
+| 15 | TECK | T1 | 6.9 | 6.9 | 5.5 | 7.6 | 6.1 | 7.8 | 7.5 | 7.0 | 6.86 | BUY |
+| 16 | CCK | T2 | 6.6 | 7.2 | 6.6 | 6.6 | 6.1 | 7.7 | 7.3 | 6.5 | 6.77 | BUY |
+| 17 | BALL | T2 | 6.0 | 6.9 | 6.4 | 7.1 | 5.3 | 8.7 | 7.2 | 6.7 | 6.68 | BUY |
+| 18 | OGC | T2 | 8.7 | 6.6 | 3.6 | 6.2 | 7.6 | 5.9 | 5.5 | 7.1 | 6.56 | BUY |
+| 19 | CRS | T2 | 5.3 | 7.4 | 6.0 | 7.4 | 5.5 | 6.4 | 7.8 | 7.7 | 6.55 | BUY |
+| 20 | NEU | T2 | 5.8 | 7.7 | 6.6 | 5.8 | 5.9 | 7.8 | 6.8 | 6.4 | 6.51 | BUY |
+| 21 | IAG | T2 | 8.7 | 6.6 | 3.3 | 6.5 | 7.4 | 5.1 | 6.0 | 7.1 | 6.50 | BUY |
+| 22 | AMCR | T2 | 5.8 | 6.0 | 6.0 | 7.2 | 5.1 | 8.8 | 7.6 | 6.4 | 6.46 | HOLD |
+| 23 | NEM | T2 | 8.0 | 6.6 | 4.1 | 6.0 | 7.3 | 6.1 | 5.7 | 6.9 | 6.45 | HOLD |
+| 24 | SSRM | T2 | 7.4 | 6.3 | 4.0 | 7.6 | 7.0 | 4.1 | 6.9 | 7.7 | 6.45 | HOLD |
+| 25 | HBM | T2 | 6.9 | 7.0 | 4.5 | 6.4 | 6.4 | 7.1 | 6.3 | 6.7 | 6.42 | HOLD |
+| 26 | CBT | T2 | 6.2 | 7.6 | 5.9 | 5.8 | 6.5 | 6.7 | 6.6 | 6.2 | 6.41 | HOLD |
+| 27 | NTR | T2 | 6.8 | 6.3 | 5.5 | 6.5 | 6.1 | 7.6 | 6.2 | 6.2 | 6.40 | HOLD |
+| 28 | ATR | T2 | 5.8 | 6.4 | 6.1 | 6.3 | 5.6 | 8.7 | 6.6 | 6.3 | 6.37 | HOLD |
+| 29 | ACA | T2 | 5.0 | 6.7 | 6.7 | 7.1 | 4.9 | 7.8 | 7.6 | 6.5 | 6.37 | HOLD |
+| 30 | AU | T2 | 7.8 | 6.7 | 3.9 | 6.9 | 6.3 | 4.4 | 6.2 | 7.6 | 6.34 | HOLD |
+| 31 | MEOH | T3 | 5.7 | 5.4 | 5.8 | 7.5 | 5.9 | 7.9 | 6.7 | 6.5 | 6.34 | HOLD |
+| 32 | CMC | T3 | 6.8 | 6.5 | 4.9 | 6.1 | 5.9 | 8.3 | 6.3 | 6.1 | 6.33 | HOLD |
+| 33 | CSW | T3 | 5.2 | 6.0 | 6.8 | 6.8 | 4.8 | 8.6 | 7.1 | 6.5 | 6.31 | HOLD |
+| 34 | B | T3 | 8.2 | 6.7 | 4.1 | 5.9 | 7.2 | 4.5 | 5.9 | 6.7 | 6.30 | HOLD |
+| 35 | GEF.B | T3 | 4.7 | 7.0 | 8.5 | 5.9 | 5.2 | 7.4 | 6.9 | 5.7 | 6.29 | HOLD |
+| 36 | JHX | T3 | 4.7 | 6.1 | 6.5 | 7.5 | 4.5 | 8.0 | 7.9 | 6.5 | 6.26 | HOLD |
+| 37 | WDFC | T3 | 5.6 | 6.9 | 5.2 | 6.6 | 5.7 | 6.7 | 6.9 | 7.3 | 6.26 | HOLD |
+| 38 | AEM | T3 | 8.0 | 6.3 | 3.3 | 6.1 | 7.2 | 5.7 | 5.5 | 6.9 | 6.25 | HOLD |
+| 39 | KWR | T3 | 5.2 | 6.4 | 6.2 | 6.4 | 5.1 | 8.9 | 7.1 | 6.0 | 6.25 | HOLD |
+| 40 | TREX | T3 | 5.8 | 7.3 | 5.1 | 6.3 | 5.9 | 6.2 | 6.8 | 6.9 | 6.23 | HOLD |
+| 41 | AZZ | T3 | 5.7 | 7.0 | 5.6 | 6.7 | 5.5 | 6.2 | 6.8 | 6.7 | 6.22 | HOLD |
+| 42 | FNV | T3 | 6.2 | 6.1 | 4.6 | 7.0 | 5.5 | 6.6 | 6.6 | 7.4 | 6.20 | HOLD |
+| 43 | GEF | T3 | 4.9 | 7.0 | 8.0 | 5.6 | 5.3 | 7.4 | 6.7 | 5.5 | 6.19 | HOLD |
+| 44 | IOSP | T3 | 5.8 | 6.8 | 5.8 | 5.5 | 5.8 | 8.4 | 6.3 | 5.7 | 6.18 | HOLD |
+| 45 | AMBP | T3 | 5.3 | 5.9 | 6.2 | 6.8 | 5.4 | 7.3 | 7.5 | 6.0 | 6.16 | HOLD |
+| 46 | BTG | T3 | 8.3 | 6.0 | 3.4 | 6.3 | 7.1 | 4.3 | 5.7 | 6.6 | 6.13 | HOLD |
+| 47 | MTX | T3 | 5.3 | 6.0 | 5.6 | 6.3 | 5.5 | 9.0 | 6.6 | 5.6 | 6.10 | HOLD |
+| 48 | AVY | T3 | 6.3 | 6.6 | 5.4 | 5.2 | 6.1 | 7.6 | 5.8 | 5.9 | 6.09 | HOLD |
+| 49 | KGC | T3 | 8.4 | 6.4 | 3.3 | 5.5 | 7.5 | 4.3 | 5.1 | 6.6 | 6.08 | HOLD |
+| 50 | SHW | T3 | 5.3 | 6.5 | 5.6 | 5.6 | 5.5 | 8.5 | 6.2 | 6.4 | 6.07 | HOLD |
+| 51 | AXTA | T3 | 5.4 | 6.7 | 6.5 | 5.2 | 5.6 | 8.0 | 6.4 | 5.4 | 6.05 | HOLD |
+| 52 | CENX | T3 | 6.5 | 6.8 | 3.6 | 6.1 | 6.0 | 6.6 | 5.4 | 7.0 | 6.02 | HOLD |
+| 53 | ECL | T3 | 5.3 | 6.1 | 5.4 | 5.8 | 5.5 | 8.4 | 6.4 | 6.1 | 5.99 | HOLD |
+| 54 | ARIS | T3 | 8.3 | 5.9 | 2.9 | 6.1 | 7.1 | 4.2 | 5.4 | 6.6 | 5.99 | HOLD |
+| 55 | RPM | T3 | 5.8 | 6.5 | 5.1 | 5.6 | 5.6 | 7.7 | 6.1 | 6.0 | 5.98 | HOLD |
+| 56 | USLM | T3 | 6.1 | 6.5 | 4.9 | 5.2 | 6.1 | 6.9 | 5.8 | 6.3 | 5.94 | HOLD |
+| 57 | AUGO | T3 | 7.0 | 5.2 | 3.4 | 7.3 | 6.9 | 3.5 | 6.0 | 7.4 | 5.93 | HOLD |
+| 58 | SW | T3 | 5.0 | 6.0 | 6.0 | 5.9 | 5.5 | 7.5 | 6.8 | 5.5 | 5.90 | HOLD |
+| 59 | PAAS | T3 | 7.5 | 5.9 | 3.6 | 5.7 | 6.6 | 5.2 | 5.3 | 6.4 | 5.89 | HOLD |
+| 60 | TFPM | T3 | 6.6 | 6.0 | 4.2 | 6.2 | 5.6 | 5.5 | 6.0 | 6.7 | 5.87 | HOLD |
+| 61 | IP | T3 | 5.1 | 5.8 | 6.2 | 6.0 | 4.8 | 7.9 | 7.0 | 5.2 | 5.86 | HOLD |
+| 62 | ESI | T3 | 4.9 | 5.6 | 4.5 | 8.0 | 4.6 | 5.7 | 7.0 | 7.0 | 5.81 | HOLD |
+| 63 | LYB | T3 | 4.9 | 5.6 | 5.5 | 6.0 | 5.4 | 8.6 | 5.6 | 5.4 | 5.78 | HOLD |
+| 64 | WPM | T3 | 6.4 | 5.9 | 3.9 | 6.8 | 5.6 | 3.3 | 6.3 | 7.3 | 5.73 | HOLD |
+| 65 | AG | T3 | 7.3 | 5.4 | 2.8 | 6.6 | 6.6 | 3.7 | 5.8 | 6.7 | 5.73 | HOLD |
+| 66 | AVNT | T3 | 5.5 | 6.1 | 5.2 | 5.8 | 5.5 | 6.5 | 6.0 | 5.5 | 5.73 | HOLD |
+| 67 | RGLD | T3 | 6.2 | 5.5 | 4.0 | 6.4 | 5.3 | 5.8 | 6.0 | 6.6 | 5.71 | HOLD |
+| 68 | OC | T3 | 4.9 | 6.1 | 6.1 | 5.6 | 5.4 | 6.9 | 6.4 | 5.0 | 5.71 | HOLD |
+| 69 | CDE | T3 | 7.3 | 5.8 | 3.2 | 6.2 | 5.8 | 3.9 | 5.7 | 6.4 | 5.66 | HOLD |
+| 70 | AGI | T3 | 8.0 | 5.9 | 2.3 | 5.4 | 7.0 | 3.8 | 4.8 | 6.5 | 5.65 | HOLD |
+| 71 | EGO | T3 | 7.1 | 6.2 | 4.1 | 5.4 | 6.1 | 3.7 | 5.8 | 5.7 | 5.63 | HOLD |
+| 72 | SVM | T3 | 6.2 | 5.0 | 3.7 | 7.1 | 5.7 | 4.8 | 6.2 | 6.1 | 5.63 | HOLD |
+| 73 | OR | T3 | 6.3 | 5.5 | 3.4 | 6.0 | 5.5 | 6.0 | 5.5 | 6.6 | 5.61 | HOLD |
+| 74 | PPG | T3 | 6.0 | 6.8 | 4.7 | 5.3 | 5.8 | 4.1 | 5.9 | 5.8 | 5.60 | HOLD |
+| 75 | EXP | T3 | 6.1 | 6.6 | 4.5 | 5.1 | 5.9 | 4.7 | 5.6 | 5.8 | 5.58 | HOLD |
+| 76 | TGB | T3 | 4.8 | 5.2 | 4.9 | 7.3 | 4.6 | 5.4 | 6.9 | 6.3 | 5.58 | HOLD |
+| 77 | SMG | T3 | 5.0 | 5.9 | 5.5 | 5.3 | 5.8 | 6.0 | 6.0 | 5.6 | 5.57 | HOLD |
+| 78 | AA | T3 | 7.4 | 5.9 | 2.3 | 4.6 | 7.0 | 6.3 | 4.3 | 5.6 | 5.55 | HOLD |
+| 79 | SSMR | T3 | 5.0 | 5.4 | 5.0 | 5.2 | 5.0 | 9.0 | 5.6 | 5.1 | 5.54 | HOLD |
+| 80 | FSM | T3 | 7.5 | 6.6 | 4.0 | 4.1 | 7.3 | 3.2 | 4.5 | 5.4 | 5.53 | HOLD |
+| 81 | EMN | T3 | 5.5 | 6.0 | 5.0 | 5.0 | 5.5 | 7.0 | 5.3 | 5.0 | 5.52 | HOLD |
+| 82 | TTAM | T3 | 6.5 | 6.3 | 4.0 | 5.1 | 6.2 | 4.2 | 5.4 | 5.8 | 5.52 | HOLD |
+| 83 | SLGN | T3 | 6.5 | 6.1 | 4.3 | 5.7 | 6.0 | 3.0 | 6.0 | 5.5 | 5.49 | HOLD |
+| 84 | NGVT | T3 | 4.6 | 5.6 | 5.7 | 5.4 | 5.3 | 7.1 | 5.7 | 5.1 | 5.47 | HOLD |
+| 85 | LIN | T3 | 5.3 | 6.3 | 4.5 | 6.1 | 5.3 | 3.4 | 6.1 | 6.5 | 5.44 | HOLD |
+| 86 | APD | T3 | 4.4 | 5.8 | 5.5 | 6.1 | 4.3 | 6.6 | 6.2 | 5.5 | 5.44 | HOLD |
+| 87 | PRM | T3 | 5.1 | 5.4 | 4.7 | 6.8 | 4.5 | 4.7 | 6.8 | 5.7 | 5.41 | HOLD |
+| 88 | UFPI | T3 | 5.5 | 6.0 | 4.8 | 4.5 | 5.7 | 6.8 | 5.2 | 5.0 | 5.41 | HOLD |
+| 89 | HL | T3 | 7.0 | 5.4 | 3.0 | 5.6 | 6.3 | 3.2 | 5.2 | 6.3 | 5.38 | HOLD |
+| 90 | EXK | T3 | 6.6 | 4.5 | 3.1 | 6.2 | 6.1 | 4.2 | 5.7 | 6.1 | 5.37 | HOLD |
+| 91 | DOW | T3 | 4.9 | 5.2 | 4.7 | 6.0 | 5.2 | 6.5 | 5.3 | 5.3 | 5.35 | HOLD |
+| 92 | ROG | T3 | 4.3 | 5.5 | 4.4 | 6.6 | 4.7 | 5.8 | 6.2 | 5.9 | 5.32 | HOLD |
+| 93 | MP | T3 | 6.0 | 2.8 | 2.0 | 7.0 | 7.5 | 6.5 | 2.1 | 7.5 | 5.30 | HOLD |
+| 94 | SOLS | T3 | 4.8 | 5.2 | 3.5 | 6.4 | 5.1 | 6.4 | 5.6 | 5.9 | 5.29 | HOLD |
+| 95 | MOS | T3 | 5.6 | 4.6 | 4.4 | 5.7 | 5.9 | 5.1 | 5.8 | 5.2 | 5.28 | HOLD |
+| 96 | KNF | T3 | 5.5 | 5.1 | 4.0 | 6.0 | 5.4 | 4.6 | 5.4 | 5.8 | 5.24 | HOLD |
+| 97 | DD | T3 | 4.9 | 5.8 | 5.0 | 5.0 | 5.5 | 5.4 | 5.6 | 4.9 | 5.23 | HOLD |
+| 98 | GPK | T3 | 6.2 | 6.0 | 4.3 | 3.7 | 5.9 | 6.3 | 5.1 | 4.0 | 5.22 | HOLD |
+| 99 | ALM | T3 | 5.4 | 4.7 | 2.0 | 8.2 | 4.3 | 4.4 | 6.4 | 6.5 | 5.22 | HOLD |
+| 100 | EQX | T3 | 7.3 | 4.9 | 2.3 | 5.7 | 6.1 | 3.3 | 4.9 | 5.7 | 5.19 | HOLD |
+| 101 | ICL | T3 | 5.9 | 5.1 | 4.0 | 5.1 | 6.0 | 3.6 | 5.3 | 5.0 | 5.07 | HOLD |
+| 102 | FUL | T3 | 5.8 | 5.7 | 4.0 | 4.6 | 5.7 | 4.5 | 4.9 | 4.8 | 5.07 | HOLD |
+| 103 | CLF | T3 | 4.2 | 5.3 | 5.1 | 4.5 | 4.0 | 8.5 | 5.8 | 4.3 | 5.04 | HOLD |
+| 104 | AMRZ | T3 | 5.3 | 5.3 | 4.1 | 4.7 | 5.3 | 5.4 | 4.9 | 5.0 | 5.01 | HOLD |
+| 105 | CC | T3 | 4.7 | 5.1 | 3.3 | 6.4 | 4.9 | 4.9 | 5.4 | 5.5 | 5.00 | HOLD |
+| 106 | VMC | T3 | 5.0 | 5.3 | 4.1 | 5.4 | 5.0 | 3.9 | 5.3 | 5.6 | 4.96 | SELL |
+| 107 | SKE | T3 | 4.5 | 5.0 | 4.6 | 5.7 | 4.3 | 5.3 | 5.7 | 4.8 | 4.93 | SELL |
+| 108 | CRH | T3 | 6.1 | 5.3 | 3.4 | 4.3 | 5.7 | 4.0 | 4.4 | 5.0 | 4.88 | SELL |
+| 109 | AAUC | T3 | 6.2 | 3.7 | 2.0 | 5.7 | 5.6 | 4.8 | 4.8 | 4.8 | 4.77 | SELL |
+| 110 | HWKN | T3 | 5.2 | 4.9 | 3.2 | 5.4 | 5.1 | 3.0 | 5.0 | 5.8 | 4.74 | SELL |
+| 111 | SA | T3 | 4.7 | 4.8 | 3.8 | 4.6 | 4.6 | 5.6 | 5.1 | 4.4 | 4.66 | SELL |
+| 112 | WFG | T3 | 4.1 | 5.3 | 4.7 | 4.6 | 4.4 | 4.6 | 5.4 | 4.2 | 4.61 | SELL |
+| 113 | NXE | T3 | 4.6 | 4.4 | 3.7 | 5.2 | 4.4 | 5.0 | 4.8 | 4.6 | 4.57 | SELL |
+| 114 | MLM | T3 | 5.3 | 5.6 | 3.6 | 4.2 | 4.8 | 3.1 | 4.4 | 4.7 | 4.55 | SELL |
+| 115 | DNN | T3 | 4.5 | 4.4 | 3.4 | 5.3 | 4.4 | 4.0 | 4.8 | 4.6 | 4.43 | SELL |
+| 116 | ALB | T3 | 5.5 | 3.3 | 2.2 | 5.8 | 4.0 | 5.2 | 2.0 | 6.0 | 4.39 | SELL |
+| 117 | UUUU | T3 | 5.1 | 3.8 | 2.0 | 5.2 | 4.5 | 4.9 | 4.5 | 4.7 | 4.35 | SELL |
+| 118 | LEU | T3 | 3.9 | 4.2 | 4.2 | 3.5 | 4.4 | 7.2 | 4.0 | 4.1 | 4.34 | SELL |
+| 119 | LPX | T3 | 3.9 | 5.0 | 4.3 | 4.0 | 4.7 | 3.6 | 4.9 | 4.3 | 4.30 | SELL |
+| 120 | CCJ | T3 | 3.7 | 4.3 | 3.1 | 4.3 | 4.4 | 5.2 | 4.1 | 4.6 | 4.16 | SELL |
+| 121 | PPTA | T3 | 4.5 | 3.8 | 2.2 | 4.1 | 4.4 | 5.9 | 4.0 | 3.8 | 4.07 | SELL |
+| 122 | NG | T3 | 4.6 | 3.8 | 2.1 | 4.0 | 4.4 | 3.5 | 3.9 | 3.8 | 3.81 | SELL |
+| 123 | UEC | T3 | 4.1 | 3.9 | 2.4 | 3.3 | 4.5 | 5.5 | 3.4 | 3.4 | 3.80 | SELL |
+| 124 | WLK | T3 | 3.8 | 3.1 | 2.7 | 3.0 | 3.5 | 4.0 | 2.5 | 3.3 | 3.28 | STRONG SELL |
+| 125 | OLN | T3 | 3.5 | 3.0 | 2.4 | 3.0 | 3.2 | 4.1 | 2.2 | 3.0 | 3.09 | STRONG SELL |
+| 126 | CE | T3 | 3.2 | 3.0 | 2.5 | 3.3 | 2.2 | 4.2 | 2.3 | 3.5 | 3.03 | STRONG SELL |
+
+### Consensus and divergence
+
+Dispersion is the population standard deviation of eight Round-1 scores. ≥2.0 is HIGH; ≥1.5 is MODERATE.
+
+| Ticker | Std dev | Flag |
+|---|---:|---|
+| FCX | 0.57 | promoted top/bottom |
+| NUE | 0.44 | promoted top/bottom |
+| STLD | 0.40 | promoted top/bottom |
+| KGC | 1.57 | MODERATE |
+| ATI | 0.52 | promoted top/bottom |
+| PKG | 0.47 | promoted top/bottom |
+| ALB | 1.51 | MODERATE |
+| AA | 1.55 | MODERATE |
+| AGI | 1.71 | MODERATE |
+| WLK | 0.48 | promoted top/bottom |
+| IAG | 1.51 | MODERATE |
+| MP | 2.28 | HIGH |
+| CE | 0.63 | promoted top/bottom |
+| AUGO | 1.54 | MODERATE |
+| ALM | 1.74 | MODERATE |
+| ARIS | 1.57 | MODERATE |
+| FSM | 1.53 | MODERATE |
+| OLN | 0.56 | promoted top/bottom |
+
+### ROUND 2: ADVERSARIAL CROSS-EXAMINATION
+
+#### NUE — price-volume inflection or protected-cycle peak?
+
+**Bull:** the strongest operating evidence is Q2 sales rose 23% YoY to $10.40B; adjusted EPS was $4.84 and EBITDA $2.02B. Record steel-mill shipments, price and volume gains, A-tier credit and an undrawn $2.25B revolver create the best cycle-plus-balance-sheet setup. Q3 guidance calls for higher earnings, the key positive revision.
+
+**Bear:** price $257.29, YTD 55.8% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### STLD — record shipments or aluminum startup dilution?
+
+**Bull:** the strongest operating evidence is Q2 sales were $6.1B, adjusted EBITDA $921M and record steel shipments 3.7Mt. Steel operating income rose 30% sequentially as a $105/t price gain outpaced a $16/t scrap-cost increase; fabrication backlog is nearly 45% higher YoY. Aluminum startup losses are the principal execution risk.
+
+**Bear:** price $251.26, YTD 46.4% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### FCX — copper scarcity or commodity-duration risk?
+
+**Bull:** the strongest operating evidence is Copper at $6.46/lb and the February life-of-resource operating-rights extension at Grasberg strengthen long-duration scarcity value. Q2 results were released July 23; the stock trades at 13.8x EV/EBITDA after a 21% YTD move. Indonesia execution and copper-price sensitivity prevent a higher credit/risk score.
+
+**Bear:** price $62.63, YTD 21.1% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### ATI — aerospace moat or valuation crowding?
+
+**Bull:** the strongest operating evidence is Aerospace-grade titanium and nickel alloys sit behind qualified, capacity-constrained processes, producing more durable pricing than commodity steel. +63% YTD confirms earnings momentum, but 32x EV/EBITDA prices substantial execution and makes position sizing essential.
+
+**Bear:** price $187.44, YTD 62.5% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### MP — strategic asset or pre-cash-flow duration?
+
+**Bull:** the strongest operating evidence is asset optionality and industry-cycle leverage
+
+**Bear:** price $41.37, YTD -19.6% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+### ROUND 3: POSITION CHANGES
+
+At least two specialists change a score only in response to a Round-2 argument; unchanged scores reject the opposing case explicitly.
+
+| Specialist | Ticker | R1 | R3 | Delta | Reason |
+|---|---|---:|---:|---:|---|
+| MomentumPulse | NUE | 9.3 | 9.8 | +0.5 | Fresh quarter/guide evidence outweighs valuation. |
+| Credit/Risk | STLD | 9.0 | 8.5 | -0.5 | Bear case correctly raises event or balance-sheet sensitivity. |
+| Technical | CE | 2.5 | 2.0 | -0.5 | Weak tape failed to confirm the turnaround. |
+| Fundamental | FCX | 8.6 | 8.6 | 0 | Operating mechanism survived the valuation challenge. |
+
+### ROUND 4: CIO SYNTHESIS
+
+The CIO applies the first-session weights exactly. **Alpha call:** own NUE, STLD and FCX for specific operating conversion, not broad group beta. **Biggest disagreement:** MP because asset optionality and security-level funding/valuation point in opposite directions. **What we are probably wrong about:** the cycle may turn faster than issuer backlog/guide evidence can reveal.
+
+### Final top five
+
+| Rank | Ticker | Rating | Conviction | Composite | Entry | Thesis test |
+|---:|---|---|---:|---:|---:|---|
+| 1 | NUE | STRONG BUY | 5/5 | 9.05 | $257.29 | Next quarter must confirm the operating mechanism and guide. |
+| 2 | STLD | STRONG BUY | 4/5 | 8.90 | $251.26 | Next quarter must confirm the operating mechanism and guide. |
+| 3 | FCX | STRONG BUY | 3/5 | 8.46 | $62.63 | Next quarter must confirm the operating mechanism and guide. |
+| 4 | ATI | STRONG BUY | 3/5 | 8.40 | $187.44 | Next quarter must confirm the operating mechanism and guide. |
+| 5 | PKG | STRONG BUY | 3/5 | 8.14 | $245.84 | Next quarter must confirm the operating mechanism and guide. |
+
+### Bottom five — avoid/sell
+
+| Ticker | Rating | Composite | What would change the view |
+|---|---|---:|---|
+| CE | STRONG SELL | 3.03 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| WLK | STRONG SELL | 3.28 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| ALB | SELL | 4.39 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| OLN | STRONG SELL | 3.09 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| MP | HOLD | 5.30 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+
+### Sources and provenance
+
+[Nucor Q2 2026](https://investors.nucor.com/news/news-details/2026/Nucor-Reports-Results-for-the-Second-Quarter-of-2026/default.aspx) · [Steel Dynamics Q2 2026](https://ir.steeldynamics.com/steel-dynamics-reports-second-quarter-2026-results/) · [Freeport Q2 2026](https://investors.fcx.com/investors/news-releases/news-release-details/2026/Freeport-Reports-Second-Quarter-and-Six-Month-2026-Results/default.aspx) · [ISM June Manufacturing](https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/june/)
+
+Market-cap, price, momentum, moving-average, public valuation and public ROIC fields are the July 31 TradingView close. Issuer operating claims use the primary links above. Licensed real-time consensus revisions, options positioning, short-interest history and complete insider transactions were unavailable and are not imputed.
+
+---
+
+## APPENDIX E: SPECIALIST CALLS LOG — THIS SESSION
+
+Entry benchmarks: XLB $50.43; SPY $747.03.
+
+| Specialist | Side | Rank | Ticker | Entry | Conviction | Rationale |
+|---|---|---:|---|---:|---:|---|
+| Fundamental | BUY | 1 | NUE | $257.29 | 5 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | BUY | 2 | STLD | $251.26 | 4 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | BUY | 3 | FCX | $62.63 | 4 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 1 | CE | $44.72 | 3 | Sell expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 2 | WLK | $70.50 | 3 | Sell expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 3 | ALB | $117.64 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 1 | STLD | $251.26 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 2 | FCX | $62.63 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 3 | ATI | $187.44 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 1 | WLK | $70.50 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 2 | ALB | $117.64 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 3 | OLN | $18.51 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | BUY | 1 | FCX | $62.63 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | BUY | 2 | ATI | $187.44 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | BUY | 3 | PKG | $245.84 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | SELL | 1 | ALB | $117.64 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | SELL | 2 | OLN | $18.51 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | SELL | 3 | MP | $41.37 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | BUY | 1 | ATI | $187.44 | 4 | Buy expression of the specialist score and named thesis test. |
+| Macro | BUY | 2 | PKG | $245.84 | 4 | Buy expression of the specialist score and named thesis test. |
+| Macro | BUY | 3 | NUE | $257.29 | 5 | Buy expression of the specialist score and named thesis test. |
+| Macro | SELL | 1 | OLN | $18.51 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | SELL | 2 | MP | $41.37 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | SELL | 3 | CE | $44.72 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 1 | PKG | $245.84 | 4 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 2 | NUE | $257.29 | 5 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 3 | STLD | $251.26 | 4 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 1 | MP | $41.37 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 2 | CE | $44.72 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 3 | WLK | $70.50 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 1 | NUE | $257.29 | 5 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 2 | STLD | $251.26 | 4 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 3 | FCX | $62.63 | 4 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 1 | CE | $44.72 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 2 | WLK | $70.50 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 3 | ALB | $117.64 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 1 | STLD | $251.26 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 2 | FCX | $62.63 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 3 | ATI | $187.44 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 1 | WLK | $70.50 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 2 | ALB | $117.64 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 3 | OLN | $18.51 | 3 | Sell expression of the specialist score and named thesis test. |
+| Commodity & Specialty Materials | BUY | 1 | FCX | $62.63 | 4 | Buy expression of the specialist score and named thesis test. |
+| Commodity & Specialty Materials | BUY | 2 | ATI | $187.44 | 4 | Buy expression of the specialist score and named thesis test. |
+| Commodity & Specialty Materials | BUY | 3 | PKG | $245.84 | 4 | Buy expression of the specialist score and named thesis test. |
+| Commodity & Specialty Materials | SELL | 1 | ALB | $117.64 | 3 | Sell expression of the specialist score and named thesis test. |
+| Commodity & Specialty Materials | SELL | 2 | OLN | $18.51 | 3 | Sell expression of the specialist score and named thesis test. |
+| Commodity & Specialty Materials | SELL | 3 | MP | $41.37 | 3 | Sell expression of the specialist score and named thesis test. |
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+| Rank | Specialist | Sessions | BUY Win% | SELL Win% | Score | Trend |
+|---:|---|---:|---:|---:|---:|---|
+| 1 | Fundamental | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Quant/Factor | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Technical | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Macro | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Credit/Risk | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Sentiment | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | MomentumPulse | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Commodity & Specialty Materials | 1 pending | N/A | N/A | 0.0 | Observation |
+
+## QUALITY GATES
+
+- Specificity: PASS for top/bottom promoted set; current quarter, mechanism, dated catalyst and falsifier are explicit.
+- Expert depth: PASS with public factor/tape/valuation fields, macro transmission, credit framing and group KPIs; unavailable licensed fields are disclosed.
+- Debate: PASS; five promoted controversies, four explicit Round-3 responses, committee-vs-consensus alpha call and probable-error statement.
+- RL completeness: PASS; pre-run first-session determination, exact default weights and all 48 calls with entry prices.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-08-03 16:38 · Not financial advice.</div>
+</footer>
+</body>
+</html>

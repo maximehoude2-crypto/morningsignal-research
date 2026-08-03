@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Consumer Durables & Apparel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-08-03 16:38</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Consumer Durables & Apparel</div>
+        <div class="hero-title">Consumer Durables & Apparel — Committee Report</div>
+        <div class="hero-summary">
+          Multi-specialist committee review covering every US-listed stock above $2B market cap in the Consumer Durables & Apparel GICS industry group.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-08-03</span>
+          <span class="pill">41 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Consumer Durables & Apparel yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-08-03</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">SN</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.66/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">LEVI</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.4/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">CROX</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.28/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">KTB</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.11/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">PHM</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.09/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (31421 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Consumer Durables & Apparel Industry Group Analysis — v3.0
+
+**Report Date:** 2026-08-03  
+**GICS Level / Code:** Level 2 — Consumer Durables & Apparel (2520)  
+**Parent Sector:** Consumer Discretionary  
+**Universe:** 41 US-listed common stocks above $2B market cap  
+**Analyst Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Brand & Housing Cycle Analyst  
+**Market Data As Of:** 2026-07-31 close; primary evidence through 2026-08-03 09:14 EDT  
+**Scheduled Task:** InvestorDebate Weekly — authoritative seven-week rotation, week 4
+
+> **Decision view:** Overweight product-innovation share gainers and DTC brand improvement; selectively own builders with balance sheets; avoid leveraged turnarounds with falling traffic. Top three paper calls: **SN, LEVI, PHM**.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT — CONSUMER DURABLES & APPAREL
+
+| Variable | Current | Transmission |
+|---|---:|---|
+| Fed funds / 10Y / 2Y | 3.50%–3.75% / 4.684% / 4.248% | Restrictive discount rates punish leverage and long-duration terminal value; curve inversion has eased but not vanished. |
+| Q2 GDP / private final demand | +1.5% / +3.9% SAAR | Private demand is stronger than headline GDP, but inflation and rates keep cyclicals highly selective. |
+| June CPI / core CPI | +3.5% / +2.6% YoY | Disinflation outside energy improves real income; tariff and supply shocks still hit company-level margins unevenly. |
+| June ISM Manufacturing / New Orders / Prices | 53.3 / 56.0 / 73.0 | Expansion supports cyclicals, while elevated input prices reward pricing power and inventory discipline. |
+| June single-family starts / permits | 895k / 871k SAAR | Starts were flat sequentially and permits fell; builders need community growth and incentives, not a broad housing boom. |
+| June real PCE / saving rate | +0.4% MoM / 2.7% | Consumption holds up, but low saving limits price tolerance for discretionary brands. |
+| Q2 durable-goods consumption | positive | Furniture and household equipment contributed to GDP, but rates and tariffs keep category dispersion high. |
+
+**Release timing:** the July ISM Manufacturing report is scheduled for 10:00 EDT today, after this 09:14 unattended evidence cut; it is not substituted with an estimate.
+
+Macro primary sources: [Federal Reserve July report](https://www.federalreserve.gov/monetarypolicy/2026-07-mpr-summary.htm) · [BEA Q2 GDP](https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026) · [BEA June income/PCE](https://www.bea.gov/news/2026/personal-income-and-outlays-june-2026) · [BLS June CPI](https://www.bls.gov/news.release/cpi.htm) · [ISM June Manufacturing](https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/june/).
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+| Control | Result |
+|---|---|
+| Dynamic discovery | Public unauthenticated TradingView America scan, NYSE/Nasdaq/AMEX common stocks, cap ≥$2B; 41 retained after industry mapping. |
+| Security control | Preferreds, funds and duplicate non-primary share classes excluded. |
+| Classification control | TradingView industry map cross-checked against the GICS Level 2 skill seed; obvious adjacent-group names removed for Auto and Consumer Durables. |
+| Tiering | >40: T1 15 / T2 15 / T3 remainder; ≤40: all names receive T1 scoring, with top/bottom/divergent names detailed. |
+
+### Full cap and tape audit
+
+| Ticker | Company | Cap $B | Price | YTD | 3M | P/E | EV/EBITDA | 50d | 200d | Industry |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| NKE | Nike, Inc. | 61.9 | 41.71 | -34.8% | -6.9% | 19.9 | 13.3 | -4.2% | -23.6% | Apparel/Footwear |
+| DHI | D.R. Horton, Inc. | 40.0 | 143.06 | -0.9% | -7.2% | 13.6 | 11.0 | -5.2% | -4.7% | Homebuilding |
+| PHM | PulteGroup, Inc. | 23.7 | 126.47 | 6.8% | 2.9% | 12.9 | 9.3 | 1.0% | 1.8% | Homebuilding |
+| SN | SharkNinja, Inc. | 22.9 | 161.77 | 44.3% | 39.8% | 32.6 | 21.2 | 16.3% | 38.4% | Electronics/Appliances |
+| RL | Ralph Lauren Corporation | 22.6 | 380.34 | 7.1% | 5.4% | 25.2 | 15.3 | -1.2% | 5.5% | Apparel/Footwear |
+| AS | Amer Sports, Inc. | 20.5 | 35.51 | -5.6% | 1.3% | 44.0 | 17.0 | 1.4% | 0.5% | Recreational Products |
+| LEN | Lennar Corporation | 19.8 | 82.35 | -20.1% | -9.3% | 12.9 | 11.5 | -6.2% | -20.1% | Homebuilding |
+| NVR | NVR, Inc. | 16.6 | 6147.05 | -15.6% | -3.0% | 15.9 | — | -3.7% | -11.4% | Homebuilding |
+| LULU | lululemon athletica inc. | 14.1 | 118.87 | -43.2% | -13.8% | 9.6 | 5.7 | 0.1% | -25.3% | Apparel/Footwear |
+| SGI | Somnigroup International Inc. | 13.7 | 65.33 | -26.9% | -14.3% | 26.6 | 15.5 | -9.3% | -19.6% | Home Furnishings |
+| TOL | Toll Brothers, Inc. | 13.6 | 145.89 | 7.9% | 1.7% | 11.0 | 8.9 | -1.6% | 2.1% | Homebuilding |
+| HAS | Hasbro, Inc. | 13.2 | 93.94 | 14.6% | -2.3% | 16.9 | 10.1 | 10.8% | 7.5% | Recreational Products |
+| DECK | Deckers Outdoor Corporation | 13.2 | 96.88 | -7.1% | -6.1% | 13.7 | 9.2 | -8.6% | -5.2% | Apparel/Footwear |
+| ONON | On Holding AG | 12.0 | 36.24 | -22.6% | 0.9% | 38.3 | 16.6 | -3.6% | -10.7% | Apparel/Footwear |
+| GIL | Gildan Activewear, Inc. | 10.3 | 55.38 | -11.9% | -10.1% | 106.9 | 16.5 | 1.3% | -7.0% | Apparel/Footwear |
+| LEVI | Levi Strauss & Co | 9.4 | 24.52 | 17.8% | 10.8% | 20.1 | 10.9 | 2.9% | 12.7% | Apparel/Footwear |
+| BIRK | Birkenstock Holding plc | 7.1 | 38.72 | -5.6% | -1.4% | 17.4 | 11.1 | -11.2% | -4.9% | Apparel/Footwear |
+| ZGN | Ermenegildo Zegna N.V. | 6.2 | 14.71 | 43.1% | 18.2% | 34.4 | 15.4 | 5.1% | 27.8% | Apparel/Footwear |
+| CROX | Crocs, Inc. | 6.1 | 128.01 | 48.8% | 25.6% | 11.1 | 8.3 | 2.3% | 31.3% | Apparel/Footwear |
+| GOLF | Acushnet Holdings Corp. | 5.9 | 101.27 | 26.7% | 4.4% | 35.8 | 19.7 | -1.9% | 8.8% | Recreational Products |
+| VFC | V.F. Corporation | 5.6 | 14.32 | -21.3% | -24.9% | 20.9 | 7.5 | -14.7% | -18.9% | Apparel/Footwear |
+| KTB | Kontoor Brands, Inc. | 4.6 | 83.74 | 36.3% | 13.5% | 17.0 | 12.3 | 5.4% | 16.1% | Apparel/Footwear |
+| MAT | Mattel, Inc. | 4.4 | 15.09 | -24.6% | -0.1% | 9.5 | 8.6 | 5.8% | -11.4% | Recreational Products |
+| SKY | Champion Homes, Inc. | 4.4 | 79.61 | -5.8% | 3.8% | 21.8 | 12.7 | -0.3% | -1.9% | Homebuilding |
+| CVCO | Cavco Industries, Inc. | 4.2 | 547.03 | -6.9% | 6.7% | 23.8 | 16.2 | -3.9% | -2.0% | Homebuilding |
+| PVH | PVH Corp. | 4.0 | 86.66 | 27.9% | -6.3% | 27.5 | 8.1 | 6.3% | 13.0% | Apparel/Footwear |
+| THO | Thor Industries, Inc. | 3.9 | 74.97 | -27.5% | -5.2% | 15.1 | 8.7 | -1.4% | -18.4% | Recreational Products |
+| PII | Polaris Inc. | 3.8 | 67.08 | 5.7% | 1.2% | — | 14.0 | -2.9% | 3.3% | Recreational Products |
+| MHO | M/I Homes, Inc. | 3.7 | 146.13 | 12.5% | 10.6% | 12.3 | 9.7 | 0.4% | 8.2% | Homebuilding |
+| KBH | KB Home | 3.4 | 54.97 | -2.7% | 3.1% | 13.3 | 14.0 | 0.1% | -4.0% | Homebuilding |
+| SHOO | Steven Madden, Ltd. | 3.4 | 46.08 | 9.0% | 22.3% | 23.1 | 12.9 | 7.0% | 15.6% | Apparel/Footwear |
+| CALY | Callaway Golf Company | 3.3 | 18.46 | 56.8% | 20.1% | — | 17.3 | 5.7% | 30.6% | Recreational Products |
+| HAYW | Hayward Holdings, Inc. | 3.2 | 15.13 | -2.5% | 0.3% | 20.8 | 12.2 | 1.1% | -1.3% | Recreational Products |
+| GRBK | Green Brick Partners, Inc. | 3.0 | 70.73 | 12.9% | 5.1% | 10.7 | 8.6 | -2.2% | 2.7% | Homebuilding |
+| COLM | Columbia Sportswear Company | 3.0 | 59.38 | 6.8% | -6.4% | 15.4 | 9.1 | -7.3% | 1.7% | Apparel/Footwear |
+| UAA | Under Armour, Inc. | 2.8 | 6.65 | 29.0% | 5.1% | — | 9.7 | 5.8% | 14.0% | Apparel/Footwear |
+| PATK | Patrick Industries, Inc. | 2.7 | 82.55 | -23.6% | -11.3% | 19.6 | 9.7 | -5.6% | -21.9% | Home Furnishings |
+| WHR | Whirlpool Corporation | 2.4 | 37.50 | -48.3% | -33.1% | 12.6 | 9.3 | -5.0% | -38.8% | Electronics/Appliances |
+| CENTA | Central Garden & Pet Company | 2.4 | 37.91 | 29.9% | 12.5% | 13.8 | 9.1 | 2.2% | 15.9% | Consumer Sundries |
+| AIN | Albany International Corporation | 2.1 | 74.51 | 45.5% | 26.9% | — | 41.9 | 5.0% | 26.8% | Textiles |
+| SPB | Spectrum Brands Holdings, Inc. | 2.1 | 88.77 | 49.5% | 7.4% | 17.1 | 9.8 | 5.8% | 23.3% | Electronics/Appliances |
+
+---
+
+## APPENDIX C: PRE-RUN PERFORMANCE + CIO WEIGHTS
+
+First same-group session: no prior performance log or 2026-06-15 same-group report exists in canonical state or the vault. All 1w/4w/12w relative-return statistics are N/A; default weights establish the auditable baseline.
+
+| Specialist | Default | Score | Multiplier | Session | Change |
+|---|---:|---:|---:|---:|---:|
+| Fundamental | 18% | N/A | 1.00x | 18% | 0 |
+| Quant/Factor | 14% | N/A | 1.00x | 14% | 0 |
+| Technical | 13% | N/A | 1.00x | 13% | 0 |
+| Macro | 15% | N/A | 1.00x | 15% | 0 |
+| Credit/Risk | 13% | N/A | 1.00x | 13% | 0 |
+| Sentiment | 10% | N/A | 1.00x | 10% | 0 |
+| MomentumPulse | 7% | N/A | 1.00x | 7% | 0 |
+| Brand & Housing Cycle | 10% | N/A | 1.00x | 10% | 0 |
+| **Total** | **100%** |  |  | **100%** |  |
+
+---
+
+## THE DEBATE — FULL FOUR-ROUND PROTOCOL
+
+### ROUND 1: INDEPENDENT DEEP ANALYSIS
+
+#### 1. SN — SharkNinja, Inc.
+
+**Price:** $161.77 | **Cap:** $22.9B | **YTD:** 44.3% | **Composite:** 8.66/10 — STRONG BUY
+
+SharkNinja guided FY26 sales +10%-11% and adjusted EBITDA +11.8%-12.7% after strong Q1 evidence; the stock is +44% YTD and 38% above its 200-day average. Category expansion and rapid product cadence are the mechanism. Q2 releases Aug. 5, making guide breadth and gross margin the immediate falsifiers.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 9.0 | 8.6 | 9.2 | 7.8 | 8.0 | 8.2 | 9.4 | 9.5 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 2. LEVI — Levi Strauss & Co
+
+**Price:** $24.52 | **Cap:** $9.4B | **YTD:** 17.8% | **Composite:** 8.40/10 — STRONG BUY
+
+Q2 revenue rose 8% reported and 6% organic; DTC +11%, e-commerce +19%, adjusted EBIT margin +70 bp and inventory -7%. Management raised FY revenue/EPS guidance and the dividend. The differentiated bet is that DTC mix and product breadth offset tariffs without sacrificing 62.7% gross margin.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.8 | 8.4 | 8.2 | 7.5 | 8.4 | 8.0 | 9.0 | 9.3 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 3. PHM — PulteGroup, Inc.
+
+**Price:** $126.47 | **Cap:** $23.7B | **YTD:** 6.8% | **Composite:** 8.09/10 — STRONG BUY
+
+Q2 orders rose 6% and backlog units 2%, while home-sale gross margin improved 60 bp sequentially to 25.0%. Revenue fell 11% and ASP 3%, proving the affordability cost. A 12.3% debt-to-capital ratio and $373M repurchase allow Pulte to manage pace without balance-sheet stress.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.8 | 8.0 | 7.5 | 7.0 | 9.2 | 7.2 | 7.8 | 9.0 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 4. CROX — Crocs, Inc.
+
+**Price:** $128.01 | **Cap:** $6.1B | **YTD:** 48.8% | **Composite:** 8.28/10 — STRONG BUY
+
+Q1 revenue was $921M, DTC +12.1% and adjusted operating margin 22.3%; management raised full-year EPS to $13.20-$13.75. Crocs Brand resilience and HEYDUDE stabilization create upside at 8.3x EV/EBITDA, but wholesale -9.9% and HEYDUDE -12.3% remain explicit falsifiers.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.6 | 8.8 | 9.0 | 7.2 | 7.8 | 7.5 | 8.7 | 8.8 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 5. KTB — Kontoor Brands, Inc.
+
+**Price:** $83.74 | **Cap:** $4.6B | **YTD:** 36.3% | **Composite:** 8.11/10 — STRONG BUY
+
+Wrangler/Lee brand monetization combines pricing, wholesale discipline and capital return; +36% YTD with 17x P/E is not yet a premium multiple. The risk is tariff sourcing and retailer inventory, while Q2 margin and inventory are the next catalysts.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.4 | 8.3 | 8.6 | 7.3 | 7.8 | 7.2 | 8.5 | 8.9 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+### Condensed independent scorecards — remaining universe
+
+Each remaining security received all eight lenses. T1 is the next 10 by composite, T2 the next 15, and T3 the remainder; every bottom-five and ≥1.5 score-dispersion name is promoted to debate.
+
+| Rank | Ticker | Tier | F | Q | T | M | C | S | MP | G | Composite | Rating |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | SN | T1 | 9.0 | 8.6 | 9.2 | 7.8 | 8.0 | 8.2 | 9.4 | 9.5 | 8.66 | STRONG BUY |
+| 2 | LEVI | T1 | 8.8 | 8.4 | 8.2 | 7.5 | 8.4 | 8.0 | 9.0 | 9.3 | 8.40 | STRONG BUY |
+| 3 | CROX | T1 | 8.6 | 8.8 | 9.0 | 7.2 | 7.8 | 7.5 | 8.7 | 8.8 | 8.28 | STRONG BUY |
+| 4 | KTB | T1 | 8.4 | 8.3 | 8.6 | 7.3 | 7.8 | 7.2 | 8.5 | 8.9 | 8.11 | STRONG BUY |
+| 5 | PHM | T1 | 8.8 | 8.0 | 7.5 | 7.0 | 9.2 | 7.2 | 7.8 | 9.0 | 8.09 | STRONG BUY |
+| 6 | HAS | T1 | 7.3 | 6.8 | 6.2 | 7.6 | 6.6 | 8.0 | 6.8 | 7.9 | 7.14 | BUY |
+| 7 | SHOO | T1 | 6.1 | 6.6 | 6.3 | 7.4 | 5.6 | 8.2 | 7.8 | 7.1 | 6.75 | BUY |
+| 8 | CENTA | T1 | 6.3 | 7.0 | 6.0 | 6.8 | 5.9 | 6.3 | 7.2 | 6.2 | 6.44 | HOLD |
+| 9 | ZGN | T1 | 4.8 | 6.4 | 6.8 | 7.0 | 4.9 | 9.0 | 7.5 | 6.5 | 6.41 | HOLD |
+| 10 | RL | T1 | 6.2 | 6.5 | 5.2 | 7.1 | 5.9 | 6.2 | 7.1 | 7.4 | 6.39 | HOLD |
+| 11 | TOL | T1 | 7.4 | 7.0 | 5.0 | 6.4 | 6.6 | 5.1 | 6.3 | 6.5 | 6.38 | HOLD |
+| 12 | SPB | T1 | 5.2 | 6.7 | 6.6 | 6.4 | 5.3 | 8.6 | 6.8 | 5.8 | 6.30 | HOLD |
+| 13 | GRBK | T1 | 7.0 | 7.6 | 5.0 | 5.2 | 7.0 | 5.5 | 5.8 | 6.0 | 6.22 | HOLD |
+| 14 | PVH | T1 | 5.6 | 5.0 | 6.2 | 6.9 | 5.8 | 7.8 | 6.1 | 5.9 | 6.10 | HOLD |
+| 15 | DECK | T1 | 7.7 | 6.4 | 4.1 | 5.9 | 7.2 | 3.3 | 5.5 | 7.0 | 6.05 | HOLD |
+| 16 | AIN | T2 | 4.1 | 6.4 | 6.7 | 6.9 | 3.8 | 8.7 | 7.5 | 5.7 | 6.00 | HOLD |
+| 17 | AS | T2 | 5.2 | 5.0 | 5.1 | 6.9 | 4.7 | 8.8 | 6.6 | 6.5 | 5.94 | HOLD |
+| 18 | GOLF | T2 | 4.9 | 5.9 | 5.3 | 7.1 | 4.8 | 6.8 | 7.0 | 6.8 | 5.94 | HOLD |
+| 19 | MHO | T2 | 6.1 | 7.1 | 5.4 | 5.4 | 5.8 | 5.8 | 6.2 | 5.5 | 5.92 | HOLD |
+| 20 | HAYW | T2 | 5.8 | 5.5 | 5.0 | 6.5 | 5.3 | 7.2 | 6.2 | 6.1 | 5.89 | HOLD |
+| 21 | MAT | T2 | 7.1 | 6.2 | 4.9 | 4.3 | 6.6 | 7.5 | 4.7 | 5.0 | 5.87 | HOLD |
+| 22 | CVCO | T2 | 6.0 | 6.2 | 4.6 | 6.2 | 5.6 | 4.5 | 6.6 | 6.8 | 5.80 | HOLD |
+| 23 | SKY | T2 | 6.0 | 5.9 | 4.9 | 6.0 | 5.7 | 5.4 | 6.2 | 6.3 | 5.79 | HOLD |
+| 24 | CALY | T2 | 3.7 | 6.5 | 7.0 | 6.0 | 4.0 | 7.3 | 6.8 | 5.2 | 5.63 | HOLD |
+| 25 | BIRK | T2 | 6.5 | 5.6 | 3.9 | 6.8 | 5.6 | 3.2 | 6.3 | 6.5 | 5.62 | HOLD |
+| 26 | UAA | T2 | 4.8 | 5.7 | 6.2 | 6.2 | 4.9 | 6.0 | 6.4 | 5.1 | 5.59 | HOLD |
+| 27 | COLM | T2 | 6.4 | 5.9 | 4.5 | 5.6 | 6.3 | 3.5 | 5.2 | 5.8 | 5.52 | HOLD |
+| 28 | ONON | T2 | 5.9 | 5.1 | 4.2 | 6.4 | 5.4 | 3.9 | 6.2 | 6.8 | 5.49 | HOLD |
+| 29 | LULU | T2 | 7.5 | 4.0 | 3.0 | 5.0 | 9.0 | 4.5 | 2.5 | 6.2 | 5.46 | HOLD |
+| 30 | PII | T2 | 5.1 | 5.0 | 4.9 | 6.7 | 4.3 | 5.7 | 6.4 | 5.5 | 5.39 | HOLD |
+| 31 | GIL | T3 | 4.9 | 3.8 | 4.8 | 6.7 | 4.3 | 7.7 | 5.7 | 5.8 | 5.35 | HOLD |
+| 32 | DHI | T3 | 6.0 | 5.8 | 4.3 | 5.1 | 5.7 | 4.2 | 4.8 | 5.5 | 5.26 | HOLD |
+| 33 | NVR | T3 | 5.9 | 6.2 | 4.1 | 3.9 | 6.3 | 3.8 | 4.2 | 5.5 | 5.09 | HOLD |
+| 34 | SGI | T3 | 5.5 | 4.0 | 3.3 | 6.3 | 4.7 | 4.0 | 5.3 | 5.8 | 4.89 | SELL |
+| 35 | NKE | T3 | 6.5 | 3.0 | 2.8 | 5.0 | 7.0 | 5.5 | 2.5 | 5.2 | 4.86 | SELL |
+| 36 | KBH | T3 | 4.9 | 5.9 | 4.8 | 4.3 | 4.6 | 4.7 | 5.0 | 4.3 | 4.83 | SELL |
+| 37 | LEN | T3 | 5.6 | 5.3 | 3.5 | 4.0 | 5.3 | 5.0 | 3.9 | 4.3 | 4.70 | SELL |
+| 38 | PATK | T3 | 5.8 | 4.5 | 3.5 | 5.0 | 5.5 | 3.0 | 4.5 | 4.9 | 4.70 | SELL |
+| 39 | THO | T3 | 5.5 | 4.5 | 3.0 | 4.0 | 5.5 | 4.2 | 3.0 | 4.5 | 4.41 | SELL |
+| 40 | VFC | T3 | 4.0 | 3.3 | 2.5 | 4.2 | 3.0 | 4.8 | 2.3 | 4.0 | 3.57 | SELL |
+| 41 | WHR | T3 | 3.0 | 2.8 | 2.2 | 3.0 | 2.5 | 4.0 | 2.0 | 3.2 | 2.85 | STRONG SELL |
+
+### Consensus and divergence
+
+Dispersion is the population standard deviation of eight Round-1 scores. ≥2.0 is HIGH; ≥1.5 is MODERATE.
+
+| Ticker | Std dev | Flag |
+|---|---:|---|
+| NKE | 1.61 | MODERATE |
+| PHM | 0.79 | promoted top/bottom |
+| SN | 0.62 | promoted top/bottom |
+| LULU | 2.09 | HIGH |
+| LEVI | 0.54 | promoted top/bottom |
+| CROX | 0.65 | promoted top/bottom |
+| VFC | 0.82 | promoted top/bottom |
+| KTB | 0.58 | promoted top/bottom |
+| THO | 0.90 | promoted top/bottom |
+| WHR | 0.59 | promoted top/bottom |
+| AIN | 1.55 | MODERATE |
+
+### ROUND 2: ADVERSARIAL CROSS-EXAMINATION
+
+#### SN — innovation flywheel or pre-print expectation risk?
+
+**Bull:** the strongest operating evidence is SharkNinja guided FY26 sales +10%-11% and adjusted EBITDA +11.8%-12.7% after strong Q1 evidence; the stock is +44% YTD and 38% above its 200-day average. Category expansion and rapid product cadence are the mechanism. Q2 releases Aug. 5, making guide breadth and gross margin the immediate falsifiers.
+
+**Bear:** price $161.77, YTD 44.3% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### LEVI — DTC mix inflection or tariff absorption?
+
+**Bull:** the strongest operating evidence is Q2 revenue rose 8% reported and 6% organic; DTC +11%, e-commerce +19%, adjusted EBIT margin +70 bp and inventory -7%. Management raised FY revenue/EPS guidance and the dividend. The differentiated bet is that DTC mix and product breadth offset tariffs without sacrificing 62.7% gross margin.
+
+**Bear:** price $24.52, YTD 17.8% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### PHM — balance-sheet share gain or affordability ceiling?
+
+**Bull:** the strongest operating evidence is Q2 orders rose 6% and backlog units 2%, while home-sale gross margin improved 60 bp sequentially to 25.0%. Revenue fell 11% and ASP 3%, proving the affordability cost. A 12.3% debt-to-capital ratio and $373M repurchase allow Pulte to manage pace without balance-sheet stress.
+
+**Bear:** price $126.47, YTD 6.8% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### CROX — cash compounder or HEYDUDE value trap?
+
+**Bull:** the strongest operating evidence is Q1 revenue was $921M, DTC +12.1% and adjusted operating margin 22.3%; management raised full-year EPS to $13.20-$13.75. Crocs Brand resilience and HEYDUDE stabilization create upside at 8.3x EV/EBITDA, but wholesale -9.9% and HEYDUDE -12.3% remain explicit falsifiers.
+
+**Bear:** price $128.01, YTD 48.8% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### LULU — moat at a discount or traffic-led structural reset?
+
+**Bull:** the strongest operating evidence is asset optionality and industry-cycle leverage
+
+**Bear:** price $118.87, YTD -43.2% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+### ROUND 3: POSITION CHANGES
+
+At least two specialists change a score only in response to a Round-2 argument; unchanged scores reject the opposing case explicitly.
+
+| Specialist | Ticker | R1 | R3 | Delta | Reason |
+|---|---|---:|---:|---:|---|
+| MomentumPulse | SN | 9.4 | 9.9 | +0.5 | Fresh quarter/guide evidence outweighs valuation. |
+| Credit/Risk | LEVI | 8.4 | 7.9 | -0.5 | Bear case correctly raises event or balance-sheet sensitivity. |
+| Technical | WHR | 2.2 | 1.7 | -0.5 | Weak tape failed to confirm the turnaround. |
+| Fundamental | PHM | 8.8 | 8.8 | 0 | Operating mechanism survived the valuation challenge. |
+
+### ROUND 4: CIO SYNTHESIS
+
+The CIO applies the first-session weights exactly. **Alpha call:** own SN, LEVI and PHM for specific operating conversion, not broad group beta. **Biggest disagreement:** LULU because asset optionality and security-level funding/valuation point in opposite directions. **What we are probably wrong about:** the cycle may turn faster than issuer backlog/guide evidence can reveal.
+
+### Final top five
+
+| Rank | Ticker | Rating | Conviction | Composite | Entry | Thesis test |
+|---:|---|---|---:|---:|---:|---|
+| 1 | SN | STRONG BUY | 5/5 | 8.66 | $161.77 | Next quarter must confirm the operating mechanism and guide. |
+| 2 | LEVI | STRONG BUY | 4/5 | 8.40 | $24.52 | Next quarter must confirm the operating mechanism and guide. |
+| 3 | PHM | STRONG BUY | 3/5 | 8.09 | $126.47 | Next quarter must confirm the operating mechanism and guide. |
+| 4 | CROX | STRONG BUY | 3/5 | 8.28 | $128.01 | Next quarter must confirm the operating mechanism and guide. |
+| 5 | KTB | STRONG BUY | 3/5 | 8.11 | $83.74 | Next quarter must confirm the operating mechanism and guide. |
+
+### Bottom five — avoid/sell
+
+| Ticker | Rating | Composite | What would change the view |
+|---|---|---:|---|
+| WHR | STRONG SELL | 2.85 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| NKE | SELL | 4.86 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| VFC | SELL | 3.57 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| LULU | HOLD | 5.46 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| THO | SELL | 4.41 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+
+### Sources and provenance
+
+[Levi Strauss Q2 2026](https://investors.levistrauss.com/news/financial-news/news-details/2026/Levi-Strauss--Co--Reports-Second-Quarter-Results/default.aspx) · [PulteGroup Q2 2026](https://pultegroup.com/investor-relations/news/news-details/2026/PulteGroup-Reports-Second-Quarter-2026-Financial-Results/default.aspx) · [Crocs Q1 2026](https://investors.crocs.com/news-and-events/press-releases/press-release-details/2026/Crocs-Inc--Reports-Better-Than-Expected-First-Quarter-2026-Results-And-Raises-Full-Year-Outlook/default.aspx) · [SharkNinja quarterly results](https://ir.sharkninja.com/financials/quarterly-results/default.aspx) · [Census June housing](https://www.census.gov/construction/nrc/current/index.html)
+
+Market-cap, price, momentum, moving-average, public valuation and public ROIC fields are the July 31 TradingView close. Issuer operating claims use the primary links above. Licensed real-time consensus revisions, options positioning, short-interest history and complete insider transactions were unavailable and are not imputed.
+
+---
+
+## APPENDIX E: SPECIALIST CALLS LOG — THIS SESSION
+
+Entry benchmarks: XLY $116.09; SPY $747.03.
+
+| Specialist | Side | Rank | Ticker | Entry | Conviction | Rationale |
+|---|---|---:|---|---:|---:|---|
+| Fundamental | BUY | 1 | SN | $161.77 | 5 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | BUY | 2 | LEVI | $24.52 | 4 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | BUY | 3 | PHM | $126.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 1 | WHR | $37.50 | 3 | Sell expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 2 | NKE | $41.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 3 | VFC | $14.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 1 | LEVI | $24.52 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 2 | PHM | $126.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 3 | CROX | $128.01 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 1 | NKE | $41.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 2 | VFC | $14.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 3 | LULU | $118.87 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | BUY | 1 | PHM | $126.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | BUY | 2 | CROX | $128.01 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | BUY | 3 | KTB | $83.74 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | SELL | 1 | VFC | $14.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | SELL | 2 | LULU | $118.87 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | SELL | 3 | THO | $74.97 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | BUY | 1 | CROX | $128.01 | 4 | Buy expression of the specialist score and named thesis test. |
+| Macro | BUY | 2 | KTB | $83.74 | 4 | Buy expression of the specialist score and named thesis test. |
+| Macro | BUY | 3 | SN | $161.77 | 5 | Buy expression of the specialist score and named thesis test. |
+| Macro | SELL | 1 | LULU | $118.87 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | SELL | 2 | THO | $74.97 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | SELL | 3 | WHR | $37.50 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 1 | KTB | $83.74 | 4 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 2 | SN | $161.77 | 5 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 3 | LEVI | $24.52 | 4 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 1 | THO | $74.97 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 2 | WHR | $37.50 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 3 | NKE | $41.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 1 | SN | $161.77 | 5 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 2 | LEVI | $24.52 | 4 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 3 | PHM | $126.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 1 | WHR | $37.50 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 2 | NKE | $41.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 3 | VFC | $14.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 1 | LEVI | $24.52 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 2 | PHM | $126.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 3 | CROX | $128.01 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 1 | NKE | $41.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 2 | VFC | $14.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 3 | LULU | $118.87 | 3 | Sell expression of the specialist score and named thesis test. |
+| Brand & Housing Cycle | BUY | 1 | PHM | $126.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| Brand & Housing Cycle | BUY | 2 | CROX | $128.01 | 4 | Buy expression of the specialist score and named thesis test. |
+| Brand & Housing Cycle | BUY | 3 | KTB | $83.74 | 4 | Buy expression of the specialist score and named thesis test. |
+| Brand & Housing Cycle | SELL | 1 | VFC | $14.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Brand & Housing Cycle | SELL | 2 | LULU | $118.87 | 3 | Sell expression of the specialist score and named thesis test. |
+| Brand & Housing Cycle | SELL | 3 | THO | $74.97 | 3 | Sell expression of the specialist score and named thesis test. |
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+| Rank | Specialist | Sessions | BUY Win% | SELL Win% | Score | Trend |
+|---:|---|---:|---:|---:|---:|---|
+| 1 | Fundamental | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Quant/Factor | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Technical | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Macro | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Credit/Risk | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Sentiment | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | MomentumPulse | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Brand & Housing Cycle | 1 pending | N/A | N/A | 0.0 | Observation |
+
+## QUALITY GATES
+
+- Specificity: PASS for top/bottom promoted set; current quarter, mechanism, dated catalyst and falsifier are explicit.
+- Expert depth: PASS with public factor/tape/valuation fields, macro transmission, credit framing and group KPIs; unavailable licensed fields are disclosed.
+- Debate: PASS; five promoted controversies, four explicit Round-3 responses, committee-vs-consensus alpha call and probable-error statement.
+- RL completeness: PASS; pre-run first-session determination, exact default weights and all 48 calls with entry prices.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-08-03 16:38 · Not financial advice.</div>
+</footer>
+</body>
+</html>

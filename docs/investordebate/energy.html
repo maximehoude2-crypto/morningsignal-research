@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Energy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-08-03 16:38</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Energy</div>
+        <div class="hero-title">Energy — Committee Report</div>
+        <div class="hero-summary">
+          Multi-specialist committee review covering every US-listed stock above $2B market cap in the Energy GICS industry group.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-08-03</span>
+          <span class="pill">92 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Energy yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-08-03</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">XOM</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.96/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">EOG</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.73/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">FTI</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.39/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">VLO</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.36/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">MPC</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.24/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (41121 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Energy Industry Group Analysis — v3.0
+
+**Report Date:** 2026-08-03  
+**GICS Level / Code:** Level 2 — Energy (1010)  
+**Parent Sector:** Energy  
+**Universe:** 92 US-listed common stocks above $2B market cap  
+**Analyst Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Commodity Cycle Analyst  
+**Market Data As Of:** 2026-07-31 close; primary evidence through 2026-08-03 09:14 EDT  
+**Scheduled Task:** InvestorDebate Weekly — authoritative seven-week rotation, week 4
+
+> **Decision view:** Overweight integrated operators and low-breakeven upstream; selectively own subsea backlog; avoid balance sheets that require benign oil or gas. Top three paper calls: **XOM, EOG, FTI**.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT — ENERGY
+
+| Variable | Current | Transmission |
+|---|---:|---|
+| Fed funds / 10Y / 2Y | 3.50%–3.75% / 4.684% / 4.248% | Restrictive discount rates punish leverage and long-duration terminal value; curve inversion has eased but not vanished. |
+| Q2 GDP / private final demand | +1.5% / +3.9% SAAR | Private demand is stronger than headline GDP, but inflation and rates keep cyclicals highly selective. |
+| June CPI / core CPI | +3.5% / +2.6% YoY | Disinflation outside energy improves real income; tariff and supply shocks still hit company-level margins unevenly. |
+| June ISM Manufacturing / New Orders / Prices | 53.3 / 56.0 / 73.0 | Expansion supports cyclicals, while elevated input prices reward pricing power and inventory discipline. |
+| WTI / Henry Hub | $78.66 / $2.77 | Oil cash margins are supportive; weak gas separates liquids-weighted E&Ps from gas-levered balance sheets. |
+| EIA week ending Jul. 24 | released Jul. 29 | High refinery runs and inventory draws support products; Aug. 5 is the next official release. |
+| Energy CPI | +15.7% YoY; -5.7% MoM | The shock remains large year on year but June relief raises mean-reversion risk for refining and integrated earnings. |
+
+**Release timing:** the July ISM Manufacturing report is scheduled for 10:00 EDT today, after this 09:14 unattended evidence cut; it is not substituted with an estimate.
+
+Macro primary sources: [Federal Reserve July report](https://www.federalreserve.gov/monetarypolicy/2026-07-mpr-summary.htm) · [BEA Q2 GDP](https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026) · [BEA June income/PCE](https://www.bea.gov/news/2026/personal-income-and-outlays-june-2026) · [BLS June CPI](https://www.bls.gov/news.release/cpi.htm) · [ISM June Manufacturing](https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/june/).
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+| Control | Result |
+|---|---|
+| Dynamic discovery | Public unauthenticated TradingView America scan, NYSE/Nasdaq/AMEX common stocks, cap ≥$2B; 92 retained after industry mapping. |
+| Security control | Preferreds, funds and duplicate non-primary share classes excluded. |
+| Classification control | TradingView industry map cross-checked against the GICS Level 2 skill seed; obvious adjacent-group names removed for Auto and Consumer Durables. |
+| Tiering | >40: T1 15 / T2 15 / T3 remainder; ≤40: all names receive T1 scoring, with top/bottom/divergent names detailed. |
+
+### Full cap and tape audit
+
+| Ticker | Company | Cap $B | Price | YTD | 3M | P/E | EV/EBITDA | 50d | 200d | Industry |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| XOM | ExxonMobil Holdings Corporation | 644.2 | 155.44 | 29.4% | 1.9% | 20.0 | 9.5 | 6.2% | 11.7% | Integrated Oil |
+| CVX | Chevron Corporation | 392.0 | 196.83 | 29.4% | 2.9% | 18.9 | 8.2 | 7.7% | 12.2% | Integrated Oil |
+| TTE | TotalEnergies SE | 196.1 | 87.86 | 34.2% | -5.0% | 11.1 | 5.7 | 4.8% | 13.7% | Integrated Oil |
+| COP | ConocoPhillips | 146.8 | 120.48 | 28.7% | -3.6% | 20.5 | 7.3 | 6.0% | 11.8% | Oil & Gas Production |
+| ENB | Enbridge Inc | 118.9 | 54.46 | 13.6% | -1.7% | 29.7 | 17.2 | -2.1% | 5.3% | Oil & Gas Pipelines |
+| CNQ | Canadian Natural Resources Limited | 99.2 | 47.68 | 41.5% | 0.5% | 14.3 | 9.0 | 8.3% | 18.1% | Integrated Oil |
+| MPC | Marathon Petroleum Corporation | 92.4 | 316.47 | 94.3% | 27.6% | 20.7 | 11.5 | 15.5% | 42.7% | Oil Refining/Marketing |
+| VLO | Valero Energy Corporation | 90.1 | 312.90 | 91.7% | 25.0% | 13.0 | 7.0 | 15.7% | 43.2% | Oil Refining/Marketing |
+| WMB | Williams Companies, Inc. (The) | 87.5 | 71.54 | 19.0% | -6.3% | 31.4 | 17.1 | -2.8% | 4.4% | Oil & Gas Pipelines |
+| PSX | Phillips 66 | 84.9 | 211.68 | 64.1% | 18.9% | 20.8 | 11.5 | 14.0% | 32.2% | Oil Refining/Marketing |
+| EPD | Enterprise Products Partners L.P. | 82.3 | 38.05 | 18.5% | -1.3% | 13.2 | 11.6 | 1.1% | 7.6% | Oil & Gas Pipelines |
+| SU | Suncor Energy Inc. | 79.4 | 67.28 | 52.1% | -1.5% | 17.8 | 7.6 | 10.1% | 22.4% | Integrated Oil |
+| EOG | EOG Resources, Inc. | 79.2 | 148.69 | 41.6% | 6.3% | 14.6 | 6.8 | 8.3% | 19.9% | Integrated Oil |
+| SLB | SLB Limited | 73.6 | 49.59 | 29.1% | -12.1% | 24.1 | 11.2 | -2.5% | 6.1% | Contract Drilling |
+| KMI | Kinder Morgan, Inc. | 71.7 | 32.18 | 17.1% | -0.5% | 20.8 | 13.5 | 0.2% | 5.7% | Oil & Gas Pipelines |
+| ET | Energy Transfer LP | 70.1 | 20.36 | 23.8% | 0.9% | 17.1 | 10.4 | 3.9% | 10.9% | Oil & Gas Pipelines |
+| TRP | TC Energy Corporation | 67.4 | 67.43 | 22.6% | 0.4% | 28.7 | 16.5 | -1.6% | 10.4% | Oil & Gas Pipelines |
+| IMO | Imperial Oil Limited | 62.7 | 129.57 | 49.6% | 1.8% | 21.7 | 11.4 | 6.7% | 16.1% | Integrated Oil |
+| BKR | Baker Hughes Company | 60.0 | 60.49 | 32.3% | -12.8% | 19.4 | 12.2 | 1.2% | 7.0% | Contract Drilling |
+| MPLX | MPLX LP | 59.3 | 58.45 | 9.8% | 3.5% | 12.7 | 14.1 | 3.2% | 5.5% | Oil & Gas Pipelines |
+| OKE | ONEOK, Inc. | 57.2 | 90.81 | 23.6% | 1.5% | 16.2 | 12.2 | 1.7% | 11.0% | Oil & Gas Pipelines |
+| FANG | Diamondback Energy, Inc. | 57.1 | 202.95 | 34.3% | -0.8% | 228.8 | 7.8 | 5.8% | 16.9% | Oil & Gas Production |
+| OXY | Occidental Petroleum Corporation | 56.8 | 57.07 | 38.4% | -4.9% | 65.1 | 6.8 | 4.2% | 13.6% | Integrated Oil |
+| CVE | Cenovus Energy Inc | 55.7 | 30.19 | 77.9% | 4.0% | 12.0 | 5.9 | 9.8% | 32.0% | Integrated Oil |
+| LNG | Cheniere Energy, Inc. | 55.2 | 263.57 | 35.5% | -3.9% | 43.1 | 10.9 | 7.1% | 13.2% | Oil & Gas Pipelines |
+| DVN | Devon Energy Corporation | 52.1 | 45.13 | 23.0% | -11.8% | 12.5 | 8.4 | 2.8% | 7.9% | Integrated Oil |
+| EQT | EQT Corporation | 33.3 | 53.29 | -0.1% | -11.2% | 12.4 | 6.3 | 1.5% | -5.5% | Integrated Oil |
+| VG | Venture Global, Inc. | 33.2 | 13.38 | 95.0% | 2.9% | 14.0 | 12.0 | 6.8% | 24.8% | Oil & Gas Pipelines |
+| PBA | Pembina Pipeline Corp. | 28.5 | 48.93 | 28.6% | 5.3% | 24.5 | 16.3 | 0.9% | 13.2% | Oil & Gas Pipelines |
+| FTI | TechnipFMC plc | 28.1 | 71.66 | 61.0% | -4.2% | 25.0 | 14.8 | 2.8% | 19.4% | Oilfield Services/Equipment |
+| HAL | Halliburton Company | 26.9 | 32.25 | 13.8% | -24.0% | 16.9 | 8.1 | -10.9% | -4.4% | Oilfield Services/Equipment |
+| EXE | Expand Energy Corporation | 21.8 | 94.03 | -14.5% | -7.5% | 8.1 | 4.3 | 4.1% | -8.3% | Integrated Oil |
+| WES | Western Midstream Partners, LP | 19.2 | 46.57 | 17.3% | 10.3% | 15.2 | 11.7 | 3.9% | 11.7% | Oil & Gas Pipelines |
+| PR | Permian Resources Corporation | 17.8 | 21.31 | 52.0% | -0.5% | 24.8 | 6.1 | 8.8% | 22.4% | Integrated Oil |
+| PAA | Plains All American Pipeline, L.P. | 17.3 | 24.57 | 36.5% | 9.2% | 18.4 | 14.8 | 6.7% | 20.5% | Oil & Gas Pipelines |
+| OVV | Ovintiv Inc. (DE) | 17.2 | 62.46 | 59.7% | 2.6% | 17.5 | 4.6 | 10.0% | 26.4% | Integrated Oil |
+| DINO | HF Sinclair Corporation | 16.3 | 91.47 | 98.8% | 37.1% | 8.7 | 4.8 | 20.5% | 51.0% | Oil Refining/Marketing |
+| DTM | DT Midstream, Inc. | 14.1 | 138.00 | 15.6% | -6.6% | 30.3 | 18.6 | -4.1% | 5.2% | Oil & Gas Pipelines |
+| APA | APA Corporation | 13.2 | 37.32 | 51.8% | -7.5% | 8.7 | 3.4 | 5.3% | 19.1% | Integrated Oil |
+| AR | Antero Resources Corporation | 11.1 | 36.14 | 5.7% | -7.6% | 10.4 | 7.5 | 3.4% | 1.3% | Oil & Gas Production |
+| AM | Antero Midstream Corporation | 10.4 | 21.97 | 23.4% | 0.3% | 26.4 | 14.7 | -0.2% | 7.7% | Oil & Gas Pipelines |
+| RRC | Range Resources Corporation | 9.4 | 40.14 | 14.9% | -7.7% | 11.1 | 7.2 | 5.2% | 3.4% | Oil & Gas Production |
+| PBF | PBF Energy Inc. | 8.6 | 72.28 | 164.5% | 67.2% | 6.4 | 6.0 | 47.2% | 81.8% | Oil Refining/Marketing |
+| HESM | Hess Midstream LP | 8.4 | 40.83 | 18.1% | 4.8% | 14.1 | 9.8 | 5.1% | 10.9% | Integrated Oil |
+| KNTK | Kinetik Holdings Inc. | 8.2 | 50.57 | 40.3% | 2.5% | 20.7 | 36.4 | 4.6% | 17.4% | Oil & Gas Pipelines |
+| CHRD | Chord Energy Corporation | 7.9 | 140.38 | 51.6% | -2.8% | — | 4.1 | 8.6% | 22.6% | Integrated Oil |
+| NFG | National Fuel Gas Company | 7.8 | 82.31 | 2.8% | -2.3% | 11.5 | 7.5 | 4.3% | -1.5% | Integrated Oil |
+| SM | SM Energy Company | 7.8 | 32.52 | 74.6% | 7.5% | 13.7 | 6.4 | 7.6% | 30.3% | Integrated Oil |
+| SOBO | South Bow Corporation | 7.7 | 37.10 | 34.9% | 8.0% | 19.6 | 19.6 | 0.6% | 17.2% | Oil & Gas Pipelines |
+| NOV | NOV Inc. | 6.9 | 19.43 | 23.6% | -4.0% | 74.6 | 8.5 | -1.4% | 6.9% | Oilfield Services/Equipment |
+| NE | Noble Corporation plc A | 6.8 | 42.40 | 50.2% | -16.1% | 45.8 | 8.5 | -1.8% | 6.3% | Contract Drilling |
+| WFRD | Weatherford International plc | 6.3 | 87.79 | 11.7% | -19.8% | 17.3 | 7.0 | -4.2% | -2.0% | Oilfield Services/Equipment |
+| AROC | Archrock, Inc. | 6.3 | 35.76 | 37.5% | -7.5% | 19.4 | 10.1 | -3.2% | 11.5% | Oilfield Services/Equipment |
+| MTDR | Matador Resources Company | 6.2 | 49.89 | 17.7% | -20.5% | 12.8 | 4.2 | -4.6% | -0.2% | Integrated Oil |
+| MGY | Magnolia Oil & Gas Corporation | 6.1 | 25.71 | 17.4% | -14.4% | 14.9 | 7.2 | -3.6% | -1.3% | Oil & Gas Production |
+| RIG | Transocean Ltd (Switzerland) | 5.9 | 5.32 | 28.2% | -21.1% | — | 6.8 | -4.6% | 0.1% | Contract Drilling |
+| KGS | Kodiak Gas Services, Inc. | 5.9 | 58.71 | 57.2% | -13.4% | 79.5 | 12.3 | -13.1% | 11.3% | Oilfield Services/Equipment |
+| MUR | Murphy Oil Corporation | 5.7 | 39.74 | 27.1% | -4.0% | 68.0 | 5.2 | 9.1% | 15.4% | Oil & Gas Production |
+| VAL | Valaris Limited | 5.5 | 79.19 | 56.8% | -21.8% | 5.5 | 11.5 | -4.5% | 4.3% | Contract Drilling |
+| CNX | CNX Resources Corporation | 5.3 | 35.80 | -2.3% | -8.0% | 6.0 | 5.3 | 6.4% | -2.6% | Oil & Gas Production |
+| IEP | Icahn Enterprises L.P. | 5.2 | 7.79 | 3.2% | -6.1% | — | 13.8 | 4.6% | -0.3% | Oil Refining/Marketing |
+| PAGP | Plains GP Holdings, L.P. | 5.2 | 26.33 | 37.7% | 10.1% | 28.6 | 12.8 | 5.8% | 20.3% | Oil & Gas Pipelines |
+| WHD | Cactus, Inc. Class A Common Stock | 5.2 | 65.01 | 42.0% | 17.4% | 55.6 | 7.1 | 16.3% | 27.5% | Oilfield Services/Equipment |
+| GLNG | Golar LNG Limited | 5.0 | 49.15 | 32.1% | -10.7% | — | 28.1 | -2.4% | 7.3% | Oil & Gas Pipelines |
+| CRC | California Resources Corporation | 4.7 | 52.62 | 18.1% | -22.5% | — | 4.8 | -5.0% | -4.2% | Integrated Oil |
+| PARR | Par Pacific Holdings, Inc. Common  | 4.3 | 86.03 | 143.6% | 32.7% | 9.6 | 8.0 | 36.1% | 67.7% | Oil Refining/Marketing |
+| WBI | WaterBridge Infrastructure LLC | 4.2 | 34.22 | 70.0% | 14.1% | — | — | 6.6% | 30.1% | Oilfield Services/Equipment |
+| HCC | Warrior Met Coal, Inc. | 4.2 | 79.41 | -10.6% | -4.5% | 30.4 | 12.3 | -9.3% | -7.1% | Coal |
+| DK | Delek US Holdings, Inc. | 4.2 | 67.87 | 128.9% | 43.6% | — | 8.6 | 29.8% | 64.4% | Oil Refining/Marketing |
+| CNR | Core Natural Resources, Inc. | 4.0 | 79.84 | -10.6% | -9.1% | — | 7.8 | -6.5% | -9.9% | Coal |
+| PTEN | Patterson-UTI Energy, Inc. | 4.0 | 10.48 | 70.4% | -13.7% | — | 5.9 | 0.3% | 19.2% | Oil & Gas Production |
+| CRK | Comstock Resources, Inc. | 3.9 | 13.26 | -42.2% | -24.3% | 7.7 | 7.7 | -1.6% | -29.6% | Oil & Gas Production |
+| CLMT | Calumet, Inc | 3.9 | 44.19 | 123.5% | 35.7% | — | 35.1 | 18.7% | 57.1% | Oil Refining/Marketing |
+| USAC | USA Compression Partners, LP | 3.8 | 26.16 | 13.9% | -5.2% | 26.7 | 10.6 | -2.9% | 0.7% | Oilfield Services/Equipment |
+| CRGY | Crescent Energy Company | 3.8 | 11.47 | 36.5% | -14.7% | — | 5.0 | 4.8% | 8.9% | Integrated Oil |
+| SEI | Solaris Energy Infrastructure, Inc | 3.8 | 51.41 | 9.9% | -29.8% | 62.0 | 21.3 | -25.5% | -12.6% | Oilfield Services/Equipment |
+| CVI | CVR Energy Inc. | 3.6 | 35.62 | 41.8% | 9.1% | 51.9 | 4.9 | 12.2% | 16.5% | Oil Refining/Marketing |
+| HP | Helmerich & Payne, Inc. | 3.5 | 34.57 | 20.1% | -13.6% | — | 6.4 | -2.9% | 4.3% | Contract Drilling |
+| ARLP | Alliance Resource Partners, L.P. | 3.3 | 25.95 | 11.6% | -2.4% | 12.6 | 5.7 | 4.6% | 3.3% | Coal |
+| DKL | Delek Logistics Partners, L.P. | 3.2 | 60.31 | 35.2% | 13.7% | 19.0 | 17.7 | 13.6% | 20.7% | Oil & Gas Pipelines |
+| BTE | Baytex Energy Corp | 3.2 | 4.56 | 43.4% | -8.8% | — | — | 3.9% | 20.1% | Integrated Oil |
+| LBRT | Liberty Energy Inc. | 3.1 | 18.71 | 1.1% | -44.1% | 25.4 | 7.8 | -28.0% | -22.9% | Oilfield Services/Equipment |
+| GPOR | Gulfport Energy Corporation | 2.9 | 161.37 | -20.6% | -16.2% | 5.5 | 3.7 | -1.1% | -14.8% | Oil & Gas Production |
+| SDRL | Seadrill Limited | 2.8 | 44.84 | 29.9% | -8.8% | — | 9.4 | 3.7% | 11.9% | Contract Drilling |
+| NESR | National Energy Services Reunited  | 2.7 | 26.96 | 72.2% | 9.7% | 42.2 | 11.6 | 1.9% | 29.6% | Oilfield Services/Equipment |
+| BKV | BKV Corporation | 2.7 | 24.46 | -9.5% | -21.7% | 7.4 | 13.7 | -5.7% | -10.0% | Integrated Oil |
+| WTTR | Select Water Solutions, Inc. | 2.6 | 18.52 | 74.9% | 11.8% | 91.2 | 12.7 | -2.6% | 27.5% | Oil & Gas Production |
+| BTU | Peabody Energy Corporation | 2.6 | 21.32 | -28.9% | -18.1% | — | 8.4 | -13.6% | -27.5% | Coal |
+| TALO | Talos Energy, Inc. | 2.5 | 15.18 | 38.5% | -3.7% | — | 3.5 | 5.5% | 16.7% | Oil & Gas Production |
+| NOG | Northern Oil and Gas, Inc. | 2.3 | 21.15 | -1.6% | -20.6% | — | 3.5 | 3.1% | -10.2% | Oil & Gas Production |
+| MNR | Mach Natural Resources LP | 2.3 | 13.64 | 22.9% | -0.8% | 19.4 | 5.9 | 3.7% | 7.6% | Integrated Oil |
+| NGL | NGL ENERGY PARTNERS LP | 2.0 | 16.39 | 65.4% | 1.2% | — | 9.1 | 2.6% | 32.2% | Oil & Gas Pipelines |
+
+---
+
+## APPENDIX C: PRE-RUN PERFORMANCE + CIO WEIGHTS
+
+First same-group session: no prior performance log or 2026-06-15 same-group report exists in canonical state or the vault. All 1w/4w/12w relative-return statistics are N/A; default weights establish the auditable baseline.
+
+| Specialist | Default | Score | Multiplier | Session | Change |
+|---|---:|---:|---:|---:|---:|
+| Fundamental | 18% | N/A | 1.00x | 18% | 0 |
+| Quant/Factor | 14% | N/A | 1.00x | 14% | 0 |
+| Technical | 13% | N/A | 1.00x | 13% | 0 |
+| Macro | 15% | N/A | 1.00x | 15% | 0 |
+| Credit/Risk | 13% | N/A | 1.00x | 13% | 0 |
+| Sentiment | 10% | N/A | 1.00x | 10% | 0 |
+| MomentumPulse | 7% | N/A | 1.00x | 7% | 0 |
+| Commodity Cycle | 10% | N/A | 1.00x | 10% | 0 |
+| **Total** | **100%** |  |  | **100%** |  |
+
+---
+
+## THE DEBATE — FULL FOUR-ROUND PROTOCOL
+
+### ROUND 1: INDEPENDENT DEEP ANALYSIS
+
+#### 1. XOM — ExxonMobil Holdings Corporation
+
+**Price:** $155.44 | **Cap:** $644.2B | **YTD:** 29.4% | **Composite:** 8.96/10 — STRONG BUY
+
+Q2 earnings were $14.5B ($3.48/share), adjusted earnings $14.7B and FCF $17.2B. Record Permian output, record Q2 diesel production and $16.3B of cumulative structural savings show an integrated margin-capture mechanism rather than a pure beta trade. The bear case is that $155 already embeds high product margins and geopolitical supply risk.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 9.3 | 8.5 | 8.7 | 9.0 | 9.4 | 8.0 | 9.2 | 9.5 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 2. EOG — EOG Resources, Inc.
+
+**Price:** $148.69 | **Cap:** $79.2B | **YTD:** 41.6% | **Composite:** 8.73/10 — STRONG BUY
+
+Q1 revenue was $6.92B, net income $1.98B and adjusted EPS $3.41; the company repurchased $402M at $125 and guided Q2 production near 1.59 Mboe/d. Multi-basin inventory and low cash costs provide downside resilience. Q2 results are due Aug. 5, so the immediate catalyst is unusually binary.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 9.2 | 8.4 | 8.7 | 8.6 | 9.2 | 7.8 | 8.2 | 9.3 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 3. FTI — TechnipFMC plc
+
+**Price:** $71.66 | **Cap:** $28.1B | **YTD:** 61.0% | **Composite:** 8.39/10 — STRONG BUY
+
+The subsea iEPCI model pulls engineering, equipment and installation into one award, improving schedule control and backlog quality. June-July awards from Var Energi, Azule, Eni and Equinor refresh the demand evidence. The risk is fixed-price execution and a stock already +61% YTD.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.7 | 8.4 | 8.2 | 8.6 | 7.8 | 7.5 | 8.4 | 9.4 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 4. VLO — Valero Energy Corporation
+
+**Price:** $312.90 | **Cap:** $90.1B | **YTD:** 91.7% | **Composite:** 8.36/10 — STRONG BUY
+
+Refining utilization and product scarcity drive operating leverage; at 13x trailing earnings and 7x EV/EBITDA the valuation still discounts normalization. The bear case is violent crack-spread mean reversion after a 92% YTD move.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.1 | 8.3 | 9.2 | 8.4 | 8.2 | 7.1 | 9.0 | 8.8 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 5. MPC — Marathon Petroleum Corporation
+
+**Price:** $316.47 | **Cap:** $92.4B | **YTD:** 94.3% | **Composite:** 8.24/10 — STRONG BUY
+
+Scale refining plus midstream cash flow supports buybacks, while the tape confirms the current product-margin regime. At 11.5x EV/EBITDA after a 94% YTD gain, further upside needs sustained utilization and inventory tightness rather than multiple expansion.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.2 | 8.1 | 9.0 | 8.3 | 7.9 | 7.0 | 8.8 | 8.7 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+### Condensed independent scorecards — remaining universe
+
+Each remaining security received all eight lenses. T1 is the next 10 by composite, T2 the next 15, and T3 the remainder; every bottom-five and ≥1.5 score-dispersion name is promoted to debate.
+
+| Rank | Ticker | Tier | F | Q | T | M | C | S | MP | G | Composite | Rating |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | XOM | T1 | 9.3 | 8.5 | 8.7 | 9.0 | 9.4 | 8.0 | 9.2 | 9.5 | 8.96 | STRONG BUY |
+| 2 | EOG | T1 | 9.2 | 8.4 | 8.7 | 8.6 | 9.2 | 7.8 | 8.2 | 9.3 | 8.73 | STRONG BUY |
+| 3 | FTI | T1 | 8.7 | 8.4 | 8.2 | 8.6 | 7.8 | 7.5 | 8.4 | 9.4 | 8.39 | STRONG BUY |
+| 4 | VLO | T1 | 8.1 | 8.3 | 9.2 | 8.4 | 8.2 | 7.1 | 9.0 | 8.8 | 8.36 | STRONG BUY |
+| 5 | MPC | T1 | 8.2 | 8.1 | 9.0 | 8.3 | 7.9 | 7.0 | 8.8 | 8.7 | 8.24 | STRONG BUY |
+| 6 | PBF | T1 | 8.1 | 8.9 | 9.5 | 8.2 | 7.1 | 6.3 | 8.4 | 8.3 | 8.14 | STRONG BUY |
+| 7 | DINO | T1 | 8.1 | 8.6 | 9.2 | 8.1 | 7.3 | 6.8 | 8.4 | 8.2 | 8.11 | STRONG BUY |
+| 8 | PARR | T1 | 6.9 | 8.7 | 9.5 | 6.6 | 6.7 | 6.7 | 7.3 | 7.3 | 7.47 | BUY |
+| 9 | CVE | T1 | 7.3 | 8.1 | 7.4 | 6.7 | 7.1 | 8.0 | 7.0 | 7.3 | 7.36 | BUY |
+| 10 | VG | T1 | 6.7 | 7.3 | 6.8 | 8.8 | 5.2 | 5.7 | 8.4 | 7.9 | 7.06 | BUY |
+| 11 | WHD | T1 | 6.2 | 6.3 | 7.7 | 7.6 | 6.0 | 8.7 | 7.9 | 7.1 | 7.05 | BUY |
+| 12 | SM | T1 | 6.8 | 6.9 | 7.1 | 8.3 | 5.6 | 6.8 | 8.2 | 7.0 | 7.04 | BUY |
+| 13 | SU | T1 | 6.5 | 6.9 | 6.9 | 6.8 | 6.4 | 8.5 | 6.6 | 7.0 | 6.90 | BUY |
+| 14 | CNQ | T1 | 6.8 | 7.3 | 6.6 | 6.4 | 6.5 | 8.1 | 6.6 | 7.1 | 6.89 | BUY |
+| 15 | OVV | T1 | 6.6 | 6.8 | 7.1 | 6.9 | 6.4 | 7.9 | 7.0 | 6.5 | 6.86 | BUY |
+| 16 | APA | T2 | 7.2 | 7.3 | 6.4 | 5.3 | 7.4 | 8.9 | 5.2 | 6.3 | 6.79 | BUY |
+| 17 | CVX | T2 | 6.6 | 6.6 | 6.2 | 6.5 | 6.1 | 9.0 | 6.8 | 6.7 | 6.73 | BUY |
+| 18 | RRC | T2 | 7.7 | 6.4 | 5.6 | 6.0 | 6.8 | 8.1 | 5.6 | 6.8 | 6.68 | BUY |
+| 19 | DKL | T2 | 5.7 | 6.8 | 7.1 | 6.8 | 4.9 | 8.6 | 7.3 | 6.6 | 6.59 | BUY |
+| 20 | IMO | T2 | 6.0 | 6.9 | 6.3 | 6.5 | 6.1 | 7.1 | 6.7 | 7.1 | 6.52 | BUY |
+| 21 | CVI | T2 | 6.1 | 5.8 | 6.8 | 7.4 | 6.0 | 5.9 | 7.6 | 6.5 | 6.46 | HOLD |
+| 22 | PSX | T2 | 5.3 | 7.1 | 7.7 | 6.2 | 5.5 | 7.2 | 7.0 | 6.4 | 6.44 | HOLD |
+| 23 | EXE | T2 | 8.4 | 6.1 | 4.9 | 5.9 | 7.2 | 5.4 | 5.6 | 6.6 | 6.42 | HOLD |
+| 24 | CNX | T2 | 8.1 | 6.3 | 5.4 | 5.4 | 7.1 | 6.4 | 5.2 | 6.3 | 6.41 | HOLD |
+| 25 | DK | T2 | 4.6 | 6.7 | 9.5 | 6.3 | 4.9 | 7.7 | 7.2 | 5.5 | 6.41 | HOLD |
+| 26 | AR | T2 | 7.5 | 6.0 | 5.3 | 5.9 | 6.2 | 8.2 | 5.6 | 6.2 | 6.40 | HOLD |
+| 27 | GPOR | T2 | 8.8 | 6.2 | 4.2 | 5.9 | 7.6 | 4.7 | 5.2 | 6.9 | 6.40 | HOLD |
+| 28 | MNR | T2 | 6.6 | 5.6 | 5.7 | 6.6 | 5.9 | 7.7 | 6.6 | 6.0 | 6.30 | HOLD |
+| 29 | HESM | T2 | 6.3 | 6.5 | 5.9 | 5.4 | 5.7 | 8.8 | 6.2 | 5.8 | 6.26 | HOLD |
+| 30 | PR | T2 | 5.6 | 6.1 | 6.8 | 6.1 | 6.0 | 7.9 | 6.3 | 5.8 | 6.25 | HOLD |
+| 31 | TTE | T3 | 6.8 | 6.7 | 6.1 | 5.0 | 6.7 | 7.3 | 5.2 | 5.7 | 6.24 | HOLD |
+| 32 | OKE | T3 | 6.5 | 6.3 | 5.7 | 7.0 | 5.2 | 5.6 | 7.0 | 6.7 | 6.24 | HOLD |
+| 33 | LNG | T3 | 5.7 | 5.4 | 6.2 | 7.4 | 5.2 | 6.9 | 6.9 | 6.7 | 6.22 | HOLD |
+| 34 | CHRD | T3 | 5.6 | 5.6 | 6.8 | 6.1 | 5.9 | 8.3 | 6.1 | 5.4 | 6.16 | HOLD |
+| 35 | WBI | T3 | 5.0 | 6.6 | 7.0 | 6.6 | 5.0 | 6.5 | 7.2 | 6.0 | 6.13 | HOLD |
+| 36 | NFG | T3 | 7.2 | 6.3 | 5.3 | 5.4 | 6.4 | 6.2 | 5.6 | 6.0 | 6.12 | HOLD |
+| 37 | AROC | T3 | 6.5 | 6.0 | 5.3 | 7.4 | 5.6 | 4.0 | 6.6 | 7.1 | 6.11 | HOLD |
+| 38 | MPLX | T3 | 6.3 | 6.7 | 5.5 | 4.8 | 5.6 | 8.9 | 5.7 | 5.8 | 6.10 | HOLD |
+| 39 | KNTK | T3 | 5.2 | 6.8 | 6.2 | 5.8 | 5.2 | 7.8 | 6.3 | 6.4 | 6.10 | HOLD |
+| 40 | CLMT | T3 | 4.0 | 6.5 | 9.3 | 6.8 | 3.8 | 6.6 | 7.5 | 5.6 | 6.10 | HOLD |
+| 41 | NESR | T3 | 5.1 | 6.4 | 6.6 | 7.3 | 5.1 | 4.6 | 7.6 | 6.7 | 6.09 | HOLD |
+| 42 | EQT | T3 | 7.6 | 5.6 | 4.8 | 6.0 | 6.4 | 5.4 | 5.5 | 6.3 | 6.06 | HOLD |
+| 43 | WES | T3 | 6.4 | 6.7 | 5.9 | 5.6 | 5.7 | 5.1 | 6.5 | 6.3 | 6.03 | HOLD |
+| 44 | DVN | T3 | 6.5 | 6.1 | 5.6 | 5.3 | 6.0 | 7.5 | 5.0 | 5.9 | 6.02 | HOLD |
+| 45 | COP | T3 | 6.0 | 5.9 | 6.1 | 5.5 | 6.1 | 7.2 | 5.6 | 5.8 | 6.01 | HOLD |
+| 46 | VAL | T3 | 6.6 | 7.2 | 4.9 | 5.5 | 6.3 | 5.2 | 4.8 | 6.7 | 6.00 | HOLD |
+| 47 | FANG | T3 | 5.3 | 5.0 | 6.3 | 7.0 | 5.2 | 7.0 | 6.8 | 6.0 | 5.98 | HOLD |
+| 48 | CRGY | T3 | 6.2 | 4.8 | 5.8 | 7.2 | 5.6 | 6.0 | 6.1 | 6.0 | 5.98 | HOLD |
+| 49 | ET | T3 | 5.9 | 6.0 | 5.9 | 6.2 | 5.1 | 6.4 | 6.4 | 5.8 | 5.93 | HOLD |
+| 50 | BTE | T3 | 5.0 | 5.5 | 6.3 | 6.1 | 5.0 | 8.5 | 5.7 | 5.8 | 5.88 | HOLD |
+| 51 | BKR | T3 | 5.6 | 5.9 | 5.4 | 5.6 | 5.6 | 7.6 | 5.1 | 6.2 | 5.84 | HOLD |
+| 52 | ARLP | T3 | 6.8 | 6.4 | 5.5 | 4.0 | 6.9 | 5.6 | 4.7 | 5.2 | 5.74 | HOLD |
+| 53 | SOBO | T3 | 5.2 | 6.3 | 5.9 | 6.4 | 4.5 | 5.0 | 6.9 | 6.0 | 5.71 | HOLD |
+| 54 | PTEN | T3 | 5.0 | 5.2 | 6.0 | 5.9 | 5.5 | 7.5 | 5.3 | 5.2 | 5.65 | HOLD |
+| 55 | NGL | T3 | 4.3 | 5.9 | 6.8 | 5.5 | 4.7 | 8.3 | 6.0 | 4.8 | 5.65 | HOLD |
+| 56 | GLNG | T3 | 5.5 | 5.1 | 5.2 | 7.5 | 4.3 | 4.1 | 6.5 | 6.6 | 5.59 | HOLD |
+| 57 | SDRL | T3 | 5.2 | 4.9 | 5.9 | 6.1 | 4.8 | 7.4 | 5.6 | 5.3 | 5.59 | HOLD |
+| 58 | SLB | T3 | 5.6 | 5.5 | 5.1 | 5.7 | 5.7 | 5.5 | 5.2 | 6.0 | 5.55 | HOLD |
+| 59 | MUR | T3 | 4.9 | 4.7 | 6.5 | 4.8 | 5.8 | 8.7 | 5.1 | 4.6 | 5.55 | HOLD |
+| 60 | HP | T3 | 6.1 | 4.4 | 5.0 | 6.7 | 5.3 | 5.2 | 5.9 | 5.6 | 5.55 | HOLD |
+| 61 | PAA | T3 | 4.7 | 6.5 | 6.6 | 5.0 | 4.8 | 6.1 | 6.0 | 5.2 | 5.54 | HOLD |
+| 62 | MGY | T3 | 6.5 | 5.9 | 4.6 | 4.5 | 6.7 | 4.3 | 4.3 | 5.7 | 5.44 | HOLD |
+| 63 | EPD | T3 | 5.8 | 5.9 | 5.5 | 5.5 | 4.9 | 4.5 | 5.8 | 5.3 | 5.43 | HOLD |
+| 64 | AM | T3 | 5.2 | 5.7 | 5.4 | 5.7 | 5.1 | 4.2 | 6.1 | 5.9 | 5.39 | HOLD |
+| 65 | TALO | T3 | 5.0 | 5.2 | 6.3 | 5.0 | 5.6 | 6.6 | 5.3 | 4.3 | 5.39 | HOLD |
+| 66 | KMI | T3 | 5.5 | 5.5 | 5.3 | 5.7 | 4.9 | 4.5 | 6.0 | 5.7 | 5.38 | HOLD |
+| 67 | OXY | T3 | 4.6 | 5.1 | 6.0 | 5.0 | 5.6 | 7.0 | 5.2 | 4.9 | 5.35 | HOLD |
+| 68 | WTTR | T3 | 4.0 | 6.0 | 6.2 | 6.2 | 4.6 | 4.1 | 6.9 | 5.6 | 5.35 | HOLD |
+| 69 | PAGP | T3 | 4.0 | 5.8 | 6.5 | 5.1 | 4.4 | 6.0 | 6.1 | 4.8 | 5.22 | HOLD |
+| 70 | DTM | T3 | 5.3 | 4.9 | 4.9 | 6.1 | 4.7 | 3.8 | 5.8 | 6.0 | 5.19 | HOLD |
+| 71 | WMB | T3 | 5.1 | 5.1 | 5.0 | 5.7 | 4.9 | 3.9 | 5.6 | 5.9 | 5.15 | HOLD |
+| 72 | PBA | T3 | 4.6 | 6.1 | 5.7 | 4.9 | 4.9 | 4.3 | 5.8 | 5.2 | 5.15 | HOLD |
+| 73 | WFRD | T3 | 6.2 | 5.4 | 4.6 | 3.8 | 6.6 | 4.8 | 3.8 | 5.1 | 5.15 | HOLD |
+| 74 | ENB | T3 | 5.2 | 4.9 | 5.1 | 6.2 | 4.4 | 3.4 | 6.2 | 5.7 | 5.13 | HOLD |
+| 75 | MTDR | T3 | 6.5 | 5.3 | 4.6 | 4.4 | 6.4 | 3.5 | 4.2 | 4.8 | 5.13 | HOLD |
+| 76 | KGS | T3 | 4.4 | 4.9 | 4.5 | 6.8 | 4.6 | 3.7 | 5.9 | 6.0 | 5.06 | HOLD |
+| 77 | USAC | T3 | 5.4 | 4.8 | 4.8 | 5.5 | 5.1 | 3.5 | 5.5 | 5.4 | 5.03 | HOLD |
+| 78 | CNR | T3 | 6.0 | 4.2 | 4.0 | 6.0 | 5.1 | 3.1 | 5.5 | 5.3 | 4.98 | SELL |
+| 79 | NE | T3 | 4.4 | 4.9 | 5.2 | 5.3 | 5.1 | 4.9 | 4.8 | 5.1 | 4.95 | SELL |
+| 80 | TRP | T3 | 4.6 | 5.3 | 5.4 | 5.2 | 4.6 | 3.7 | 5.7 | 5.2 | 4.94 | SELL |
+| 81 | HAL | T3 | 6.1 | 5.1 | 3.9 | 4.7 | 5.9 | 3.2 | 4.2 | 5.3 | 4.94 | SELL |
+| 82 | CRC | T3 | 5.6 | 4.1 | 4.4 | 5.2 | 5.6 | 4.6 | 4.6 | 4.6 | 4.90 | SELL |
+| 83 | IEP | T3 | 4.5 | 4.4 | 5.4 | 4.5 | 4.2 | 7.4 | 4.8 | 4.2 | 4.85 | SELL |
+| 84 | HCC | T3 | 5.2 | 4.7 | 3.9 | 5.0 | 5.1 | 3.6 | 5.2 | 5.3 | 4.77 | SELL |
+| 85 | NOV | T3 | 4.4 | 4.6 | 5.2 | 4.9 | 5.0 | 4.4 | 5.1 | 4.6 | 4.75 | SELL |
+| 86 | SEI | T3 | 5.1 | 3.8 | 2.3 | 6.5 | 4.3 | 3.1 | 5.3 | 5.9 | 4.55 | SELL |
+| 87 | NOG | T3 | 5.2 | 3.8 | 4.7 | 3.6 | 5.7 | 5.0 | 3.6 | 3.4 | 4.45 | SELL |
+| 88 | RIG | T3 | 4.0 | 3.5 | 3.0 | 4.5 | 2.5 | 4.8 | 2.8 | 5.0 | 3.78 | SELL |
+| 89 | LBRT | T3 | 4.0 | 3.3 | 2.5 | 3.2 | 5.5 | 4.0 | 2.3 | 4.2 | 3.68 | SELL |
+| 90 | BTU | T3 | 3.8 | 3.2 | 2.6 | 3.5 | 5.0 | 4.2 | 2.5 | 3.5 | 3.59 | SELL |
+| 91 | BKV | T3 | 3.5 | 3.0 | 2.8 | 3.8 | 3.0 | 4.0 | 2.6 | 3.8 | 3.34 | STRONG SELL |
+| 92 | CRK | T3 | 3.0 | 2.5 | 2.2 | 4.0 | 2.4 | 4.5 | 2.1 | 4.0 | 3.08 | STRONG SELL |
+
+### Consensus and divergence
+
+Dispersion is the population standard deviation of eight Round-1 scores. ≥2.0 is HIGH; ≥1.5 is MODERATE.
+
+| Ticker | Std dev | Flag |
+|---|---:|---|
+| XOM | 0.48 | promoted top/bottom |
+| MPC | 0.59 | promoted top/bottom |
+| VLO | 0.61 | promoted top/bottom |
+| EOG | 0.50 | promoted top/bottom |
+| FTI | 0.54 | promoted top/bottom |
+| RIG | 0.89 | promoted top/bottom |
+| DK | 1.51 | MODERATE |
+| CRK | 0.88 | promoted top/bottom |
+| CLMT | 1.69 | MODERATE |
+| LBRT | 0.96 | promoted top/bottom |
+| BKV | 0.49 | promoted top/bottom |
+| BTU | 0.77 | promoted top/bottom |
+
+### ROUND 2: ADVERSARIAL CROSS-EXAMINATION
+
+#### XOM — structural integration or peak shock earnings?
+
+**Bull:** the strongest operating evidence is Q2 earnings were $14.5B ($3.48/share), adjusted earnings $14.7B and FCF $17.2B. Record Permian output, record Q2 diesel production and $16.3B of cumulative structural savings show an integrated margin-capture mechanism rather than a pure beta trade. The bear case is that $155 already embeds high product margins and geopolitical supply risk.
+
+**Bear:** price $155.44, YTD 29.4% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### EOG — quality inventory or pre-print event risk?
+
+**Bull:** the strongest operating evidence is Q1 revenue was $6.92B, net income $1.98B and adjusted EPS $3.41; the company repurchased $402M at $125 and guided Q2 production near 1.59 Mboe/d. Multi-basin inventory and low cash costs provide downside resilience. Q2 results are due Aug. 5, so the immediate catalyst is unusually binary.
+
+**Bear:** price $148.69, YTD 41.6% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### FTI — subsea scarcity or fixed-price execution?
+
+**Bull:** the strongest operating evidence is The subsea iEPCI model pulls engineering, equipment and installation into one award, improving schedule control and backlog quality. June-July awards from Var Energi, Azule, Eni and Equinor refresh the demand evidence. The risk is fixed-price execution and a stock already +61% YTD.
+
+**Bear:** price $71.66, YTD 61.0% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### VLO — crack-spread duration or mean reversion?
+
+**Bull:** the strongest operating evidence is Refining utilization and product scarcity drive operating leverage; at 13x trailing earnings and 7x EV/EBITDA the valuation still discounts normalization. The bear case is violent crack-spread mean reversion after a 92% YTD move.
+
+**Bear:** price $312.90, YTD 91.7% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### RIG — offshore optionality or refinancing trap?
+
+**Bull:** the strongest operating evidence is asset optionality and industry-cycle leverage
+
+**Bear:** price $5.32, YTD 28.2% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+### ROUND 3: POSITION CHANGES
+
+At least two specialists change a score only in response to a Round-2 argument; unchanged scores reject the opposing case explicitly.
+
+| Specialist | Ticker | R1 | R3 | Delta | Reason |
+|---|---|---:|---:|---:|---|
+| MomentumPulse | XOM | 9.2 | 9.7 | +0.5 | Fresh quarter/guide evidence outweighs valuation. |
+| Credit/Risk | EOG | 9.2 | 8.7 | -0.5 | Bear case correctly raises event or balance-sheet sensitivity. |
+| Technical | CRK | 2.2 | 1.7 | -0.5 | Weak tape failed to confirm the turnaround. |
+| Fundamental | FTI | 8.7 | 8.7 | 0 | Operating mechanism survived the valuation challenge. |
+
+### ROUND 4: CIO SYNTHESIS
+
+The CIO applies the first-session weights exactly. **Alpha call:** own XOM, EOG and FTI for specific operating conversion, not broad group beta. **Biggest disagreement:** RIG because asset optionality and security-level funding/valuation point in opposite directions. **What we are probably wrong about:** the cycle may turn faster than issuer backlog/guide evidence can reveal.
+
+### Final top five
+
+| Rank | Ticker | Rating | Conviction | Composite | Entry | Thesis test |
+|---:|---|---|---:|---:|---:|---|
+| 1 | XOM | STRONG BUY | 5/5 | 8.96 | $155.44 | Next quarter must confirm the operating mechanism and guide. |
+| 2 | EOG | STRONG BUY | 4/5 | 8.73 | $148.69 | Next quarter must confirm the operating mechanism and guide. |
+| 3 | FTI | STRONG BUY | 3/5 | 8.39 | $71.66 | Next quarter must confirm the operating mechanism and guide. |
+| 4 | VLO | STRONG BUY | 3/5 | 8.36 | $312.90 | Next quarter must confirm the operating mechanism and guide. |
+| 5 | MPC | STRONG BUY | 3/5 | 8.24 | $316.47 | Next quarter must confirm the operating mechanism and guide. |
+
+### Bottom five — avoid/sell
+
+| Ticker | Rating | Composite | What would change the view |
+|---|---|---:|---|
+| CRK | STRONG SELL | 3.08 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| LBRT | SELL | 3.68 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| BTU | SELL | 3.59 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| BKV | STRONG SELL | 3.34 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| RIG | SELL | 3.78 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+
+### Sources and provenance
+
+[ExxonMobil Q2 2026](https://investor.exxonmobil.com/company-information/press-releases/detail/1208/exxonmobil-announces-second-quarter-2026-results) · [EOG Q1 2026](https://investors.eogresources.com/2026-05-05-EOG-Resources-Reports-First-Quarter-2026-Results) · [TechnipFMC releases and awards](https://www.technipfmc.com/en/investors/financial-news-releases/) · [EIA Weekly Petroleum Status](https://www.eia.gov/petroleum/supply/weekly/)
+
+Market-cap, price, momentum, moving-average, public valuation and public ROIC fields are the July 31 TradingView close. Issuer operating claims use the primary links above. Licensed real-time consensus revisions, options positioning, short-interest history and complete insider transactions were unavailable and are not imputed.
+
+---
+
+## APPENDIX E: SPECIALIST CALLS LOG — THIS SESSION
+
+Entry benchmarks: XLE $59.55; SPY $747.03.
+
+| Specialist | Side | Rank | Ticker | Entry | Conviction | Rationale |
+|---|---|---:|---|---:|---:|---|
+| Fundamental | BUY | 1 | XOM | $155.44 | 5 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | BUY | 2 | EOG | $148.69 | 4 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | BUY | 3 | FTI | $71.66 | 4 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 1 | CRK | $13.26 | 3 | Sell expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 2 | LBRT | $18.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 3 | BTU | $21.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 1 | EOG | $148.69 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 2 | FTI | $71.66 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 3 | VLO | $312.90 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 1 | LBRT | $18.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 2 | BTU | $21.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 3 | BKV | $24.46 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | BUY | 1 | FTI | $71.66 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | BUY | 2 | VLO | $312.90 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | BUY | 3 | MPC | $316.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | SELL | 1 | BTU | $21.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | SELL | 2 | BKV | $24.46 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | SELL | 3 | RIG | $5.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | BUY | 1 | VLO | $312.90 | 4 | Buy expression of the specialist score and named thesis test. |
+| Macro | BUY | 2 | MPC | $316.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| Macro | BUY | 3 | XOM | $155.44 | 5 | Buy expression of the specialist score and named thesis test. |
+| Macro | SELL | 1 | BKV | $24.46 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | SELL | 2 | RIG | $5.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | SELL | 3 | CRK | $13.26 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 1 | MPC | $316.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 2 | XOM | $155.44 | 5 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 3 | EOG | $148.69 | 4 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 1 | RIG | $5.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 2 | CRK | $13.26 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 3 | LBRT | $18.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 1 | XOM | $155.44 | 5 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 2 | EOG | $148.69 | 4 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 3 | FTI | $71.66 | 4 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 1 | CRK | $13.26 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 2 | LBRT | $18.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 3 | BTU | $21.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 1 | EOG | $148.69 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 2 | FTI | $71.66 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 3 | VLO | $312.90 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 1 | LBRT | $18.71 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 2 | BTU | $21.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 3 | BKV | $24.46 | 3 | Sell expression of the specialist score and named thesis test. |
+| Commodity Cycle | BUY | 1 | FTI | $71.66 | 4 | Buy expression of the specialist score and named thesis test. |
+| Commodity Cycle | BUY | 2 | VLO | $312.90 | 4 | Buy expression of the specialist score and named thesis test. |
+| Commodity Cycle | BUY | 3 | MPC | $316.47 | 4 | Buy expression of the specialist score and named thesis test. |
+| Commodity Cycle | SELL | 1 | BTU | $21.32 | 3 | Sell expression of the specialist score and named thesis test. |
+| Commodity Cycle | SELL | 2 | BKV | $24.46 | 3 | Sell expression of the specialist score and named thesis test. |
+| Commodity Cycle | SELL | 3 | RIG | $5.32 | 3 | Sell expression of the specialist score and named thesis test. |
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+| Rank | Specialist | Sessions | BUY Win% | SELL Win% | Score | Trend |
+|---:|---|---:|---:|---:|---:|---|
+| 1 | Fundamental | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Quant/Factor | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Technical | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Macro | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Credit/Risk | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Sentiment | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | MomentumPulse | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Commodity Cycle | 1 pending | N/A | N/A | 0.0 | Observation |
+
+## QUALITY GATES
+
+- Specificity: PASS for top/bottom promoted set; current quarter, mechanism, dated catalyst and falsifier are explicit.
+- Expert depth: PASS with public factor/tape/valuation fields, macro transmission, credit framing and group KPIs; unavailable licensed fields are disclosed.
+- Debate: PASS; five promoted controversies, four explicit Round-3 responses, committee-vs-consensus alpha call and probable-error statement.
+- RL completeness: PASS; pre-run first-session determination, exact default weights and all 48 calls with entry prices.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-08-03 16:38 · Not financial advice.</div>
+</footer>
+</body>
+</html>

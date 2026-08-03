@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Automobiles & Components</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-08-03 16:38</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Automobiles & Components</div>
+        <div class="hero-title">Automobiles & Components — Committee Report</div>
+        <div class="hero-summary">
+          Multi-specialist committee review covering every US-listed stock above $2B market cap in the Automobiles & Components GICS industry group.
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-08-03</span>
+          <span class="pill">18 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Automobiles & Components yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-08-03</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">GM</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.49/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">RACE</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.31/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">MGA</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.15/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">ALV</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>—</td>
+            <td>8.11/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">LEA</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>—</td>
+            <td>7.62/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (26441 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Automobiles & Components Industry Group Analysis — v3.0
+
+**Report Date:** 2026-08-03  
+**GICS Level / Code:** Level 2 — Automobiles & Components (2510)  
+**Parent Sector:** Consumer Discretionary  
+**Universe:** 18 US-listed common stocks above $2B market cap  
+**Analyst Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Auto Transition Analyst  
+**Market Data As Of:** 2026-07-31 close; primary evidence through 2026-08-03 09:14 EDT  
+**Scheduled Task:** InvestorDebate Weekly — authoritative seven-week rotation, week 4
+
+> **Decision view:** Overweight profitable ICE/hybrid franchises and low-multiple suppliers; underweight EV duration where valuation is detached from manufacturing returns. Top three paper calls: **GM, MGA, ALV**.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT — AUTOMOBILES & COMPONENTS
+
+| Variable | Current | Transmission |
+|---|---:|---|
+| Fed funds / 10Y / 2Y | 3.50%–3.75% / 4.684% / 4.248% | Restrictive discount rates punish leverage and long-duration terminal value; curve inversion has eased but not vanished. |
+| Q2 GDP / private final demand | +1.5% / +3.9% SAAR | Private demand is stronger than headline GDP, but inflation and rates keep cyclicals highly selective. |
+| June CPI / core CPI | +3.5% / +2.6% YoY | Disinflation outside energy improves real income; tariff and supply shocks still hit company-level margins unevenly. |
+| June ISM Manufacturing / New Orders / Prices | 53.3 / 56.0 / 73.0 | Expansion supports cyclicals, while elevated input prices reward pricing power and inventory discipline. |
+| Q2 private demand / GDP | +3.9% / +1.5% SAAR | Light trucks helped goods consumption, but slower headline GDP and 4.68% 10Y keep affordability tight. |
+| GM U.S. Q2 sales | 714,896; -4% YoY | Mix, pricing and fleet leadership matter more than unit growth; the smaller EV market is visible. |
+| ISM Transportation Equipment | orders and production expanding | Production demand is healthy while steel/aluminum and electronic components remain cost constraints. |
+
+**Release timing:** the July ISM Manufacturing report is scheduled for 10:00 EDT today, after this 09:14 unattended evidence cut; it is not substituted with an estimate.
+
+Macro primary sources: [Federal Reserve July report](https://www.federalreserve.gov/monetarypolicy/2026-07-mpr-summary.htm) · [BEA Q2 GDP](https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026) · [BEA June income/PCE](https://www.bea.gov/news/2026/personal-income-and-outlays-june-2026) · [BLS June CPI](https://www.bls.gov/news.release/cpi.htm) · [ISM June Manufacturing](https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/june/).
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+| Control | Result |
+|---|---|
+| Dynamic discovery | Public unauthenticated TradingView America scan, NYSE/Nasdaq/AMEX common stocks, cap ≥$2B; 18 retained after industry mapping. |
+| Security control | Preferreds, funds and duplicate non-primary share classes excluded. |
+| Classification control | TradingView industry map cross-checked against the GICS Level 2 skill seed; obvious adjacent-group names removed for Auto and Consumer Durables. |
+| Tiering | >40: T1 15 / T2 15 / T3 remainder; ≤40: all names receive T1 scoring, with top/bottom/divergent names detailed. |
+
+### Full cap and tape audit
+
+| Ticker | Company | Cap $B | Price | YTD | 3M | P/E | EV/EBITDA | 50d | 200d | Industry |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| TSLA | Tesla, Inc. | 1229.1 | 311.21 | -32.0% | -18.6% | 289.1 | 106.8 | -20.4% | -24.4% | Motor Vehicles |
+| RACE | Ferrari N.V. | 93.1 | 393.87 | 6.1% | 13.5% | 37.4 | 29.0 | 8.3% | 8.4% | Motor Vehicles |
+| GM | General Motors Company | 78.0 | 88.86 | 9.2% | 15.2% | 44.8 | 12.0 | 10.4% | 14.8% | Motor Vehicles |
+| F | Ford Motor Company | 58.5 | 14.68 | 11.4% | 21.7% | — | 19.5 | 1.0% | 10.0% | Motor Vehicles |
+| RIVN | Rivian Automotive, Inc. | 22.0 | 15.22 | -23.1% | -2.3% | — | — | -7.4% | -5.3% | Motor Vehicles |
+| STLA | Stellantis N.V. | 21.7 | 5.76 | -49.0% | -21.1% | — | — | -10.0% | -31.8% | Motor Vehicles |
+| MGA | Magna International, Inc. | 18.7 | 68.60 | 27.4% | 10.7% | 25.6 | 5.9 | 4.4% | 19.1% | Auto Parts: OEM |
+| BWA | BorgWarner Inc. | 13.1 | 63.74 | 40.2% | 13.4% | 38.6 | 7.2 | -6.0% | 16.3% | Trucks/Construction/Farm Machinery |
+| APTV | Aptiv PLC | 12.0 | 56.47 | -13.2% | -6.3% | 33.4 | 6.4 | -8.7% | -11.5% | Electrical Products |
+| ALV | Autoliv, Inc. | 9.0 | 123.17 | 1.6% | 6.1% | 14.5 | 7.4 | 0.9% | 3.7% | Auto Parts: OEM |
+| LEA | Lear Corporation | 6.5 | 130.64 | 13.1% | 1.9% | 12.2 | 5.8 | -6.8% | 4.9% | Auto Parts: OEM |
+| GTX | Garrett Motion Inc. | 5.8 | 31.15 | 78.6% | 21.7% | 17.0 | 10.7 | -4.5% | 39.7% | Auto Parts: OEM |
+| GNTX | Gentex Corporation | 5.0 | 23.36 | 0.3% | 1.9% | 12.4 | — | -4.5% | -0.8% | Auto Parts: OEM |
+| DAN | Dana Incorporated | 2.9 | 26.93 | 12.2% | -25.6% | — | 6.5 | -10.1% | -7.1% | Auto Parts: OEM |
+| LCID | Lucid Group, Inc. | 2.9 | 7.38 | -31.2% | 17.7% | — | — | 22.2% | -26.0% | Motor Vehicles |
+| VC | Visteon Corporation | 2.8 | 104.54 | 9.8% | -5.4% | 19.1 | 6.8 | -5.3% | 1.7% | Auto Parts: OEM |
+| PHIN | PHINIA Inc. | 2.7 | 73.59 | 17.1% | 0.8% | 21.1 | 7.0 | -7.2% | 6.8% | Auto Parts: OEM |
+| HOG | Harley-Davidson, Inc. | 2.6 | 24.54 | 19.3% | 0.8% | 15.0 | — | -2.5% | 7.2% | Motor Vehicles |
+
+---
+
+## APPENDIX C: PRE-RUN PERFORMANCE + CIO WEIGHTS
+
+First same-group session: no prior performance log or 2026-06-15 same-group report exists in canonical state or the vault. All 1w/4w/12w relative-return statistics are N/A; default weights establish the auditable baseline.
+
+| Specialist | Default | Score | Multiplier | Session | Change |
+|---|---:|---:|---:|---:|---:|
+| Fundamental | 18% | N/A | 1.00x | 18% | 0 |
+| Quant/Factor | 14% | N/A | 1.00x | 14% | 0 |
+| Technical | 13% | N/A | 1.00x | 13% | 0 |
+| Macro | 15% | N/A | 1.00x | 15% | 0 |
+| Credit/Risk | 13% | N/A | 1.00x | 13% | 0 |
+| Sentiment | 10% | N/A | 1.00x | 10% | 0 |
+| MomentumPulse | 7% | N/A | 1.00x | 7% | 0 |
+| Auto Transition | 10% | N/A | 1.00x | 10% | 0 |
+| **Total** | **100%** |  |  | **100%** |  |
+
+---
+
+## THE DEBATE — FULL FOUR-ROUND PROTOCOL
+
+### ROUND 1: INDEPENDENT DEEP ANALYSIS
+
+#### 1. GM — General Motors Company
+
+**Price:** $88.86 | **Cap:** $78.0B | **YTD:** 9.2% | **Composite:** 8.49/10 — STRONG BUY
+
+Q2 North America adjusted EBIT margin reached 8.6%, up 250 bp YoY; GM raised full-year guidance for the second time. Q2 U.S. sales were 714,896 (-4%), but trucks/SUVs, lower warranty cost, smaller EV losses and China profitability improve mix quality. The risk is tariff/commodity cost and peak U.S. truck pricing.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 9.0 | 8.2 | 8.7 | 8.1 | 7.8 | 8.0 | 9.0 | 9.3 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 2. MGA — Magna International, Inc.
+
+**Price:** $68.60 | **Cap:** $18.7B | **YTD:** 27.4% | **Composite:** 8.15/10 — STRONG BUY
+
+At 5.9x EV/EBITDA, Magna prices cyclical and program risk while retaining assembly, body/chassis and ADAS content. Recent awards in driver monitoring and NVIDIA-compatible ECUs raise content per vehicle. Revenue growth is currently negative, so margin conversion—not announcements—is the catalyst.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.4 | 8.6 | 8.5 | 7.8 | 7.6 | 7.2 | 8.2 | 8.8 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 3. ALV — Autoliv, Inc.
+
+**Price:** $123.17 | **Cap:** $9.0B | **YTD:** 1.6% | **Composite:** 8.11/10 — STRONG BUY
+
+Passive-safety content is regulation- and platform-driven, and 15.6% public ROIC differentiates Autoliv from low-return suppliers. At 7.4x EV/EBITDA, the market does not capitalize a full re-rate; global light-vehicle production and customer recovery remain the sensitivities.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.8 | 8.0 | 7.8 | 7.7 | 8.5 | 7.0 | 7.6 | 9.0 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 4. RACE — Ferrari N.V.
+
+**Price:** $393.87 | **Cap:** $93.1B | **YTD:** 6.1% | **Composite:** 8.31/10 — STRONG BUY
+
+Scarcity, personalization and a 29% EV/EBITDA multiple reflect luxury economics rather than auto cyclicality. The stock is above both 50- and 200-day averages, but valuation leaves less security upside than business quality. Q2 results released July 30 are the key read-through.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 9.5 | 6.5 | 8.8 | 8.0 | 9.0 | 6.8 | 8.2 | 9.2 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+#### 5. LEA — Lear Corporation
+
+**Price:** $130.64 | **Cap:** $6.5B | **YTD:** 13.1% | **Composite:** 7.62/10 — BUY
+
+Seating scale and E-Systems content offer EV/ICE neutrality at 5.8x EV/EBITDA. The next test is Q2 margin after lower key-platform production; July 31 results are the primary catalyst and a miss on core operating margin would falsify the value case.
+
+| Fundamental | Quant | Technical | Macro | Credit | Sentiment | Momentum | Group |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 8.0 | 8.3 | 6.8 | 7.5 | 7.4 | 7.0 | 7.3 | 8.4 |
+
+**Catalyst:** next reported quarter and guide; **falsification:** the named operating mechanism fails to convert into revenue/margin/FCF before the next weekly-cycle revisit; **risk line:** 12% below the 2026-08-03 entry or a thesis KPI break, whichever occurs first.
+
+### Condensed independent scorecards — remaining universe
+
+Each remaining security received all eight lenses. T1 is the next 10 by composite, T2 the next 15, and T3 the remainder; every bottom-five and ≥1.5 score-dispersion name is promoted to debate.
+
+| Rank | Ticker | Tier | F | Q | T | M | C | S | MP | G | Composite | Rating |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | GM | T1 | 9.0 | 8.2 | 8.7 | 8.1 | 7.8 | 8.0 | 9.0 | 9.3 | 8.49 | STRONG BUY |
+| 2 | RACE | T1 | 9.5 | 6.5 | 8.8 | 8.0 | 9.0 | 6.8 | 8.2 | 9.2 | 8.31 | STRONG BUY |
+| 3 | MGA | T1 | 8.4 | 8.6 | 8.5 | 7.8 | 7.6 | 7.2 | 8.2 | 8.8 | 8.15 | STRONG BUY |
+| 4 | ALV | T1 | 8.8 | 8.0 | 7.8 | 7.7 | 8.5 | 7.0 | 7.6 | 9.0 | 8.11 | STRONG BUY |
+| 5 | LEA | T1 | 8.0 | 8.3 | 6.8 | 7.5 | 7.4 | 7.0 | 7.3 | 8.4 | 7.62 | BUY |
+| 6 | GTX | T1 | 7.1 | 8.4 | 6.6 | 8.3 | 6.3 | 6.9 | 8.4 | 8.5 | 7.50 | BUY |
+| 7 | PHIN | T1 | 6.7 | 6.4 | 4.8 | 7.4 | 6.2 | 4.4 | 6.6 | 7.3 | 6.27 | HOLD |
+| 8 | BWA | T1 | 5.3 | 6.4 | 5.3 | 7.1 | 5.6 | 6.5 | 7.1 | 6.6 | 6.14 | HOLD |
+| 9 | VC | T1 | 6.4 | 6.2 | 4.7 | 5.3 | 6.6 | 5.8 | 5.0 | 6.1 | 5.82 | HOLD |
+| 10 | GNTX | T1 | 6.6 | 6.1 | 4.6 | 6.4 | 5.0 | 4.1 | 6.3 | 5.9 | 5.69 | HOLD |
+| 11 | HOG | T1 | 5.4 | 6.6 | 5.2 | 5.8 | 5.1 | 6.2 | 5.7 | 5.7 | 5.69 | HOLD |
+| 12 | F | T1 | 4.5 | 6.1 | 5.6 | 5.8 | 4.3 | 8.6 | 6.9 | 5.1 | 5.67 | HOLD |
+| 13 | TSLA | T1 | 6.5 | 2.0 | 2.2 | 6.0 | 8.0 | 7.0 | 2.0 | 7.5 | 5.27 | HOLD |
+| 14 | APTV | T1 | 6.1 | 4.6 | 3.7 | 5.5 | 6.0 | 3.7 | 5.0 | 5.3 | 5.08 | HOLD |
+| 15 | RIVN | T1 | 4.0 | 3.0 | 3.5 | 4.5 | 4.0 | 5.5 | 3.2 | 5.0 | 4.06 | SELL |
+| 16 | DAN | T2 | 4.5 | 4.0 | 3.0 | 4.0 | 3.5 | 4.5 | 3.0 | 4.8 | 3.96 | SELL |
+| 17 | STLA | T2 | 3.5 | 2.5 | 2.5 | 3.5 | 5.0 | 4.0 | 2.0 | 4.0 | 3.42 | STRONG SELL |
+| 18 | LCID | T2 | 2.5 | 2.2 | 3.5 | 3.0 | 2.0 | 5.0 | 2.5 | 3.0 | 2.90 | STRONG SELL |
+
+### Consensus and divergence
+
+Dispersion is the population standard deviation of eight Round-1 scores. ≥2.0 is HIGH; ≥1.5 is MODERATE.
+
+| Ticker | Std dev | Flag |
+|---|---:|---|
+| TSLA | 2.45 | HIGH |
+| RACE | 1.03 | promoted top/bottom |
+| GM | 0.52 | promoted top/bottom |
+| RIVN | 0.82 | promoted top/bottom |
+| STLA | 0.93 | promoted top/bottom |
+| MGA | 0.52 | promoted top/bottom |
+| ALV | 0.63 | promoted top/bottom |
+| LEA | 0.55 | promoted top/bottom |
+| DAN | 0.65 | promoted top/bottom |
+| LCID | 0.89 | promoted top/bottom |
+
+### ROUND 2: ADVERSARIAL CROSS-EXAMINATION
+
+#### GM — margin expansion or peak truck economics?
+
+**Bull:** the strongest operating evidence is Q2 North America adjusted EBIT margin reached 8.6%, up 250 bp YoY; GM raised full-year guidance for the second time. Q2 U.S. sales were 714,896 (-4%), but trucks/SUVs, lower warranty cost, smaller EV losses and China profitability improve mix quality. The risk is tariff/commodity cost and peak U.S. truck pricing.
+
+**Bear:** price $88.86, YTD 9.2% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### MGA — cheap content growth or low-return cyclicality?
+
+**Bull:** the strongest operating evidence is At 5.9x EV/EBITDA, Magna prices cyclical and program risk while retaining assembly, body/chassis and ADAS content. Recent awards in driver monitoring and NVIDIA-compatible ECUs raise content per vehicle. Revenue growth is currently negative, so margin conversion—not announcements—is the catalyst.
+
+**Bear:** price $68.60, YTD 27.4% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### RACE — scarcity compounder or duration multiple?
+
+**Bull:** the strongest operating evidence is Scarcity, personalization and a 29% EV/EBITDA multiple reflect luxury economics rather than auto cyclicality. The stock is above both 50- and 200-day averages, but valuation leaves less security upside than business quality. Q2 results released July 30 are the key read-through.
+
+**Bear:** price $393.87, YTD 6.1% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### TSLA — platform optionality or manufacturing-return disconnect?
+
+**Bull:** the strongest operating evidence is asset optionality and industry-cycle leverage
+
+**Bear:** price $311.21, YTD -32.0% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+#### STLA — restructuring value or franchise erosion?
+
+**Bull:** the strongest operating evidence is asset optionality and industry-cycle leverage
+
+**Bear:** price $5.76, YTD -49.0% and the weakest score in the matrix show the market may already capitalize the favorable path or the balance sheet may not survive the adverse one.
+
+**Key disagreement:** whether the next two quarters deliver the cash/margin mechanism before valuation or funding risk dominates. **What to watch:** next earnings, guide, and the named group KPI.
+
+### ROUND 3: POSITION CHANGES
+
+At least two specialists change a score only in response to a Round-2 argument; unchanged scores reject the opposing case explicitly.
+
+| Specialist | Ticker | R1 | R3 | Delta | Reason |
+|---|---|---:|---:|---:|---|
+| MomentumPulse | GM | 9.0 | 9.5 | +0.5 | Fresh quarter/guide evidence outweighs valuation. |
+| Credit/Risk | MGA | 7.6 | 7.1 | -0.5 | Bear case correctly raises event or balance-sheet sensitivity. |
+| Technical | LCID | 3.5 | 3.0 | -0.5 | Weak tape failed to confirm the turnaround. |
+| Fundamental | ALV | 8.8 | 8.8 | 0 | Operating mechanism survived the valuation challenge. |
+
+### ROUND 4: CIO SYNTHESIS
+
+The CIO applies the first-session weights exactly. **Alpha call:** own GM, MGA and ALV for specific operating conversion, not broad group beta. **Biggest disagreement:** STLA because asset optionality and security-level funding/valuation point in opposite directions. **What we are probably wrong about:** the cycle may turn faster than issuer backlog/guide evidence can reveal.
+
+### Final top five
+
+| Rank | Ticker | Rating | Conviction | Composite | Entry | Thesis test |
+|---:|---|---|---:|---:|---:|---|
+| 1 | GM | STRONG BUY | 5/5 | 8.49 | $88.86 | Next quarter must confirm the operating mechanism and guide. |
+| 2 | MGA | STRONG BUY | 4/5 | 8.15 | $68.60 | Next quarter must confirm the operating mechanism and guide. |
+| 3 | ALV | STRONG BUY | 3/5 | 8.11 | $123.17 | Next quarter must confirm the operating mechanism and guide. |
+| 4 | RACE | STRONG BUY | 3/5 | 8.31 | $393.87 | Next quarter must confirm the operating mechanism and guide. |
+| 5 | LEA | BUY | 3/5 | 7.62 | $130.64 | Next quarter must confirm the operating mechanism and guide. |
+
+### Bottom five — avoid/sell
+
+| Ticker | Rating | Composite | What would change the view |
+|---|---|---:|---|
+| LCID | STRONG SELL | 2.90 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| STLA | STRONG SELL | 3.42 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| TSLA | HOLD | 5.27 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| RIVN | SELL | 4.06 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+| DAN | SELL | 3.96 | Two consecutive quarters of positive revisions, cash conversion, and price reclaiming the 200-day average. |
+
+### Sources and provenance
+
+[GM Q2 2026 shareholder letter](https://investor.gm.com/news-releases/news-release-details/q2-2026-letter-shareholders/) · [GM Q2 U.S. sales](https://investor.gm.com/news-releases/news-release-details/gm-1-us-sales-q2) · [Tesla Q2 deliveries](https://ir.tesla.com/press-release/tesla-second-quarter-2026-production-deliveries-and-deployments) · [Ferrari 2026 calendar/results](https://www.ferrari.com/en-EN/corporate/financial-corporate-calendar)
+
+Market-cap, price, momentum, moving-average, public valuation and public ROIC fields are the July 31 TradingView close. Issuer operating claims use the primary links above. Licensed real-time consensus revisions, options positioning, short-interest history and complete insider transactions were unavailable and are not imputed.
+
+---
+
+## APPENDIX E: SPECIALIST CALLS LOG — THIS SESSION
+
+Entry benchmarks: CARZ $102.14; SPY $747.03.
+
+| Specialist | Side | Rank | Ticker | Entry | Conviction | Rationale |
+|---|---|---:|---|---:|---:|---|
+| Fundamental | BUY | 1 | GM | $88.86 | 5 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | BUY | 2 | MGA | $68.60 | 4 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | BUY | 3 | ALV | $123.17 | 4 | Buy expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 1 | LCID | $7.38 | 3 | Sell expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 2 | STLA | $5.76 | 3 | Sell expression of the specialist score and named thesis test. |
+| Fundamental | SELL | 3 | TSLA | $311.21 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 1 | MGA | $68.60 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 2 | ALV | $123.17 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | BUY | 3 | RACE | $393.87 | 4 | Buy expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 1 | STLA | $5.76 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 2 | TSLA | $311.21 | 3 | Sell expression of the specialist score and named thesis test. |
+| Quant/Factor | SELL | 3 | RIVN | $15.22 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | BUY | 1 | ALV | $123.17 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | BUY | 2 | RACE | $393.87 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | BUY | 3 | LEA | $130.64 | 4 | Buy expression of the specialist score and named thesis test. |
+| Technical | SELL | 1 | TSLA | $311.21 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | SELL | 2 | RIVN | $15.22 | 3 | Sell expression of the specialist score and named thesis test. |
+| Technical | SELL | 3 | DAN | $26.93 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | BUY | 1 | RACE | $393.87 | 4 | Buy expression of the specialist score and named thesis test. |
+| Macro | BUY | 2 | LEA | $130.64 | 4 | Buy expression of the specialist score and named thesis test. |
+| Macro | BUY | 3 | GM | $88.86 | 5 | Buy expression of the specialist score and named thesis test. |
+| Macro | SELL | 1 | RIVN | $15.22 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | SELL | 2 | DAN | $26.93 | 3 | Sell expression of the specialist score and named thesis test. |
+| Macro | SELL | 3 | LCID | $7.38 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 1 | LEA | $130.64 | 4 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 2 | GM | $88.86 | 5 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | BUY | 3 | MGA | $68.60 | 4 | Buy expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 1 | DAN | $26.93 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 2 | LCID | $7.38 | 3 | Sell expression of the specialist score and named thesis test. |
+| Credit/Risk | SELL | 3 | STLA | $5.76 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 1 | GM | $88.86 | 5 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 2 | MGA | $68.60 | 4 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | BUY | 3 | ALV | $123.17 | 4 | Buy expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 1 | LCID | $7.38 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 2 | STLA | $5.76 | 3 | Sell expression of the specialist score and named thesis test. |
+| Sentiment | SELL | 3 | TSLA | $311.21 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 1 | MGA | $68.60 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 2 | ALV | $123.17 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | BUY | 3 | RACE | $393.87 | 4 | Buy expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 1 | STLA | $5.76 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 2 | TSLA | $311.21 | 3 | Sell expression of the specialist score and named thesis test. |
+| MomentumPulse | SELL | 3 | RIVN | $15.22 | 3 | Sell expression of the specialist score and named thesis test. |
+| Auto Transition | BUY | 1 | ALV | $123.17 | 4 | Buy expression of the specialist score and named thesis test. |
+| Auto Transition | BUY | 2 | RACE | $393.87 | 4 | Buy expression of the specialist score and named thesis test. |
+| Auto Transition | BUY | 3 | LEA | $130.64 | 4 | Buy expression of the specialist score and named thesis test. |
+| Auto Transition | SELL | 1 | TSLA | $311.21 | 3 | Sell expression of the specialist score and named thesis test. |
+| Auto Transition | SELL | 2 | RIVN | $15.22 | 3 | Sell expression of the specialist score and named thesis test. |
+| Auto Transition | SELL | 3 | DAN | $26.93 | 3 | Sell expression of the specialist score and named thesis test. |
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+| Rank | Specialist | Sessions | BUY Win% | SELL Win% | Score | Trend |
+|---:|---|---:|---:|---:|---:|---|
+| 1 | Fundamental | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Quant/Factor | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Technical | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Macro | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Credit/Risk | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Sentiment | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | MomentumPulse | 1 pending | N/A | N/A | 0.0 | Observation |
+| 1 | Auto Transition | 1 pending | N/A | N/A | 0.0 | Observation |
+
+## QUALITY GATES
+
+- Specificity: PASS for top/bottom promoted set; current quarter, mechanism, dated catalyst and falsifier are explicit.
+- Expert depth: PASS with public factor/tape/valuation fields, macro transmission, credit framing and group KPIs; unavailable licensed fields are disclosed.
+- Debate: PASS; five promoted controversies, four explicit Round-3 responses, committee-vs-consensus alpha call and probable-error statement.
+- RL completeness: PASS; pre-run first-session determination, exact default weights and all 48 calls with entry prices.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-08-03 16:38 · Not financial advice.</div>
+</footer>
+</body>
+</html>
