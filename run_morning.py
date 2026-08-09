@@ -4,7 +4,7 @@ MorningSignal pre-market refresh.
 
 Usage:
     python3 run_morning.py            # live run
-    python3 run_morning.py --dry-run  # preview actions without OpenAI or git push
+    python3 run_morning.py --dry-run  # preview actions without Claude or git push
 """
 
 import argparse
@@ -49,7 +49,7 @@ def parse_args():
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Preview the morning run without OpenAI generation or git push.",
+        help="Preview the morning run without Claude generation or git push.",
     )
     return parser.parse_args()
 
