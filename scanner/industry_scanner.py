@@ -113,7 +113,9 @@ def _scrape_wiki_industries(source: dict) -> dict[str, dict]:
             raw = row[ticker_col]
             if pd.isna(raw):
                 continue
-            ticker = str(raw).split(".")[0].strip().replace("-", ".")
+            # Match the Yahoo Finance share-class convention used by the
+            # breakout scanner (BRK-B, BF-B, CWEN-A).
+            ticker = str(raw).strip().replace(".", "-")
             if not ticker:
                 continue
             industry = str(row[industry_col]).strip() if industry_col and not pd.isna(row[industry_col]) else "Unknown"

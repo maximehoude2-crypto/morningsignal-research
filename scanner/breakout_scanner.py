@@ -44,8 +44,9 @@ def _fetch_wikipedia_tickers(url: str, ticker_col: str) -> list[str]:
             cols = [c for c in tbl.columns if ticker_col.lower() in str(c).lower()]
             if cols:
                 raw = tbl[cols[0]].dropna().tolist()
-                # Clean tickers (remove exchange suffix like .NYSE)
-                return [str(t).split(".")[0].strip().replace("-", ".") for t in raw if str(t).strip()]
+                # Wikipedia uses dots for share classes (BRK.B, BF.B), while
+                # Yahoo Finance expects hyphens (BRK-B, BF-B).
+                return [str(t).strip().replace(".", "-") for t in raw if str(t).strip()]
     except Exception as e:
         print(f"  Warning: could not fetch {url}: {e}")
     return []
@@ -58,10 +59,10 @@ def get_sp1500_tickers() -> list[str]:
         "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies", "Symbol"
     )
     sp400 = _fetch_wikipedia_tickers(
-        "https://en.wikipedia.org/wiki/List_of_S%26P_400_companies", "Ticker"
+        "https://en.wikipedia.org/wiki/List_of_S%26P_400_companies", "Symbol"
     )
     sp600 = _fetch_wikipedia_tickers(
-        "https://en.wikipedia.org/wiki/List_of_S%26P_600_companies", "Ticker"
+        "https://en.wikipedia.org/wiki/List_of_S%26P_600_companies", "Symbol"
     )
     combined = list(dict.fromkeys(sp500 + sp400 + sp600))  # deduplicate preserving order
     print(f"  Universe: {len(sp500)} S&P500 + {len(sp400)} S&P400 + {len(sp600)} S&P600 = {len(combined)} unique tickers")
@@ -115,7 +116,9 @@ def fetch_prices_batch(
         group_by="ticker",
         auto_adjust=True,
         progress=False,
-        threads=True,
+        # yfinance's per-symbol worker pool can exhaust DNS threads and contend
+        # on its SQLite cookie cache across a 1,500-name production scan.
+        threads=False,
     )
     result = {}
     if len(tickers) == 1:
