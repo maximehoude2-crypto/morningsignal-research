@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Real Estate Management & Development</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-08-17 16:39</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Real Estate Management & Development</div>
+        <div class="hero-title">Real Estate Management & Development — Committee Report</div>
+        <div class="hero-summary">
+          The group faces an unusual split regime. July CPI cooled to 3.4% year over year and core CPI to 2.5%, but the 10-year Treasury closed at 4.68% and the 30-year mortgage rate was 6.67%; the Fed held 3.50%-3.75% on July 29. July payrolls fell 23,000 and Q2 real GDP slowed to 1.5%, yet July ISM services
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-08-17</span>
+          <span class="pill">16 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Real Estate Management & Development yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-08-17</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">JLL</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.35/10</td>
+            <td class="thesis-cell">Leasing and U.S. investment-sales share gains are converting a transaction recovery into disproportionate EBITDA growth.</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">CBRE</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>19.0/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">JOE</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>—</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">MRP</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>9.2/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">NMRK</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>2.0/10</td>
+            <td class="thesis-cell"></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">**FRMI:** the bull sees a 222 MW, 15-year TensorWave lease with about $6.5B contracted revenue and 4.8 GW of site power as a newly de-risked AI-campus asset; the bear sees a pre-revenue developer with $520M debt, a $25.8M quarterly loss, construction/counterparty concentration, and financing needs that overwhelm current equity value.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--blue);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Where We Differ from Consensus</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">Public target ranges are broadly constructive on CSGP, Z, FRMI, and OPEN. The committee refuses to treat target dispersion as fundamental support: CSGP still trades at about 32x EV/EBITDA with sub-1% quarterly ROIC, Zillow traffic declined 2%, FRMI remains pre-revenue, and OPEN's Q2 revenue fell 44% while inventory increased. Conversely, NMRK and MRP receive higher committee ranks because their cash conversion, contracted yields, and current valuation are underappreciated.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--red);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">What We're Probably Wrong About</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">Long rates could fall quickly if July's payroll weakness becomes a genuine recession signal. That would rerate Zillow, CSGP, HHH, and FRMI faster than operating evidence changes, while compressing the relative upside in already-strong JLL and CBRE. We may also underestimate how much AI/data-center capital can fund FRMI before common-equity dilution becomes necessary.</div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 16 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · JLL — Jones Lang LaSalle</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q2 revenue rose 10% to $6.93B, adjusted EBITDA rose 32% to $386M, and EPS nearly doubled to $4.59. Leasing revenue grew 24%, capital-markets revenue 19%, and U.S. investment-sales revenue 53% against a 22% market increase, direct evidence of share gain and operating leverage. **Bear case:** a 4.68% 10-year yield can arrest deal recovery; investment management AUM of $86.8B remains exposed to marks and fundraising. **Debate resolution:** the fee mix and demonstrable share gain outweigh rate risk.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>a 4.68% 10-year yield can arrest deal recovery; investment management AUM of $86.8B remains exposed to marks and fundraising. **Debate resolution:** the fee mix and demonstrable share gain outweigh rate risk.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#2 · CBRE — CBRE Group</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q2 revenue rose 16% to $11.2B, core EPS rose 30% to $1.56, transactional revenue rose 19%, and resilient revenue rose 15%. Management raised 2026 core EPS guidance to $7.80-$7.90 and produced nearly $1.7B trailing free cash flow. **Bear case:** $168M of UK fire-safety reserves shows acquired/project liabilities can puncture reported earnings; at 27x EV/EBITDA, execution is not cheap. **Resolution:** resilient operations plus cyclical torque justify premium quality, but target upside is lower than JLL's.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>$168M of UK fire-safety reserves shows acquired/project liabilities can puncture reported earnings; at 27x EV/EBITDA, execution is not cheap. **Resolution:** resilient operations plus cyclical torque justify premium quality, but target upside is lower than JLL's.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#3 · JOE — The St. Joe Company</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q2 net income rose 37% to $40.5M on revenue of $158.8M, up 23%; real-estate revenue rose 59% and hospitality reached a record. The company repurchased $32.7M of stock, paid $9.1M of dividends, and repaid $10.9M of debt while continuing Watersound buildout. **Bear case:** Northwest Florida concentration and hurricane/insurance risk make apparent diversification less real than segment count suggests; a 32x P/E embeds sustained land-price appreciation. **Resolution:** low leverage and irreplaceable land basis beat cyclical concentration.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Northwest Florida concentration and hurricane/insurance risk make apparent diversification less real than segment count suggests; a 32x P/E embeds sustained land-price appreciation. **Resolution:** low leverage and irreplaceable land basis beat cyclical concentration.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#4 · MRP — Millrose Properties</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>the $9.7B portfolio yields 9.2%, spans 143,771 homesites and 877 communities, and reported zero option terminations. Q2 AFFO was $127.6M/$0.77 per share, with a $0.80 quarterly run-rate; liquidity was $1.4B and debt/capital 30%. **Bear case:** Lennar is still $6.0B of invested capital, so counterparty and geographic diversification lag headline asset count. **Round-2 change:** Fundamental and Property raised scores after the bears could not rebut zero terminations, $1.0B of lot-sale proceeds, and contractual yield economics.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Lennar is still $6.0B of invested capital, so counterparty and geographic diversification lag headline asset count. **Round-2 change:** Fundamental and Property raised scores after the bears could not rebut zero terminations, $1.0B of lot-sale proceeds, and contractual yield economics.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#5 · NMRK — Newmark Group</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q2 revenue rose 17% to $888M, adjusted EBITDA 22% to $139M, and adjusted EPS 26% to $0.39. Leasing fees rose 17% to a record, capital markets rose 16%, and Newmark ranked #2 in U.S. investment sales; management guides to 15%-18% revenue and 17%-23% EBITDA growth. **Bear case:** $1.89B net debt and a smaller platform increase refinancing and key-producer risk. **Resolution:** 10.8x EV/EBITDA plus buybacks creates the best value among pure transaction-recovery brokers.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>$1.89B net debt and a smaller platform increase refinancing and key-producer risk. **Resolution:** 10.8x EV/EBITDA plus buybacks creates the best value among pure transaction-recovery brokers.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#6 · COMP — Compass</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>post-Anywhere Q2 revenue was $4.31B, pro-forma growth 14.3%, adjusted EBITDA $363M, and free cash flow $180M. Brokerage GTV rose 15.9% versus 6% for the market, agent retention was 95.5%, and $300M of first-year synergies were actioned five months early. **Bear case:** $3.14B long-term debt, a 244x P/E, and 70.9% three-month price gain leave little room for integration errors. **Round-2 change:** Fundamental and Credit each rose one point because the $500M high-coupon note repayment plan and positive-FCF guide make deleveraging credible, not complete.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>$3.14B long-term debt, a 244x P/E, and 70.9% three-month price gain leave little room for integration errors. **Round-2 change:** Fundamental and Credit each rose one point because the $500M high-coupon note repayment plan and positive-FCF guide make deleveraging credible, not complete.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#7 · CWK — Cushman & Wakefield</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#8 · EROK — Epsilon Energy/ERock land platform</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#9 · CIGI — Colliers International</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#10 · BEKE — KE Holdings</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#11 · FSV — FirstService</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#12 · CSGP — CoStar Group</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#13 · Z — Zillow Group (Z/ZG consolidated)</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#14 · HHH — Howard Hughes Holdings</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#15 · FRMI — Fermi America</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#16 · OPEN — Opendoor Technologies</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (45975 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Real Estate Management & Development — v3.0
+
+**GICS Level 2:** Real Estate Management & Development (Code 6020) | **Parent Sector:** Real Estate  
+**Report Date:** 2026-08-17 (America/Toronto)  
+**Universe:** 16 US-listed issuers above $2B market capitalization; Zillow share classes consolidated as one issuer  
+**Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Property Developer Analyst  
+**Market Data As Of:** 2026-08-14 close; macro releases available through 2026-08-17 09:00 ET  
+**Run Type:** Authoritative Monday rotation, real unattended run; first tracked session for this group
+
+---
+
+## SPECIALIST WEIGHTS THIS SESSION
+
+No prior group-specific performance log was found. Section 0 therefore uses the mandated default weights; performance scores and multipliers are not yet observable.
+
+| Specialist | Default | Prior score | Multiplier | Session weight | Rationale |
+|---|---:|---:|---:|---:|---|
+| Fundamental | 18% | n/a | 1.00x | 18% | Largest weight because normalized owner earnings and moat trajectory dominate long-run outcomes. |
+| Quant/Factor | 14% | n/a | 1.00x | Cross-sectional valuation, quality, momentum, and crowding discipline. |
+| Technical | 13% | n/a | 1.00x | Stage and price/volume regime determine entry risk in a rate-sensitive group. |
+| Macro | 15% | n/a | 1.00x | Long rates, mortgage affordability, labor, and transaction velocity directly drive revenue. |
+| Credit/Risk | 13% | n/a | 1.00x | Refinancing and inventory finance can overwhelm equity optionality. |
+| Sentiment | 10% | n/a | 1.00x | Expectations and positioning matter, but public revision data are incomplete. |
+| MomentumPulse | 7% | n/a | 1.00x | Earnings revisions and event momentum are useful but receive the lowest starting weight. |
+| Property Developer | 10% | n/a | 1.00x | Applies transaction, pipeline, land, affordability, and maturity-wall domain mechanics. |
+
+---
+
+## PAGE 1: EXECUTIVE SUMMARY
+
+### Macro Context
+
+The group faces an unusual split regime. July CPI cooled to 3.4% year over year and core CPI to 2.5%, but the 10-year Treasury closed at 4.68% and the 30-year mortgage rate was 6.67%; the Fed held 3.50%-3.75% on July 29. July payrolls fell 23,000 and Q2 real GDP slowed to 1.5%, yet July ISM services remained expansionary at 54.1 and real-estate business activity grew. Transaction-sensitive advisers are benefiting from recovering leasing and capital markets, while high-duration platforms, leveraged developers, and inventory owners still face expensive capital.
+
+### Top 5 Ranked Stocks
+
+| Rank | Ticker | Rating | Conviction | Composite | One-Line Thesis |
+|---:|---|---|---:|---:|---|
+| 1 | JLL | STRONG BUY | 5/5 | 8.35 | Leasing and U.S. investment-sales share gains are converting a transaction recovery into disproportionate EBITDA growth. |
+| 2 | CBRE | STRONG BUY | 5/5 | Diversified resilient revenue funds upside from a 19% transactional rebound, with raised guidance and strong free cash flow. |
+| 3 | JOE | BUY | 4/5 | Scarce Florida land, low leverage, and record operating momentum create a self-funded compounding model. |
+| 4 | MRP | BUY | 4/5 | Contractual 9.2% portfolio yields and zero option terminations offer better risk-adjusted housing exposure than owning homes. |
+| 5 | NMRK | BUY | 4/5 | Record leasing, #2 U.S. investment-sales position, and buybacks provide a cheaper recovery vehicle than larger peers. |
+
+### Key Industry Group Call
+
+**Selective overweight fee-heavy services and capital-light land monetization; underweight balance-sheet-heavy optionality.** CBRE U.S. property-sales revenue rose 24%, JLL U.S. investment-sales revenue rose 53%, office leasing volume rose 16%, and NMRK revenue rose 17%. Conversely, a 4.68% 10-year yield, $875B of 2026 CRE maturities, and 6.67% mortgages keep speculative development and iBuying economics fragile.
+
+### Biggest Disagreement
+
+**FRMI:** the bull sees a 222 MW, 15-year TensorWave lease with about $6.5B contracted revenue and 4.8 GW of site power as a newly de-risked AI-campus asset; the bear sees a pre-revenue developer with $520M debt, a $25.8M quarterly loss, construction/counterparty concentration, and financing needs that overwhelm current equity value.
+
+### Where We Differ From Consensus
+
+Public target ranges are broadly constructive on CSGP, Z, FRMI, and OPEN. The committee refuses to treat target dispersion as fundamental support: CSGP still trades at about 32x EV/EBITDA with sub-1% quarterly ROIC, Zillow traffic declined 2%, FRMI remains pre-revenue, and OPEN's Q2 revenue fell 44% while inventory increased. Conversely, NMRK and MRP receive higher committee ranks because their cash conversion, contracted yields, and current valuation are underappreciated.
+
+### What We're Probably Wrong About
+
+Long rates could fall quickly if July's payroll weakness becomes a genuine recession signal. That would rerate Zillow, CSGP, HHH, and FRMI faster than operating evidence changes, while compressing the relative upside in already-strong JLL and CBRE. We may also underestimate how much AI/data-center capital can fund FRMI before common-equity dilution becomes necessary.
+
+---
+
+## SUBSECTOR ENGINEERING PRIOR
+
+This GICS group combines businesses with very different economic engines:
+
+1. **Fee advisers and brokers (CBRE, JLL, NMRK, CWK, CIGI):** revenue is volume × take rate across leasing, investment sales, debt placement, valuation, outsourcing, and servicing. Incremental margins are high in transactions, while outsourcing and servicing damp cyclicality.
+2. **Residential brokerage/platforms (COMP, Z, BEKE, OPEN):** the bottlenecks are listings density, agent productivity, lead conversion, attach rates, and customer-acquisition cost. OPEN adds inventory duration and warehouse financing, turning a marketplace problem into a balance-sheet problem.
+3. **Land and master-planned communities (JOE, HHH, MRP):** value depends on land basis, entitlement duration, absorption, builder counterparties, infrastructure spend, and price-participation. MRP is structurally capital-light versus developers because builders fund construction while MRP earns contractual lot yields.
+4. **Services/franchises (FSV):** acquisition discipline, franchisee economics, recurring service density, and leverage matter more than spot home prices.
+5. **Power-rich development/land optionality (FRMI, EROK):** the critical path is permits → power/interconnect → anchor lease → financing → construction → energized capacity. Contracted megawatts are not equivalent to operating cash flow.
+
+The shared failure mode is duration: when funding costs stay above stabilized property yields, transaction volume, land residual values, and development returns fall together. The primary differentiation is who earns fees without warehousing the asset or financing the end customer.
+
+---
+
+## DETAILED STOCK ANALYSIS
+
+### 1. JLL — Jones Lang LaSalle
+
+**Price:** $375.00 | **Mkt Cap:** $17.25B | **YTD:** +11.5%  
+**Rating:** STRONG BUY | **Conviction:** 5/5 | **Composite:** 8.35/10  
+**R1→R3:** Fund 9→9 · Quant 8→8 · Tech 9→9 · Macro 8→8 · Credit 7→7 · Sent 8→8 · MomP 9→9 · Property 9→9
+
+**Bull case:** Q2 revenue rose 10% to $6.93B, adjusted EBITDA rose 32% to $386M, and EPS nearly doubled to $4.59. Leasing revenue grew 24%, capital-markets revenue 19%, and U.S. investment-sales revenue 53% against a 22% market increase, direct evidence of share gain and operating leverage. **Bear case:** a 4.68% 10-year yield can arrest deal recovery; investment management AUM of $86.8B remains exposed to marks and fundraising. **Debate resolution:** the fee mix and demonstrable share gain outweigh rate risk.
+
+**Catalysts:** Q3 results expected late October/early November 2026; August 26 Q2 GDP revision; 2030 plan execution including targeted 12% EBITDA and 16% EPS CAGR.  
+**Risks:** higher cap rates reduce transaction volume; office distress delays rather than closes deals; compensation inflation absorbs incremental gross profit.  
+**Price targets:** Bear $300 (-20%) | Base $440 (+17%) | Bull $520 (+39%).
+
+### 2. CBRE — CBRE Group
+
+**Price:** $152.86 | **Mkt Cap:** $44.26B | **YTD:** -4.7%  
+**Rating:** STRONG BUY | **Conviction:** 5/5 | **Composite:** 8.05/10  
+**R1→R3:** 9→9 · 8→8 · 8→8 · 8→8 · 7→7 · 8→8 · 8→8 · 8→8
+
+**Bull case:** Q2 revenue rose 16% to $11.2B, core EPS rose 30% to $1.56, transactional revenue rose 19%, and resilient revenue rose 15%. Management raised 2026 core EPS guidance to $7.80-$7.90 and produced nearly $1.7B trailing free cash flow. **Bear case:** $168M of UK fire-safety reserves shows acquired/project liabilities can puncture reported earnings; at 27x EV/EBITDA, execution is not cheap. **Resolution:** resilient operations plus cyclical torque justify premium quality, but target upside is lower than JLL's.
+
+**Catalysts:** Q3 results expected October 2026; 2026 office investment volume forecast +16%; deployment of $4.4B liquidity.  
+**Risks:** transaction relapse; project-management reserve creep; leverage rises from 1.60x net debt/core EBITDA after acquisitions.  
+**Targets:** $125 (-18%) / $185 (+21%) / $220 (+44%).
+
+### 3. JOE — The St. Joe Company
+
+**Price:** $68.40 | **Mkt Cap:** $3.89B | **YTD:** +15.2%  
+**Rating:** BUY | **Conviction:** 4/5 | **Composite:** 7.84/10  
+**R1→R3:** 8→8 · 7→7 · 8→8 · 7→7 · 9→9 · 7→7 · 8→8 · 9→9
+
+**Bull case:** Q2 net income rose 37% to $40.5M on revenue of $158.8M, up 23%; real-estate revenue rose 59% and hospitality reached a record. The company repurchased $32.7M of stock, paid $9.1M of dividends, and repaid $10.9M of debt while continuing Watersound buildout. **Bear case:** Northwest Florida concentration and hurricane/insurance risk make apparent diversification less real than segment count suggests; a 32x P/E embeds sustained land-price appreciation. **Resolution:** low leverage and irreplaceable land basis beat cyclical concentration.
+
+**Catalysts:** Watersound Town Center tenant openings through H2 2026; Pulte builder partnership conversion; Q3 results expected October 2026.  
+**Risks:** regional demand shock; hospitality operating leverage; infrastructure spend leads absorption.  
+**Targets:** $55 (-20%) / $82 (+20%) / $95 (+39%).
+
+### 4. MRP — Millrose Properties
+
+**Price:** $30.33 | **Mkt Cap:** $4.68B | **YTD:** +1.9%  
+**Rating:** BUY | **Conviction:** 4/5 | **Composite:** 7.78/10  
+**R1→R3:** Fund 7→8 · Quant 8→8 · Tech 8→8 · Macro 7→7 · Credit 8→8 · Sent 7→7 · MomP 7→7 · Property 8→9
+
+**Bull case:** the $9.7B portfolio yields 9.2%, spans 143,771 homesites and 877 communities, and reported zero option terminations. Q2 AFFO was $127.6M/$0.77 per share, with a $0.80 quarterly run-rate; liquidity was $1.4B and debt/capital 30%. **Bear case:** Lennar is still $6.0B of invested capital, so counterparty and geographic diversification lag headline asset count. **Round-2 change:** Fundamental and Property raised scores after the bears could not rebut zero terminations, $1.0B of lot-sale proceeds, and contractual yield economics.
+
+**Catalysts:** Dream Finders/Beazer transaction support; JPI multifamily relationship scaling; Q3 portfolio-yield and termination update.  
+**Risks:** builder default; falling home prices reduce option renewals; debt repricing compresses spread.  
+**Targets:** $25 (-18%) / $36 (+19%) / $42 (+38%).
+
+### 5. NMRK — Newmark Group
+
+**Price:** $15.25 | **Mkt Cap:** $2.76B | **YTD:** -11.9%  
+**Rating:** BUY | **Conviction:** 4/5 | **Composite:** 7.35/10  
+**R1→R3:** 8→8 · 7→7 · 8→8 · 7→7 · 6→6 · 7→7 · 8→8 · 8→8
+
+**Bull case:** Q2 revenue rose 17% to $888M, adjusted EBITDA 22% to $139M, and adjusted EPS 26% to $0.39. Leasing fees rose 17% to a record, capital markets rose 16%, and Newmark ranked #2 in U.S. investment sales; management guides to 15%-18% revenue and 17%-23% EBITDA growth. **Bear case:** $1.89B net debt and a smaller platform increase refinancing and key-producer risk. **Resolution:** 10.8x EV/EBITDA plus buybacks creates the best value among pure transaction-recovery brokers.
+
+**Catalysts:** Q3 results expected November 2026; execution against $3.78-$3.88B revenue guide; $249M remaining repurchase authorization.  
+**Risks:** producer compensation; debt cost; capital-markets volume reversal.  
+**Targets:** $12 (-21%) / $19 (+25%) / $23 (+51%).
+
+### 6. COMP — Compass
+
+**Price:** $13.02 | **Mkt Cap:** $10.00B | **YTD:** +22.6%  
+**Rating:** BUY | **Conviction:** 3/5 | **Composite:** 7.10/10  
+**R1→R3:** Fund 7→8 · Quant 6→6 · Tech 9→9 · Macro 6→6 · Credit 3→4 · Sent 8→8 · MomP 9→9 · Property 8→8
+
+**Bull case:** post-Anywhere Q2 revenue was $4.31B, pro-forma growth 14.3%, adjusted EBITDA $363M, and free cash flow $180M. Brokerage GTV rose 15.9% versus 6% for the market, agent retention was 95.5%, and $300M of first-year synergies were actioned five months early. **Bear case:** $3.14B long-term debt, a 244x P/E, and 70.9% three-month price gain leave little room for integration errors. **Round-2 change:** Fundamental and Credit each rose one point because the $500M high-coupon note repayment plan and positive-FCF guide make deleveraging credible, not complete.
+
+**Catalysts:** Q3 revenue guide $3.85-$4.05B; realized 2026 synergy target of $220M; 2027 first call on 9.75% notes.  
+**Risks:** integration churn; housing-volume sensitivity; leverage and refinancing.  
+**Targets:** $8.50 (-35%) / $16 (+23%) / $20 (+54%).
+
+### 7. CWK — Cushman & Wakefield
+
+**Price:** $14.40 | **Mkt Cap:** $3.38B | **YTD:** -11.1%  
+**Rating:** BUY | **Conviction:** 3/5 | **Composite:** 6.74/10  
+**R1→R3:** 7→7 · 7→7 · 7→7 · 7→7 · 5→5 · 7→7 · 7→7 · 7→7
+
+Q2 revenue rose 11% to $2.76B and adjusted EBITDA 14% to $184M; leasing rose 27%, while capital markets fell 1%, leaving additional recovery upside. The company raised adjusted EPS growth guidance to 18%-23%, repriced its term loan 50 bps lower, and redeemed $450M of 2028 notes. The bear case is $2.53B net debt and 1.50x debt/equity, which makes this a leveraged recovery rather than a compounder. **Targets:** $11 / $17 / $20. Catalysts are Q3 results, capital-markets inflection, and lower interest expense; risks are refinancing, transaction relapse, and producer attrition.
+
+### 8. EROK — Epsilon Energy/ERock land platform
+
+**Price:** $25.02 | **Mkt Cap:** $3.24B | **YTD:** +8.8% since IPO  
+**Rating:** HOLD | **Conviction:** 2/5 | **Composite:** 6.43/10  
+**R1→R3:** 7→7 · 5→5 · 8→8 · 4→4 · 9→9 · 6→6 · 8→8 · Property 6→5
+
+Normalized Q2 revenue rose 32% sequentially to $46.8M, adjusted EBITDA margin was 77.5%, and free cash flow was $22.2M; liquidity was $262M and net cash about $60M. The August 10 $78.2M Intrepid Ranch acquisition adds 50,000 acres to a 286,000-acre Permian footprint. The committee reduced the Property score because SEC SIC 6792 and mineral/surface-use economics make 6020 classification ambiguous; it is a cash-generative land/royalty hybrid, not a conventional developer. **Targets:** $18 / $29 / $36. Risks are commodity-linked tenant activity, IPO liquidity, and classification/peer mismatch.
+
+### 9. CIGI — Colliers International
+
+**Price:** $105.41 | **Mkt Cap:** $5.39B | **YTD:** -28.6%  
+**Rating:** HOLD | **Conviction:** 3/5 | **Composite:** 6.31/10  
+**R1→R3:** 7→7 · 7→7 · 6→6 · 7→7 · 4→4 · 6→6 · 6→6 · 7→7
+
+Q2 revenue rose 17% to $1.57B, adjusted EBITDA 14% to $205M, leasing and capital markets each 23%, and trailing free cash flow equaled 106% of adjusted net earnings. Engineering revenue rose 30% after Ayesa, but acquisition financing pushed net debt to $2.24B and net debt/pro-forma EBITDA to 2.8x. The operating mix is improving while credit risk is moving the wrong way; the right stance is wait for deleveraging evidence. **Targets:** $80 / $125 / $150. Catalysts: Ayesa integration and mid-teens outlook; risks: acquisition leverage, AUM fee pressure, and recession.
+
+### 10. BEKE — KE Holdings
+
+**Price:** $17.01 | **Mkt Cap:** $18.52B | **YTD:** +5.1%  
+**Rating:** HOLD | **Conviction:** 3/5 | **Composite:** 6.00/10  
+**R1→R3:** 7→7 · 6→6 · 6→6 · 4→4 · 8→8 · 5→5 · 4→4 · 7→7
+
+Q1 GTV fell 15.6% and revenue 19% to RMB18.9B, but gross margin expanded to 24.1%, adjusted EBITDA rose 21% to RMB2.24B, and cash/investments totaled about $7.8B. New-home GTV fell 37.2%, active agents declined 7.6%, and monthly active users fell to 42.7M. Q2 results are scheduled for August 21 and are the decisive event; balance-sheet strength offsets China property-policy, ADR, and volume risks. **Targets:** $12 / $20 / $25.
+
+### 11. FSV — FirstService
+
+**Price:** $140.81 | **Mkt Cap:** $6.19B | **YTD:** -9.4%  
+**Rating:** HOLD | **Conviction:** 3/5 | **Composite:** 5.85/10  
+**R1→R3:** 7→7 · 6→6 · 5→5 · 6→6 · 5→5 · 5→5 · 5→5 · 7→7
+
+Q2 revenue rose 2% to $1.45B, adjusted EBITDA 3% to $162M, and adjusted EPS 2% to $1.75. Residential revenue rose 4%, but Brands organic revenue fell 3%; acquisitions in commercial roofing and fire protection support density but also push net debt to about $1.36B and debt/equity to 1.28x. A 41x P/E is too rich for low-single-digit growth. **Targets:** $115 / $155 / $180. Watch organic Brands growth, acquisition integration, and leverage.
+
+### 12. CSGP — CoStar Group
+
+**Price:** $32.38 | **Mkt Cap:** $13.12B | **YTD:** -51.8%  
+**Rating:** HOLD | **Conviction:** 2/5 | **Composite:** 5.57/10  
+**R1→R3:** Fund 6→7 · Quant 4→3 · Tech 5→5 · Macro 5→5 · Credit 8→8 · Sent 4→4 · MomP 5→5 · Property 7→7
+
+Q2 revenue rose 18% to $925M, adjusted EBITDA more than doubled, net income rose to $55M from $6M, and bookings increased 3% sequentially. The company has a clean balance sheet and guided Q3 revenue to $935-$945M, but trades near 32x EV/EBITDA and remains below its 150- and 200-day averages after a 52% YTD drawdown. Fundamental rose on margin inflection; Quant fell because the new evidence does not repair valuation or factor crowding. **Targets:** $22 / $40 / $55. Catalysts are Q3 bookings and Homes.com monetization; risks are marketing intensity, weak conversion, and further multiple compression.
+
+### 13. Z — Zillow Group (Z/ZG consolidated)
+
+**Price:** $34.78 (Z) | **Mkt Cap:** $7.84B combined | **YTD:** -49.3%  
+**Rating:** HOLD | **Conviction:** 2/5 | **Composite:** 5.54/10  
+**R1→R3:** 7→7 · 4→4 · 5→5 · 5→5 · 8→8 · 4→4 · 4→4 · 6→6
+
+Q2 revenue rose 18% to $772M: residential +7%, mortgages +75%, and rentals +31%; adjusted EBITDA was $176M at a 23% margin. Yet traffic and visits each fell 2%, net loss was $4M, and the shares remain below 150/200-day averages. $682M of cash/investments and $200M of Q2 repurchases cap downside, but a 154x P/E demands traffic and lead-conversion reacceleration. **Targets:** $25 / $42 / $55. Watch Q3 traffic, Zillow Preview adoption, and mortgage attach.
+
+### 14. HHH — Howard Hughes Holdings
+
+**Price:** $66.60 | **Mkt Cap:** $3.98B | **YTD:** -16.5%  
+**Rating:** SELL | **Conviction:** 3/5 | **Composite:** 4.95/10  
+**R1→R3:** 6→6 · 5→5 · 4→4 · 5→5 · Credit 5→4 · 4→4 · 4→4 · 7→7
+
+Q2 MPC land-sales revenue rose 37% to $171M and MPC EBT rose 32% to $135M, while operating-asset NOI rose 2%. But the June 4 $2.1B Vantage acquisition used $1.0B of Pershing Square preferred capital plus cash, adding holding-company and capital-allocation complexity just as long rates remain high. Credit fell one point because land value does not remove preferred seniority or integration risk. **Targets:** $45 / $70 / $90. A cleaner post-Vantage capital framework would flip the view.
+
+### 15. FRMI — Fermi America
+
+**Price:** $6.40 | **Mkt Cap:** $4.08B | **YTD:** -20.9%  
+**Rating:** SELL | **Conviction:** 2/5 | **Composite:** 4.77/10  
+**R1→R3:** 5→5 · 4→4 · 4→4 · 5→5 · Credit 4→3 · 6→6 · 5→5 · Property 8→7
+
+The TensorWave anchor is real progress: 222 MW for 15 years and about $6.5B of stated revenue, with options that could triple capacity. The Hillcore alliance targets 2.6 GW and a 350 MW first project after notice-to-proceed. But Q2 was pre-revenue with a $25.8M loss, $91.7M cash/restricted cash, $520M debt, and $185M quarterly PP&E additions; July 5% convertibles add more financing/dilution risk. Credit and Property each fell after the bear quantified the cash-to-construction gap. **Targets:** $3 / $8 / $14. What changes the view: non-recourse project financing and on-time first energization without common dilution.
+
+### 16. OPEN — Opendoor Technologies
+
+**Price:** $3.64 | **Mkt Cap:** $3.54B | **YTD:** -38.5%  
+**Rating:** STRONG SELL | **Conviction:** 4/5 | **Composite:** 3.09/10  
+**R1→R3:** 3→3 · 3→3 · 3→3 · 4→4 · 1→1 · Sent 6→5 · 3→3 · Property 4→3
+
+Q2 contribution margin improved to 5.8% and inventory older than 120 days fell to 9%, evidence that cohort discipline improved. The equity case still fails: revenue fell 44% to $883M, net loss widened to $162M, homes purchased rose to 4,378 versus 2,339 sold, and inventory reached $1.85B while net debt was about $1.0B. The committee rejects sentiment around optionality because warehouse capacity is not economic capital. **Targets:** $1.50 / $3 / $6. A sustained positive adjusted EBITDA plus declining inventory dollars is required to change the verdict.
+
+---
+
+## HOLD ZONE SUMMARY
+
+| Ticker | Company | Mkt Cap | Composite | Rating | What Would Change the View |
+|---|---|---:|---:|---|---|
+| EROK | EROK land/royalty platform | $3.24B | 6.43 | HOLD | Two quarters of post-IPO FCF plus stable classification/peer evidence. |
+| CIGI | Colliers | $5.39B | 6.31 | HOLD | Net debt/pro-forma EBITDA below 2.5x while mid-teens EBITDA growth holds. |
+| BEKE | KE Holdings | $18.52B | 6.00 | HOLD | August 21 results show new-home GTV stabilization without margin reversal. |
+| FSV | FirstService | $6.19B | 5.85 | HOLD | Brands organic growth turns positive and leverage declines. |
+| CSGP | CoStar | $13.12B | 5.57 | HOLD | Bookings reaccelerate and EBITDA scales faster than marketing spend. |
+| Z | Zillow | $7.84B | 5.54 | HOLD | Traffic growth resumes and residential revenue accelerates without margin giveback. |
+
+## BOTTOM 5: AVOID / SELL
+
+| Rank from bottom | Ticker | Rating | Broken mechanism | Flip condition |
+|---:|---|---|---|---|
+| 1 | OPEN | STRONG SELL | Purchases exceed sales, inventory dollars rise, and losses consume scarce equity capital. | Positive adjusted EBITDA and falling inventory for two quarters. |
+| 2 | FRMI | SELL | Contracted MW are years and billions of funding away from energized cash flow. | Non-recourse funding, firm construction milestones, no common dilution. |
+| 3 | HHH | SELL | Preferred-funded acquisition obscures otherwise attractive MPC land economics. | Transparent leverage and Vantage cash conversion. |
+| 4 | Z | HOLD | Traffic contraction and long-duration valuation offset segment growth. | Positive traffic and lead-conversion inflection. |
+| 5 | CSGP | HOLD | Margin recovery is not enough at 32x EV/EBITDA and damaged long-term trend. | Two quarters of accelerating bookings and durable margin. |
+
+---
+
+## ROUND 2: ADVERSARIAL CROSS-EXAMINATION
+
+| Ticker | Bull's strongest evidence | Bear's attack | Key disagreement | What to watch |
+|---|---|---|---|---|
+| JLL | +53% U.S. investment-sales revenue vs +22% market. | A 4.68% 10Y can freeze cap-rate discovery. | Share gain vs macro duration. | Q3 capital-markets revenue. |
+| CBRE | Raised EPS guide; resilient and transactional profit both >25%. | Premium multiple and project reserves. | Diversification premium durability. | Reserve development and FCF. |
+| JOE | Record Q2 and self-funded buybacks/debt paydown. | Regional/hurricane concentration. | Land scarcity vs concentration discount. | Residential absorption after summer. |
+| MRP | 9.2% yield, 0 terminations, 30% debt/capital. | Lennar concentration and option non-renewal risk. | Contractual spread durability. | Terminations and portfolio yield. |
+| NMRK | 17%-23% EBITDA guide and cheap 10.8x EV/EBITDA. | Smaller scale and $1.89B net debt. | Recovery torque vs balance sheet. | Interest expense and FCF. |
+| COMP | Share gain, 95.5% retention, early synergies. | 244x P/E and $3.14B debt. | Integration alpha vs priced momentum. | Realized synergies and note repayment. |
+| CWK | Leasing +27%, raised EPS growth. | Capital markets -1%, leverage high. | Lagged recovery vs weak mix. | Capital-markets turn. |
+| EROK | 77.5% EBITDA margin and net cash. | Commodity/royalty hybrid may not belong in peer set. | Cash quality vs classification. | Intrepid integration. |
+| CIGI | 17% revenue and 106% cash conversion. | Ayesa pushed leverage to 2.8x. | Strategic mix vs acquisition risk. | Deleveraging. |
+| BEKE | Margin/EBITDA up despite GTV decline. | New-home GTV -37% and China risk. | Efficiency vs shrinking ecosystem. | August 21 Q2. |
+| FSV | Recurring density and tuck-in M&A. | Organic Brands -3% at 41x P/E. | Quality premium vs growth gap. | Organic growth. |
+| CSGP | 18% growth and EBITDA more than doubled. | 32x EV/EBITDA, weak ROIC, long-term downtrend. | Inflection vs value trap. | Bookings and margin. |
+| Z | Revenue +18%, mortgages +75%, large buybacks. | Traffic -2% and 154x P/E. | Monetization vs audience decay. | Traffic and residential growth. |
+| HHH | MPC EBT +32%; land NAV support. | $2.1B Vantage deal and preferred seniority. | NAV discount vs governance discount. | Post-deal cash flow. |
+| FRMI | $6.5B anchor revenue and 4.8 GW site power. | Pre-revenue, $520M debt, construction funding gap. | Bankable contract vs equity duration. | Project financing/NTP. |
+| OPEN | Better contribution margin and fresher inventory. | Revenue -44%, $162M loss, purchases > sales. | Cohort repair vs solvency math. | Inventory dollars and EBITDA. |
+
+### Round 3 change log
+
+- **MRP:** Fundamental 7→8 and Property 8→9 after zero terminations, a 9.2% portfolio yield, and $1.0B of lot-sale proceeds rebutted the concentration bear case.
+- **COMP:** Fundamental 7→8 and Credit 3→4 after early synergy execution, positive FCF, and a stated $500M high-coupon note repayment plan; leverage remains the gating risk.
+- **CSGP:** Fundamental 6→7 on Q2 margin inflection; Quant 4→3 because valuation and factor crowding worsened relative to the group.
+- **EROK:** Property 6→5 after the classification challenge showed royalty economics rather than classic development absorption.
+- **HHH:** Credit 5→4 because preferred-funded Vantage exposure adds senior claims and opacity.
+- **FRMI:** Credit 4→3 and Property 8→7 after the financing gap was quantified; the anchor lease de-risks demand, not construction capital.
+- **OPEN:** Sentiment 6→5 and Property 4→3 because improved cohorts did not overcome purchases exceeding sales and the rising inventory balance.
+
+---
+
+## APPENDIX A: FULL SCORING MATRIX
+
+### Round 1 Scores — Complete Universe
+
+| # | Ticker | Tier | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Property | AVG | Std Dev | Flag |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | JLL | 1 | 9 | 8 | 9 | 8 | 7 | 8 | 9 | 9 | 8.38 | 0.70 | ✅ |
+| 2 | CBRE | 1 | 9 | 8 | 8 | 8 | 7 | 8 | 8 | 8 | 8.00 | 0.50 | ✅ |
+| 3 | JOE | 1 | 8 | 7 | 8 | 7 | 9 | 7 | 8 | 9 | 7.88 | 0.78 | ✅ |
+| 4 | MRP | 1 | 7 | 8 | 8 | 7 | 8 | 7 | 7 | 8 | 7.50 | 0.50 | ✅ |
+| 5 | NMRK | 1 | 8 | 7 | 8 | 7 | 6 | 7 | 8 | 8 | 7.38 | 0.70 | ✅ |
+| 6 | COMP | 1 | 7 | 6 | 9 | 6 | 3 | 8 | 9 | 8 | 7.00 | 1.87 | 🔶 MODERATE |
+| 7 | CWK | 1 | 7 | 7 | 7 | 7 | 5 | 7 | 7 | 7 | 6.75 | 0.66 | ✅ |
+| 8 | EROK | 1 | 7 | 5 | 8 | 4 | 9 | 6 | 8 | 6 | 6.63 | 1.58 | 🔶 MODERATE |
+| 9 | CIGI | 1 | 7 | 7 | 6 | 7 | 4 | 6 | 6 | 7 | 6.25 | 0.97 | ✅ |
+| 10 | BEKE | 1 | 7 | 6 | 6 | 4 | 8 | 5 | 4 | 7 | 5.88 | 1.36 | ✅ |
+| 11 | FSV | 1 | 7 | 6 | 5 | 6 | 5 | 5 | 5 | 7 | 5.75 | 0.83 | ✅ |
+| 12 | CSGP | 1 | 6 | 4 | 5 | 5 | 8 | 4 | 5 | 7 | 5.50 | 1.32 | ✅ |
+| 13 | Z | 1 | 7 | 4 | 5 | 5 | 8 | 4 | 4 | 6 | 5.38 | 1.41 | ✅ |
+| 14 | FRMI | 1 | 5 | 4 | 4 | 5 | 4 | 6 | 5 | 8 | 5.13 | 1.27 | ✅ |
+| 15 | HHH | 1 | 6 | 5 | 4 | 5 | 5 | 4 | 4 | 7 | 5.00 | 1.00 | ✅ |
+| 16 | OPEN | 1 | 3 | 3 | 3 | 4 | 1 | 6 | 3 | 4 | 3.38 | 1.32 | ✅ |
+
+### Round 3 Revised Scores and Weighted CIO Composite
+
+| Rank | Ticker | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Property | Composite | Rating |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | JLL | 9 | 8 | 9 | 8 | 7 | 8 | 9 | 9 | 8.35 | STRONG BUY |
+| 2 | CBRE | 9 | 8 | 8 | 8 | 7 | 8 | 8 | 8 | 8.05 | STRONG BUY |
+| 3 | JOE | 8 | 7 | 8 | 7 | 9 | 7 | 8 | 9 | 7.84 | BUY |
+| 4 | MRP | 8 | 8 | 8 | 7 | 8 | 7 | 7 | 9 | 7.78 | BUY |
+| 5 | NMRK | 8 | 7 | 8 | 7 | 6 | 7 | 8 | 8 | 7.35 | BUY |
+| 6 | COMP | 8 | 6 | 9 | 6 | 4 | 8 | 9 | 8 | 7.10 | BUY |
+| 7 | CWK | 7 | 7 | 7 | 7 | 5 | 7 | 7 | 7 | 6.74 | BUY |
+| 8 | EROK | 7 | 5 | 8 | 4 | 9 | 6 | 8 | 5 | 6.43 | HOLD |
+| 9 | CIGI | 7 | 7 | 6 | 7 | 4 | 6 | 6 | 7 | 6.31 | HOLD |
+| 10 | BEKE | 7 | 6 | 6 | 4 | 8 | 5 | 4 | 7 | 6.00 | HOLD |
+| 11 | FSV | 7 | 6 | 5 | 6 | 5 | 5 | 5 | 7 | 5.85 | HOLD |
+| 12 | CSGP | 7 | 3 | 5 | 5 | 8 | 4 | 5 | 7 | 5.57 | HOLD |
+| 13 | Z | 7 | 4 | 5 | 5 | 8 | 4 | 4 | 6 | 5.54 | HOLD |
+| 14 | HHH | 6 | 5 | 4 | 5 | 4 | 4 | 4 | 7 | 4.95 | SELL |
+| 15 | FRMI | 5 | 4 | 4 | 5 | 3 | 6 | 5 | 7 | 4.77 | SELL |
+| 16 | OPEN | 3 | 3 | 3 | 4 | 1 | 5 | 3 | 3 | 3.09 | STRONG SELL |
+
+### Quant factor Z-scores (within this 16-issuer universe)
+
+Value is negative EV/EBITDA z-score; loss/pre-revenue companies are conservatively assigned 50x. Quality is ROIC z-score; missing values use the universe median. Momentum averages YTD and three-month z-scores. Low Risk is negative monthly-volatility z-score.
+
+| Ticker | Value z | Quality z | Momentum z | Low-risk z |
+|---|---:|---:|---:|---:|
+| CBRE | -0.34 | +0.44 | +0.32 | +0.64 |
+| JLL | +0.79 | +0.58 | +1.06 | +0.76 |
+| CSGP | -0.72 | +0.04 | -1.17 | -0.45 |
+| COMP | -1.17 | +0.09 | +2.35 | -0.44 |
+| Z | +0.05 | +0.06 | -1.33 | -0.62 |
+| FSV | +0.60 | +0.31 | +0.01 | +0.50 |
+| CIGI | +0.69 | +0.14 | -0.33 | +0.36 |
+| MRP | +0.94 | +0.33 | +0.33 | +1.05 |
+| FRMI | -2.10 | +0.26* | -0.60 | -2.70 |
+| HHH | +0.93 | +0.16 | -0.30 | +0.83 |
+| JOE | +0.27 | +0.58 | +0.53 | +0.71 |
+| OPEN | -2.10 | -3.82 | -1.34 | -1.42 |
+| CWK | +0.97 | +0.07 | +0.11 | +0.01 |
+| EROK | +0.24* | +0.26* | +0.62 | -0.76 |
+| NMRK | +0.96 | +0.29 | -0.18 | +0.28 |
+| BEKE | -0.02 | +0.24 | -0.06 | +1.25 |
+
+`*` imputed input; retained to avoid rewarding missing data.
+
+### Technical regime
+
+Stage 2 leaders: JLL, CBRE, JOE, MRP, COMP, CWK, EROK. Repair/Stage 1: CSGP, CIGI, Z. Stage 3/4: FSV, HHH, FRMI, OPEN. The key technical asymmetry is COMP's extension (70.9% three-month gain) versus JLL's stronger but less crowded 31.1% three-month gain.
+
+### Credit stress screen
+
+Standardized Altman Z-scores were not available from the public sources used. The required substitute is a lender-style -20% revenue stress:
+
+- **Pass/low risk:** JOE, MRP, BEKE, CSGP, EROK — net cash/low leverage or contracted assets provide liquidity runway.
+- **Pass with monitoring:** JLL, CBRE, FSV, NMRK, CWK, CIGI — recurring revenue and cash conversion help, but transactions/acquisition leverage raise covenant sensitivity.
+- **High risk:** COMP — pro-forma integration plus $3.14B debt; requires synergy and FCF delivery.
+- **Very high risk:** HHH, FRMI, OPEN — preferred/development funding, pre-revenue construction, or inventory financing could force equity dilution/asset sales.
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT
+
+| Variable | Latest | Rate of change | Group transmission |
+|---|---:|---|---|
+| Fed funds target | 3.50%-3.75% (Jul 29) | Unchanged | Short financing remains restrictive; no near-term policy relief. |
+| 2Y / 10Y Treasury | 4.17% / 4.68% (Aug 14) | +51 bp curve slope | Long-duration cap rates and mortgage affordability remain tight. |
+| 30Y fixed mortgage | 6.67% (Aug 13) | +9 bp y/y | Suppresses brokerage turns and increases builder buydown cost. |
+| CPI / core CPI | 3.4% / 2.5% y/y (Jul) | -10 bp each vs Jun | Disinflation helps, but energy is +14.7% y/y. |
+| Payrolls / unemployment | -23k / 4.1% (Jul) | May/Jun revised -103k | Labor softness threatens transactions; may eventually lower rates. |
+| Real GDP | +1.5% annualized (Q2 advance) | Down from +2.1% | Slower demand but not recession. |
+| ISM manufacturing/services | 55.6 / 54.1 (Jul) | +2.3 / +0.1 | Broad activity expands; real-estate new orders contracted. |
+| Existing-home sales | 4.06M SAAR (Jul) | -1.7% m/m, +0.7% y/y | Stable but low turnover; favors share gain over market beta. |
+| Existing-home inventory | 1.54M / 4.6 months | -1.9% m/m | Limited supply props price, constrains transactions. |
+| Housing affordability index | 103.3 (Jul) | Up from 98.3 y/y | Better income/price balance, offset by 6.67% mortgage. |
+| Housing permits / starts | 1.367M / 1.427M (Jun) | -3.0% / +19.0% m/m | Starts spike masks -2.4% single-family permits decline. |
+| CRE maturities | $875B in 2026 | 17% of $5.0T outstanding | Refinancing wall drives both broker fees and distress risk. |
+| CMBS 30+ day delinquency | 4.82% (Q2) | Down from 5.21% | Improvement is real, but office/lodging remain stressed. |
+| S&P 500 / VIX / DXY | 7785.76 / 15.08 / 99.434 | SPX +13.2% YTD | Risk appetite supportive; low VIX understates rate tail risk. |
+
+---
+
+## APPENDIX C: CIO WEIGHTING RATIONALE
+
+This is the first tracked 6020 session, so there is no evidence-based multiplier. Defaults sum to 100% and are used unchanged in every composite. The CIO resolves the group by weighting recurring owner earnings (Fundamental 18%) and quantified rate/transaction sensitivity (Macro 15%) above public sentiment and short-term revision proxies. No specialist was rewarded ex ante for agreeing with price action.
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+**Discovery route:** current public GICS structure; iShares U.S. total-market holdings mapped to GICS 6020; public TradingView U.S. listings and current market capitalizations; issuer deduplication.  
+**Included:** CBRE, JLL, CSGP, COMP, Z/ZG (one issuer), FSV, CIGI, MRP, FRMI, HHH, JOE, OPEN, CWK, EROK, NMRK, BEKE.  
+**Excluded below $2B:** Forestar (FOR, approximately $1.50B) and smaller service/development names.  
+**Excluded wrong GICS:** Meritage (homebuilding/consumer durables), Hilton Grand Vacations (consumer services), REITs (6010).  
+**Ambiguity retained and penalized:** EROK is SEC SIC 6792 and functions as a Permian land/mineral/surface-use platform; FRMI is a newly public powered-land developer. Both appeared in live real-estate-development screens but paid official constituent files were unavailable.  
+**Foreign domiciles:** BEKE, FSV, and CIGI are retained because the mandate says US-listed, not U.S.-domiciled.  
+**Coverage:** all 16 issuers are Tier 1 because the universe is ≤20. Prices and market caps were refreshed from the unauthenticated TradingView scanner at the latest completed close.
+
+---
+
+## APPENDIX E: SPECIALIST CALLS LOG — THIS SESSION
+
+Entry prices are the latest completed close (2026-08-14), because the scheduled run began before the 2026-08-17 U.S. close.
+
+### Top 3 BUY Picks per Specialist
+
+| Specialist | Rank | Ticker | Entry | Conv. | Rationale |
+|---|---:|---|---:|---:|---|
+| Fundamental | 1 | JLL | $375.00 | 5 | Share gains plus 32% EBITDA growth and 92% net-income growth. |
+| Fundamental | 2 | CBRE | $152.86 | 5 | Raised guide, balanced profit growth, $1.7B TTM FCF. |
+| Fundamental | 3 | JOE | $68.40 | 4 | Scarce land and self-funded record earnings. |
+| Quant/Factor | 1 | MRP | $30.33 | 4 | Best value/low-risk mix with contractual yield. |
+| Quant/Factor | 2 | JLL | $375.00 | 5 | Positive value, quality, momentum, and low-risk z-scores. |
+| Quant/Factor | 3 | JOE | $68.40 | 4 | Top quality with positive momentum and low volatility. |
+| Technical | 1 | COMP | $13.02 | 3 | Strongest three-month momentum and Stage 2 trend. |
+| Technical | 2 | JLL | $375.00 | 5 | Above 50/150/200-day averages with controlled extension. |
+| Technical | 3 | CBRE | $152.86 | 4 | Early Stage 2 recovery above all major averages. |
+| Macro | 1 | JLL | $375.00 | 5 | Fee share gains capture volume without principal inventory. |
+| Macro | 2 | CBRE | $152.86 | 5 | Resilient outsourcing offsets rate-sensitive transactions. |
+| Macro | 3 | MRP | $30.33 | 4 | Contractual lot yield buffers stagnant home turns. |
+| Credit/Risk | 1 | JOE | $68.40 | 5 | Low leverage plus debt paydown and buybacks. |
+| Credit/Risk | 2 | EROK | $25.02 | 4 | Net cash and 96% normalized FCF conversion. |
+| Credit/Risk | 3 | MRP | $30.33 | 4 | 30% debt/capital and $1.4B liquidity. |
+| Sentiment | 1 | JLL | $375.00 | 4 | Earnings and share-gain evidence support positive revisions. |
+| Sentiment | 2 | COMP | $13.02 | 3 | Early synergies and 95.5% retention sustain narrative. |
+| Sentiment | 3 | CBRE | $152.86 | 4 | Raised guidance offsets YTD underperformance. |
+| MomentumPulse | 1 | COMP | $13.02 | 3 | +70.9% three-month price momentum and raised synergy actions. |
+| MomentumPulse | 2 | JLL | $375.00 | 5 | +31.1% three-month move with earnings acceleration. |
+| MomentumPulse | 3 | NMRK | $15.25 | 4 | Raised full-year growth ranges and record leasing. |
+| Property Developer | 1 | JOE | $68.40 | 5 | Entitled low-basis land and accelerating absorption. |
+| Property Developer | 2 | MRP | $30.33 | 5 | Contractual land banking with zero option terminations. |
+| Property Developer | 3 | JLL | $375.00 | 4 | Best evidence of CRE transaction share gain. |
+
+### Top 3 SELL/AVOID Picks per Specialist
+
+| Specialist | Rank | Ticker | Entry | Rationale |
+|---|---:|---|---:|---|
+| Fundamental | 1 | OPEN | $3.64 | Revenue collapse, widening loss, and inventory growth. |
+| Fundamental | 2 | FRMI | $6.40 | Pre-revenue cash flows cannot support current equity duration. |
+| Fundamental | 3 | HHH | $66.60 | Vantage complexity obscures otherwise improving MPC economics. |
+| Quant/Factor | 1 | OPEN | $3.64 | Worst value/quality/momentum composite. |
+| Quant/Factor | 2 | FRMI | $6.40 | Worst value and low-risk z-scores outside OPEN. |
+| Quant/Factor | 3 | CSGP | $32.38 | Expensive with negative momentum. |
+| Technical | 1 | OPEN | $3.64 | Stage 4 below all major moving averages. |
+| Technical | 2 | FRMI | $6.40 | Short history, high volatility, broken post-IPO trend. |
+| Technical | 3 | HHH | $66.60 | Below 50/150/200-day averages. |
+| Macro | 1 | OPEN | $3.64 | 6.67% mortgages worsen turnover and inventory carry. |
+| Macro | 2 | FRMI | $6.40 | 4.68% long rates inflate multiyear construction funding cost. |
+| Macro | 3 | BEKE | $17.01 | China property volume/policy risk dominates U.S. disinflation. |
+| Credit/Risk | 1 | OPEN | $3.64 | Inventory finance and operating losses threaten equity. |
+| Credit/Risk | 2 | FRMI | $6.40 | Pre-revenue, $520M debt, and large capex needs. |
+| Credit/Risk | 3 | COMP | $13.02 | $3.14B debt creates integration/refinancing risk. |
+| Sentiment | 1 | OPEN | $3.64 | Narrative optionality outruns operating evidence. |
+| Sentiment | 2 | HHH | $66.60 | Preferred-funded transformation creates skepticism. |
+| Sentiment | 3 | CSGP | $32.38 | Q2 beat has not repaired a 52% YTD drawdown. |
+| MomentumPulse | 1 | OPEN | $3.64 | Negative YTD/3M/6M momentum with loss growth. |
+| MomentumPulse | 2 | HHH | $66.60 | Negative YTD and six-month momentum. |
+| MomentumPulse | 3 | Z | $34.78 | Negative YTD and six-month momentum despite revenue beat. |
+| Property Developer | 1 | OPEN | $3.64 | Purchases exceed sales and capital is warehoused in homes. |
+| Property Developer | 2 | FRMI | $6.40 | Power/site optionality lacks funded construction. |
+| Property Developer | 3 | HHH | $66.60 | Preferred seniority and acquisition complexity dilute land thesis. |
+
+---
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+| Rank | Specialist | Sessions | BUY Win% | SELL Win% | Combined Score | Trend |
+|---:|---|---:|---:|---:|---:|---|
+| 1= | Fundamental | 1 | n/a | n/a | n/a | PENDING |
+| 1= | Quant/Factor | 1 | n/a | n/a | n/a | PENDING |
+| 1= | Technical | 1 | n/a | n/a | n/a | PENDING |
+| 1= | Macro | 1 | n/a | n/a | n/a | PENDING |
+| 1= | Credit/Risk | 1 | n/a | n/a | n/a | PENDING |
+| 1= | Sentiment | 1 | n/a | n/a | n/a | PENDING |
+| 1= | MomentumPulse | 1 | n/a | n/a | n/a | PENDING |
+| 1= | Property Developer | 1 | n/a | n/a | n/a | PENDING |
+
+No performance leader exists until these entry-price calls are evaluated at the next group session.
+
+---
+
+## EVIDENCE LIMITS / EXACT BLOCKED INPUTS
+
+- Standardized vendor-calculated **Altman Z-scores** for all 16 issuers were not exposed by the public TradingView scanner; the report uses a disclosed lender-style -20% revenue stress substitute.
+- **Named sell-side analyst upgrade/downgrade histories, estimate-revision breadth/magnitude, and per-firm target changes** were not available from public primary sources across the entire universe. Public aggregate high/low target bands were used only as sentiment context, not as evidence for the investment verdict.
+- **Current standardized short interest and complete Form 4 insider-transaction normalization** were not available consistently from the permitted unauthenticated sources. No missing value was invented.
+- **Paid official GICS constituent files** for newly listed EROK and FRMI were unavailable; both are retained with explicit classification penalties and audit notes.
+
+These are source limitations, not omitted analytical steps; affected specialist scores were lowered for uncertainty.
+
+### Operational input limits
+
+The following pre-existing TIF strategy/contract files repeatedly returned the operating-system error `Interrupted system call` on content reads during this run: `/Users/max/Documents/TIF/AGENTS.md`, `/Users/max/Documents/TIF/AGENT_CONTRACT.md`, `/Users/max/Documents/TIF/Meta/InvestmentProcess.md`, `/Users/max/Documents/TIF/Meta/SignalLibrary.md`, and `/Users/max/Documents/TIF/Meta/AnalyticalLedger.md`. The run therefore applied the TIF contract supplied in the active task plus the current `tif-investment-system` skill and made no blind edit to the Analytical Ledger. The current daily note became readable before backlink insertion and was read back in full after the owned block was added.
+
+---
+
+## PRIMARY SOURCES
+
+- [Federal Reserve, July 29 FOMC statement](https://www.federalreserve.gov/newsevents/pressreleases/monetary20260729a.htm)
+- [BLS, July 2026 CPI](https://www.bls.gov/news.release/cpi.nr0.htm)
+- [BLS, July 2026 Employment Situation](https://www.bls.gov/news.release/empsit.nr0.htm)
+- [BEA, Q2 2026 GDP advance estimate](https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026)
+- [ISM, July 2026 Manufacturing PMI](https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/pmi/july/)
+- [ISM, July 2026 Services PMI](https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/services/july/)
+- [U.S. Treasury daily yield curve XML](https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_yield_curve&field_tdr_date_value=2026)
+- [Freddie Mac PMMS](https://www.freddiemac.com/pmms)
+- [NAR July existing-home sales](https://www.nar.realtor/newsroom/nar-existing-home-sales-report-shows-1-7-decrease-in-july)
+- [Census, June new residential construction](https://www.census.gov/construction/nrc/current/index.html)
+- [MBA, 2026 CRE maturities](https://www.mba.org/news-and-research/newsroom/news/2026/02/09/17-percent-of-commercial-and-multifamily-mortgage-balances-to-mature-in-2026)
+- [MBA, Q2 CRE delinquency](https://www.mba.org/news-and-research/newsroom/news/2026/07/30/delinquency-rates-for-commercial-properties-decreased-in-the-second-quarter-of-2026)
+- [CBRE Q2 2026](https://ir.cbre.com/press-releases/detail/268/cbre-group-inc-reports-financial-results-for-q2-2026)
+- [CBRE Q2 U.S. office market](https://www.cbre.com/insights/figures/q2-2026-us-office-market-report)
+- [JLL Q2 2026](https://ir.jll.com/news-releases/press-release-details/2026/JLL-Reports-Financial-Results-for-Second-Quarter-2026/default.aspx)
+- [CoStar Q2 2026](https://investors.costargroup.com/news-and-events/news-releases)
+- [Compass Q2 2026](https://investors.compass.com/news-releases)
+- [Zillow Q2 2026](https://zillowgroup.mediaroom.com/2026-08-05-Zillow-Group-Reports-Second-Quarter-2026-Financial-Results)
+- [Colliers Q2 2026](https://corporate.colliers.com/newsroom)
+- [FirstService Q2 2026](https://www.firstservice.com/newsroom/)
+- [NAR data and issuer SEC filings](https://www.sec.gov/edgar/search/)
+
+---
+
+## COMPLETION GATES
+
+- Section 0 / first-run weight logic: **PASS**
+- Dynamic universe and issuer deduplication: **PASS WITH TWO DISCLOSED CLASSIFICATION AMBIGUITIES**
+- Eight specialists, all issuers scored: **PASS**
+- Four-round debate and ≥2 score changes: **PASS**
+- Weighted CIO rankings/rating boundaries: **PASS**
+- 48 specialist calls with entry prices: **PASS**
+- Current public macro/company evidence: **PASS**
+- Paid-data-only fields: **BLOCKED AND DISCLOSED; NO FABRICATION**
+
+### Scheduler and delivery audit
+
+- Automation id: `investordebate-weekly` — verified from the saved TOML.
+- Native-app status: `PAUSED` — intentionally unchanged because the tested macOS LaunchAgent is authoritative.
+- RRULE: `FREQ=WEEKLY;BYDAY=MO;BYHOUR=9;BYMINUTE=0`.
+- Saved prompt executed: `Run $investordebate-weekly from /Users/max/Documents/OpenAI. Use the authoritative Monday-2026-03-30 seven-week rotation, complete the OpenAI-native $investordebate workflow sequentially for every current group, archive each verified report and specialist-performance log under /Users/max/Documents/TIF/InvestorDebate/, and update only the dated agent-owned InvestorDebate block in the daily note if it exists. Finish with top picks, cross-group themes, weight changes, report paths, and next week's groups.`
+- Current-date daily skeleton: existed before backlink work; no skeleton content was overwritten.
+- TIF report, performance log, and daily backlink: written and read back; report/performance hashes match their local canonical artifacts.
+
+**Next rotation (2026-08-24):** Semiconductors & Semiconductor Equipment · Software & Services · Technology Hardware & Equipment · Media & Entertainment.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-08-17 16:39 · Not financial advice.</div>
+</footer>
+</body>
+</html>
