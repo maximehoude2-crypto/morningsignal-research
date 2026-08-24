@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MorningSignal — InvestorDebate · Media & Entertainment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+  <style>
+    .diff-banner {
+      background:linear-gradient(135deg, rgba(15,123,84,0.06), var(--surface));
+      border-left:4px solid var(--green);
+      border-radius:var(--radius); padding:18px 22px; margin-bottom:24px;
+      box-shadow:var(--shadow-sm);
+    }
+    .diff-banner.no-changes {
+      background:linear-gradient(135deg, rgba(157,106,46,0.04), var(--surface));
+      border-left-color:var(--text-muted);
+    }
+    .diff-banner.first-run {
+      background:linear-gradient(135deg, var(--blue-soft), var(--surface));
+      border-left-color:var(--blue);
+    }
+    .diff-banner h2 {
+      font-family:var(--font-display); font-weight:700; font-size:1.1rem; color:var(--text);
+      margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    }
+    .diff-banner h2 .badge {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      background:var(--green); color:var(--white); padding:3px 10px;
+      border-radius:var(--radius-pill); text-transform:uppercase; letter-spacing:0.06em;
+    }
+    .diff-grid {
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px;
+      margin-top:12px;
+    }
+    .diff-cell { background:var(--surface-strong); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+    .diff-cell h4 { font-family:var(--font-display); font-weight:700; font-size:0.84rem; color:var(--text); margin-bottom:8px; }
+    .diff-cell .empty { color:var(--text-muted); font-size:0.78rem; font-style:italic; }
+    .diff-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-family:var(--font-mono); font-size:0.78rem; border-bottom:1px solid rgba(215,208,195,0.5); }
+    .diff-row:last-child { border-bottom:none; }
+    .diff-row .ticker { font-weight:700; color:var(--text); }
+    .diff-row .arrow-up { color:var(--green); }
+    .diff-row .arrow-down { color:var(--red); }
+    .diff-row .meta { color:var(--text-muted); font-size:0.72rem; }
+
+    .top5-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.84rem; margin:10px 0; }
+    .top5-table th { text-align:left; padding:8px 10px; color:var(--text-muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:0.05em; font-size:0.72rem; }
+    .top5-table td { padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    .top5-table .ticker-cell { font-weight:700; color:var(--text); }
+    .top5-table .thesis-cell { font-family:var(--font-sans); color:var(--text-dim); font-size:0.84rem; line-height:1.45; }
+
+    .id-rating-pill {
+      font-family:var(--font-mono); font-size:0.65rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:0.04em; padding:2px 8px;
+      border-radius:var(--radius-pill); white-space:nowrap; display:inline-block;
+    }
+    .rating-strong-buy { background:var(--green-soft); color:var(--green); }
+    .rating-buy        { background:var(--blue-soft);  color:var(--blue);  }
+    .rating-hold       { background:rgba(157,106,46,0.1); color:var(--accent); }
+    .rating-sell       { background:var(--yellow-soft); color:var(--yellow); }
+    .rating-strong-sell{ background:var(--red-soft);   color:var(--red);   }
+
+    .stock-card {
+      background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; margin-bottom:16px; box-shadow:var(--shadow-sm);
+    }
+    .stock-card h3 { font-family:var(--font-display); font-weight:700; color:var(--text); font-size:1.1rem; margin-bottom:6px; }
+    .stock-card .stock-meta { font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-bottom:12px; }
+    .stock-card .case { margin-top:10px; }
+    .stock-card .case-label { font-family:var(--font-display); font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+    .stock-card .case p { font-size:0.88rem; line-height:1.6; color:var(--text); }
+
+    .history-list { font-family:var(--font-mono); font-size:0.84rem; }
+    .history-list .h-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+    .history-list .h-row:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="../assets/logo.svg" width="32" height="32" alt="MorningSignal">
+      <div>
+        <div class="logo-text">Morning<span>Signal</span></div>
+        <div class="logo-sub">Research Platform</div>
+      </div>
+    </a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../dashboard.html">Dashboard</a>
+      <a href="../industries.html">Industries</a>
+      <a href="../investordebate.html" class="active">Debate</a>
+      <a href="../weekly.html">Weekly</a>
+      <a href="../podcast.html">Podcast</a>
+      <a href="../earnings.html">Earnings</a>
+      <a href="../archive.html">Archive</a>
+    </nav>
+    <div class="header-date">2026-08-24 16:39</div>
+  </div>
+</header>
+
+
+
+
+<div class="hero-strip">
+  <div class="page-wrapper">
+    <div class="hero-panel hero-panel-main">
+      <div class="hero-copy">
+        <div class="eyebrow">InvestorDebate · Media & Entertainment</div>
+        <div class="hero-title">Media & Entertainment — Committee Report</div>
+        <div class="hero-summary">
+          The Fed held 3.50%-3.75% on July 29; July CPI was 3.4% with core CPI 2.5%, July payrolls fell 23,000, and Q2 real GDP grew 1.5% annualized. The August 21 Treasury curve was 4.24% at 2 years and 4.74% at 10 years, while July manufacturing PMI accelerated to 55.6 and services PMI held 54.1. This is st
+        </div>
+        <div class="hero-meta-row">
+          <span class="pill">Latest 2026-08-24</span>
+          <span class="pill">32 stocks reviewed</span>
+          <span class="pill">1 report on file</span>
+          <a href="../investordebate.html" class="pill" style="text-decoration:none;color:var(--blue)">← All groups</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-wrapper">
+
+  
+  
+    <div class="diff-banner first-run">
+      <h2>First Report on File <span class="badge" style="background:var(--blue);">FIRST RUN</span></h2>
+      <div style="font-size:0.86rem;color:var(--text-dim);">No prior committee report exists for Media & Entertainment yet — all subsequent runs will diff against this baseline.</div>
+    </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Latest committee call</div>
+        <div class="section-title">Top 5 ranked picks · 2026-08-24</div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table class="top5-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Ticker</th><th>Rating</th><th>Conviction</th><th>Composite</th><th style="width:55%">One-line thesis</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td>#1</td>
+            <td class="ticker-cell">[[GOOGL]]</td>
+            <td><span class="id-rating-pill rating-strong-buy">STRONG BUY</span></td>
+            <td>5.0/5</td>
+            <td>8.3/10</td>
+            <td class="thesis-cell">Q2 revenue was $119.8B, up 24%</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#2</td>
+            <td class="ticker-cell">[[FOXA]]</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>7.59/10</td>
+            <td class="thesis-cell">Latest-quarter revenue was $4.21B, up 28.1%, EPS $1.61 and the shares gained 15.4% over one year</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#3</td>
+            <td class="ticker-cell">[[META]]</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>7.38/10</td>
+            <td class="thesis-cell">Q2 revenue grew 28% to $60.8B, but expenses rose 55%, operating margin fell to 31% and FCF collapsed to $784M as capex reached $31.1B</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#4</td>
+            <td class="ticker-cell">[[SPOT]]</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>7.3/10</td>
+            <td class="thesis-cell">Latest-quarter revenue was $5.55B equivalent, up 16.9%, EPS $3.03 and ROIC 42.4%</td>
+          </tr>
+          
+          
+          <tr>
+            <td>#5</td>
+            <td class="ticker-cell">[[DIS]]</td>
+            <td><span class="id-rating-pill rating-buy">BUY</span></td>
+            <td>4.0/5</td>
+            <td>7.01/10</td>
+            <td class="thesis-cell">Fiscal Q3 revenue was $25.34B, up 7.5%, with $1.51 EPS</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Sector view</div>
+        <div class="section-title">What the committee thinks</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(360px, 1fr));gap:14px;">
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--yellow);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Biggest Disagreement</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">**GOOGL versus the duration/cycle bear:** the bull anchors on +24.0% quarterly revenue growth and 42.3% ROIC; the bear argues that +70.1% one-year performance and 23.1x EV/EBITDA leave asymmetric estimate risk.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--blue);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Where We Differ from Consensus</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">The alpha split is not old versus new media; it is first-party distribution plus pricing data versus expensive content or compute without cash conversion. Scanner technical consensus is treated as positioning evidence, not fundamental truth; exact point-in-time sell-side target/revision breadth was unavailable without token-backed feeds.</div>
+      </div>
+      
+      
+      <div class="card" style="padding:20px;">
+        <div style="font-family:var(--font-display);font-weight:700;color:var(--red);font-size:0.86rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">What We're Probably Wrong About</div>
+        <div style="font-size:0.92rem;line-height:1.6;color:var(--text);">AI answer products could erode search query economics before Cloud profit offsets the loss, making Alphabet's apparent pullback entry a value trap.</div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Per-stock deep dives</div>
+        <div class="section-title">Detailed analysis · 11 stocks</div>
+      </div>
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#1 · GOOGL — Alphabet Inc.</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q2 revenue was $119.8B, up 24%; Search grew 17%, Cloud 82% to $24.8B and consolidated operating margin expanded to 34%, while first-half capex doubled to $80.6B. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 23.1x EV/EBITDA and the stock moved -11.0% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#2 · FOXA — Fox Corporation</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Latest-quarter revenue was $4.21B, up 28.1%, EPS $1.61 and the shares gained 15.4% over one year; live/news/sports pricing and affiliate fees distinguish it from weaker linear bundles. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 7.9x EV/EBITDA and the stock moved +6.2% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#3 · META — Meta Platforms, Inc.</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Q2 revenue grew 28% to $60.8B, but expenses rose 55%, operating margin fell to 31% and FCF collapsed to $784M as capex reached $31.1B; ad demand is strong while AI intensity is consuming cash. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 13.0x EV/EBITDA and the stock moved -9.5% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#4 · SPOT — Spotify Technology S.A.</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Latest-quarter revenue was $5.55B equivalent, up 16.9%, EPS $3.03 and ROIC 42.4%; subscriber/ARPU execution is offset by a 22.6% one-year stock decline. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 31.0x EV/EBITDA and the stock moved +5.6% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#5 · DIS — Walt Disney Company (The)</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>Fiscal Q3 revenue was $25.34B, up 7.5%, with $1.51 EPS; experiences and IP cash generation must offset sports rights and linear decline. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 11.2x EV/EBITDA and the stock moved +3.6% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#28 · LION — Lionsgate Studios Corp</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>The latest reported quarter produced $777M revenue, +47.7% year over year, $51M free cash flow and -0.10 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 5.6x EV/EBITDA and the stock moved -15.1% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#29 · RBLX — Roblox Corporation</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>The latest reported quarter produced $1.47B revenue, +35.9% year over year, $296M free cash flow and -0.26 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is n/ax EV/EBITDA and the stock moved -17.2% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#30 · PSKY — Paramount Skydance Corporation</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>The latest reported quarter produced $6.91B revenue, +0.9% year over year, $258M free cash flow and 0.04 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 7.5x EV/EBITDA and the stock moved +0.1% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#31 · BATRK — Atlanta Braves Holdings, Inc. - Series A</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>The latest reported quarter produced $305M revenue, -2.3% year over year, $-71M free cash flow and -0.19 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 98.4x EV/EBITDA and the stock moved +5.9% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#32 · TTWO — Take-Two Interactive Software, Inc.</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>The latest reported quarter produced $1.53B revenue, +2.0% year over year, $-194M free cash flow and -0.18 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 35.5x EV/EBITDA and the stock moved -1.7% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+    
+    <div class="stock-card">
+      <h3>#15 · RDDT — Reddit, Inc.</h3>
+      <div class="stock-meta">
+        
+        
+        
+      </div>
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--green);">Bull Case</div>
+        <p>The latest reported quarter produced $805M revenue, +61.1% year over year, $261M free cash flow and 1.25 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.</p>
+      </div>
+      
+      
+      <div class="case">
+        <div class="case-label" style="color:var(--red);">Bear Case</div>
+        <p>Valuation is 33.3x EV/EBITDA and the stock moved +5.5% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.</p>
+      </div>
+      
+      
+    </div>
+    
+  </div>
+  
+
+  
+  
+
+  
+  
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-kicker">Full report</div>
+        <div class="section-title">Raw committee output</div>
+      </div>
+    </div>
+    <details class="card" style="padding:18px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--blue);">Show full report markdown (48482 chars)</summary>
+      <pre style="margin-top:14px;font-family:var(--font-mono);font-size:0.78rem;line-height:1.6;color:var(--text);white-space:pre-wrap;background:var(--surface-strong);padding:18px;border-radius:8px;border:1px solid var(--border);"># InvestorDebate: Media & Entertainment — v3.0
+**GICS Level 2:** Media & Entertainment (Code 5020) | **Parent Sector:** Communication Services  **Report Date:** 2026-08-24 (America/Toronto)  **Universe:** 32 US-listed common/ADR issuers above $2B after share-class consolidation and boundary review  **Team:** Fundamental · Quant/Factor · Technical · Macro · Credit/Risk · Sentiment · MomentumPulse · Digital Ecosystem Analyst  **Market Data As Of:** 2026-08-21 close; captured 2026-08-24 premarket ET  **Run Type:** authoritative Monday rotation; real unattended run
+
+---
+## SPECIALIST WEIGHTS THIS SESSION
+No compatible prior v3 performance log was available for this exact group. Default weights are therefore mandatory; all current calls begin as PENDING. For semiconductors, a 2026-06-21 legacy v2.1 report exists but lacks the 48-call Appendix E needed for valid RL evaluation.
+| Specialist | Default | Prior score | Multiplier | Session weight | Change |
+|---|---:|---:|---:|---:|---|
+| Fundamental | 18% | n/a | 1.00x | 18% | first compatible session |
+| Quant/Factor | 14% | n/a | 1.00x | 14% | first compatible session |
+| Technical | 13% | n/a | 1.00x | 13% | first compatible session |
+| Macro | 15% | n/a | 1.00x | 15% | first compatible session |
+| Credit/Risk | 13% | n/a | 1.00x | 13% | first compatible session |
+| Sentiment | 10% | n/a | 1.00x | 10% | first compatible session |
+| MomentumPulse | 7% | n/a | 1.00x | 7% | first compatible session |
+| Digital Ecosystem Analyst | 10% | n/a | 1.00x | 10% | first compatible session |
+| **TOTAL** | **100%** |  |  | **100%** |  |
+
+---
+## PAGE 1: EXECUTIVE SUMMARY
+
+### Macro Context
+The Fed held 3.50%-3.75% on July 29; July CPI was 3.4% with core CPI 2.5%, July payrolls fell 23,000, and Q2 real GDP grew 1.5% annualized. The August 21 Treasury curve was 4.24% at 2 years and 4.74% at 10 years, while July manufacturing PMI accelerated to 55.6 and services PMI held 54.1. This is strong nominal demand with expensive duration: earnings delivery is rewarded, but capex-heavy or distant cash flows face a high hurdle.
+
+### Top 5 Ranked Stocks
+
+| Rank | Ticker | Rating | Conviction | Composite | One-line thesis |
+|---:|---|---|---:|---:|---|
+| 1 | [[GOOGL]] | STRONG BUY | 5/5 | 8.30 | Q2 revenue was $119.8B, up 24% |
+| 2 | [[FOXA]] | BUY | 4/5 | 7.59 | Latest-quarter revenue was $4.21B, up 28.1%, EPS $1.61 and the shares gained 15.4% over one year |
+| 3 | [[META]] | BUY | 4/5 | 7.38 | Q2 revenue grew 28% to $60.8B, but expenses rose 55%, operating margin fell to 31% and FCF collapsed to $784M as capex reached $31.1B |
+| 4 | [[SPOT]] | BUY | 4/5 | 7.30 | Latest-quarter revenue was $5.55B equivalent, up 16.9%, EPS $3.03 and ROIC 42.4% |
+| 5 | [[DIS]] | BUY | 4/5 | 7.01 | Fiscal Q3 revenue was $25.34B, up 7.5%, with $1.51 EPS |
+
+### Key Industry Group Call
+
+**Overweight scaled ad/AI distribution and disciplined IP owners; underweight leverage-heavy linear bundles and engagement stories without unit economics.** The alpha split is not old versus new media; it is first-party distribution plus pricing data versus expensive content or compute without cash conversion.
+
+### Biggest Disagreement
+
+**GOOGL versus the duration/cycle bear:** the bull anchors on +24.0% quarterly revenue growth and 42.3% ROIC; the bear argues that +70.1% one-year performance and 23.1x EV/EBITDA leave asymmetric estimate risk.
+
+### Where We Differ From Consensus
+
+The alpha split is not old versus new media; it is first-party distribution plus pricing data versus expensive content or compute without cash conversion. Scanner technical consensus is treated as positioning evidence, not fundamental truth; exact point-in-time sell-side target/revision breadth was unavailable without token-backed feeds.
+
+### What We're Probably Wrong About
+
+AI answer products could erode search query economics before Cloud profit offsets the loss, making Alphabet's apparent pullback entry a value trap.
+
+---
+
+## SUBSECTOR ENGINEERING PRIOR
+
+Revenue is attention × engagement × ad load × price, or subscribers × ARPU × retention, less traffic/content acquisition and delivery cost. First-party identity, recommendation quality, rights, live inventory and distribution drive differentiation. AI improves targeting and creation but requires heavy compute, so incremental operating income and FCF—not engagement alone—decide winners.
+
+---
+
+## ROUND 1: INDEPENDENT SPECIALIST ANALYSIS
+
+### Fundamental
+
+Owner earnings favor GOOGL, FOXA and META; moat trajectory is weakest where growth lacks FCF.
+
+### Quant/Factor
+
+Cross-sectional value-quality-momentum is strongest in GOOGL, FOXA, META; crowding is highest where one-year gains and EV/EBITDA are both extreme.
+
+### Technical
+
+Price/SMA stacks and three-month momentum favor U, ROKU, OMC; stops must sit below the 50/150-day stack, with unavailable exact levels disclosed in Appendix G.
+
+### Macro
+
+The 4.74% 10-year penalizes duration, but 55.6 manufacturing PMI and tight electronic-component supply support near-term nominal demand.
+
+### Credit/Risk
+
+Net-cash and FCF durability favor RDDT, SPOT, PINS; leveraged issuers fail a revenue-down-20% stress first.
+
+### Sentiment
+
+TradingView consensus/price-volume is used as a public proxy. Short interest, options skew and named broker revision breadth were not consistently public for the full universe.
+
+### MomentumPulse
+
+The strongest price/earnings rate-of-change cluster is U, ROKU, MSGS; acceleration is separated from absolute leadership.
+
+### Digital Ecosystem Analyst
+
+The alpha split is not old versus new media; it is first-party distribution plus pricing data versus expensive content or compute without cash conversion.
+
+### Round 1 Consensus & Divergence
+
+| Ticker | Average | Std dev | Flag |
+|---|---:|---:|---|
+| RDDT | 5.59 | 2.20 | HIGH |
+| RBLX | 4.42 | 1.97 | MODERATE |
+| BATRK | 4.70 | 1.62 | MODERATE |
+| META | 4.88 | 1.60 | MODERATE |
+| OMC | 6.11 | 1.47 | CONSENSUS |
+| NXST | 4.71 | 1.47 | CONSENSUS |
+| AMC | 5.92 | 1.34 | CONSENSUS |
+| LION | 4.69 | 1.32 | CONSENSUS |
+| NFLX | 4.92 | 1.30 | CONSENSUS |
+| SPHR | 5.69 | 1.28 | CONSENSUS |
+| SIRI | 5.39 | 1.23 | CONSENSUS |
+| MSGS | 6.21 | 1.18 | CONSENSUS |
+| U | 6.78 | 1.16 | CONSENSUS |
+| ROKU | 6.61 | 1.12 | CONSENSUS |
+| MSGE | 5.22 | 1.11 | CONSENSUS |
+
+---
+
+## ROUND 2: ADVERSARIAL CROSS-EXAMINATION
+
+| Ticker | Bull evidence | Bear attack | Key disagreement | What to watch |
+|---|---|---|---|---|
+| GOOGL | Revenue growth +24.0%, ROIC 42.3% and 3M -11.0%. | 23.1x EV/EBITDA, FCF $-5.86B, net debt $-125.13B. | durability versus expectations | 2026-10-27 earnings and FCF conversion |
+| FOXA | Revenue growth +28.1%, ROIC 8.7% and 3M +6.2%. | 7.9x EV/EBITDA, FCF $726M, net debt $3.36B. | durability versus expectations | 2026-10-29 earnings and FCF conversion |
+| META | Revenue growth +28.0%, ROIC 22.2% and 3M -9.5%. | 13.0x EV/EBITDA, FCF $1.75B, net debt $21.36B. | durability versus expectations | 2026-10-28 earnings and FCF conversion |
+| SPOT | Revenue growth +16.9%, ROIC 42.4% and 3M +5.6%. | 31.0x EV/EBITDA, FCF $936M, net debt $-10.20B. | durability versus expectations | 2026-10-27 earnings and FCF conversion |
+| DIS | Revenue growth +7.5%, ROIC 5.9% and 3M +3.6%. | 11.2x EV/EBITDA, FCF $3.07B, net debt $40.86B. | durability versus expectations | 2026-11-12 earnings and FCF conversion |
+| LION | Revenue growth +47.7%, ROIC -12.5% and 3M -15.1%. | 5.6x EV/EBITDA, FCF $51M, net debt $3.44B. | durability versus expectations | 2026-11-05 earnings and FCF conversion |
+| RBLX | Revenue growth +35.9%, ROIC -52.4% and 3M -17.2%. | n/ax EV/EBITDA, FCF $296M, net debt $-1.18B. | durability versus expectations | 2026-11-11 earnings and FCF conversion |
+| PSKY | Revenue growth +0.9%, ROIC -2.1% and 3M +0.1%. | 7.5x EV/EBITDA, FCF $258M, net debt $14.57B. | durability versus expectations | 2026-11-16 earnings and FCF conversion |
+| BATRK | Revenue growth -2.3%, ROIC -5.6% and 3M +5.9%. | 98.4x EV/EBITDA, FCF $-71M, net debt $711M. | durability versus expectations | 2026-11-11 earnings and FCF conversion |
+| TTWO | Revenue growth +2.0%, ROIC -5.2% and 3M -1.7%. | 35.5x EV/EBITDA, FCF $-194M, net debt $1.10B. | durability versus expectations | 2026-11-05 earnings and FCF conversion |
+| RDDT | Revenue growth +61.1%, ROIC 30.5% and 3M +5.5%. | 33.3x EV/EBITDA, FCF $261M, net debt $-2.77B. | durability versus expectations | 2026-11-04 earnings and FCF conversion |
+
+The bull cases pre-empted cycle concerns with current earnings and balance-sheet evidence; the bears attacked valuation, cash conversion and named transmission mechanisms. No consensus was forced.
+
+---
+
+## ROUND 3: POSITION CHANGES
+
+| Ticker | Specialist | R1 | R3 | Reason |
+|---|---|---:|---:|---|
+| GOOGL | Fundamental | 5.3 | 9.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| GOOGL | Quant/Factor | 5.0 | 9.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| GOOGL | Technical | 3.1 | 7.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| GOOGL | Macro | 6.1 | 9.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| GOOGL | Credit/Risk | 5.4 | 9.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| GOOGL | Sentiment | 4.4 | 6.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| GOOGL | MomentumPulse | 4.5 | 7.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| GOOGL | Digital Ecosystem Analyst | 5.2 | 9.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| FOXA | Fundamental | 6.7 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| FOXA | Quant/Factor | 6.7 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| FOXA | Technical | 6.8 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| FOXA | Credit/Risk | 6.6 | 6.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| FOXA | Sentiment | 7.3 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| FOXA | MomentumPulse | 6.5 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| FOXA | Digital Ecosystem Analyst | 6.6 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| META | Fundamental | 5.6 | 9.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| META | Quant/Factor | 4.7 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| META | Technical | 2.3 | 5.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| META | Macro | 6.8 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| META | Credit/Risk | 6.8 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| META | Sentiment | 4.1 | 5.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| META | MomentumPulse | 2.8 | 5.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| META | Digital Ecosystem Analyst | 5.9 | 9.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| SPOT | Fundamental | 5.5 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| SPOT | Quant/Factor | 5.5 | 7.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| SPOT | Technical | 6.5 | 6.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| SPOT | Macro | 6.8 | 7.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| SPOT | Credit/Risk | 8.2 | 10.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| SPOT | Sentiment | 5.9 | 6.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| SPOT | MomentumPulse | 5.4 | 5.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| SPOT | Digital Ecosystem Analyst | 6.4 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| DIS | Fundamental | 5.5 | 7.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| DIS | Quant/Factor | 5.6 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| DIS | Technical | 7.1 | 7.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| DIS | Macro | 5.4 | 7.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| DIS | Credit/Risk | 6.7 | 5.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| DIS | Sentiment | 6.9 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| DIS | MomentumPulse | 5.7 | 6.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| DIS | Digital Ecosystem Analyst | 5.5 | 8.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| RBLX | MomentumPulse | 1.7 | 1.0 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+| BATRK | Credit/Risk | 3.2 | 2.2 | Round 2 changed the balance between current operating evidence and valuation/credit transmission. |
+
+Held scores reflect a conscious judgment that the opposing case did not outweigh the latest earnings, price and balance-sheet evidence.
+
+---
+
+## ROUND 4: CIO SYNTHESIS
+
+The CIO uses the session weights exactly. **Alpha call:** The alpha split is not old versus new media; it is first-party distribution plus pricing data versus expensive content or compute without cash conversion. **Highest conviction:** GOOGL, FOXA, META. **Probable error:** AI answer products could erode search query economics before Cloud profit offsets the loss, making Alphabet's apparent pullback entry a value trap.
+
+---
+
+## DETAILED STOCK ANALYSIS
+
+### 1. GOOGL — Alphabet Inc.
+
+**Price:** $344.82 | **Mkt cap:** $4200.18B | **YTD:** +8.8% | **3M:** -11.0%  
+**Rating:** STRONG BUY | **Conviction:** 5/5 | **Composite:** 8.30/10  
+**R1→R3:** Fund 5.3→9.0 · Quant 5.0→9.0 · Tech 3.1→7.0 · Macro 6.1→9.0 · Credit 5.4→9.0 · Sent 4.4→6.0 · MomP 4.5→7.0 · Group 5.2→9.0
+
+**Bull case:** Q2 revenue was $119.8B, up 24%; Search grew 17%, Cloud 82% to $24.8B and consolidated operating margin expanded to 34%, while first-half capex doubled to $80.6B. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 23.1x EV/EBITDA and the stock moved -11.0% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-10-27; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $258.62 (-25%) | Base $396.54 (+15%) | Bull $465.51 (+35%). Targets are scenario markers, not consensus.
+
+### 2. FOXA — Fox Corporation
+
+**Price:** $68.54 | **Mkt cap:** $27.11B | **YTD:** -6.3% | **3M:** +6.2%  
+**Rating:** BUY | **Conviction:** 4/5 | **Composite:** 7.59/10  
+**R1→R3:** Fund 6.7→8.0 · Quant 6.7→8.0 · Tech 6.8→8.0 · Macro 7.0→7.0 · Credit 6.6→6.0 · Sent 7.3→8.0 · MomP 6.5→8.0 · Group 6.6→8.0
+
+**Bull case:** Latest-quarter revenue was $4.21B, up 28.1%, EPS $1.61 and the shares gained 15.4% over one year; live/news/sports pricing and affiliate fees distinguish it from weaker linear bundles. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 7.9x EV/EBITDA and the stock moved +6.2% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-10-29; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $51.41 (-25%) | Base $78.82 (+15%) | Bull $92.53 (+35%). Targets are scenario markers, not consensus.
+
+### 3. META — Meta Platforms, Inc.
+
+**Price:** $549.90 | **Mkt cap:** $1400.87B | **YTD:** -17.0% | **3M:** -9.5%  
+**Rating:** BUY | **Conviction:** 4/5 | **Composite:** 7.38/10  
+**R1→R3:** Fund 5.6→9.0 · Quant 4.7→8.0 · Tech 2.3→5.0 · Macro 6.8→8.0 · Credit 6.8→8.0 · Sent 4.1→5.0 · MomP 2.8→5.0 · Group 5.9→9.0
+
+**Bull case:** Q2 revenue grew 28% to $60.8B, but expenses rose 55%, operating margin fell to 31% and FCF collapsed to $784M as capex reached $31.1B; ad demand is strong while AI intensity is consuming cash. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 13.0x EV/EBITDA and the stock moved -9.5% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-10-28; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $412.42 (-25%) | Base $632.38 (+15%) | Bull $742.37 (+35%). Targets are scenario markers, not consensus.
+
+### 4. SPOT — Spotify Technology S.A.
+
+**Price:** $533.72 | **Mkt cap:** $109.88B | **YTD:** -8.9% | **3M:** +5.6%  
+**Rating:** BUY | **Conviction:** 4/5 | **Composite:** 7.30/10  
+**R1→R3:** Fund 5.5→8.0 · Quant 5.5→7.0 · Tech 6.5→6.0 · Macro 6.8→7.0 · Credit 8.2→10.0 · Sent 5.9→6.0 · MomP 5.4→5.0 · Group 6.4→8.0
+
+**Bull case:** Latest-quarter revenue was $5.55B equivalent, up 16.9%, EPS $3.03 and ROIC 42.4%; subscriber/ARPU execution is offset by a 22.6% one-year stock decline. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 31.0x EV/EBITDA and the stock moved +5.6% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-10-27; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $400.29 (-25%) | Base $613.78 (+15%) | Bull $720.52 (+35%). Targets are scenario markers, not consensus.
+
+### 5. DIS — Walt Disney Company (The)
+
+**Price:** $107.78 | **Mkt cap:** $186.10B | **YTD:** -5.0% | **3M:** +3.6%  
+**Rating:** BUY | **Conviction:** 4/5 | **Composite:** 7.01/10  
+**R1→R3:** Fund 5.5→7.0 · Quant 5.6→8.0 · Tech 7.1→7.0 · Macro 5.4→7.0 · Credit 6.7→5.0 · Sent 6.9→8.0 · MomP 5.7→6.0 · Group 5.5→8.0
+
+**Bull case:** Fiscal Q3 revenue was $25.34B, up 7.5%, with $1.51 EPS; experiences and IP cash generation must offset sports rights and linear decline. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 11.2x EV/EBITDA and the stock moved +3.6% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-11-12; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $80.84 (-25%) | Base $123.95 (+15%) | Bull $145.50 (+35%). Targets are scenario markers, not consensus.
+
+### 28. LION — Lionsgate Studios Corp
+
+**Price:** $11.51 | **Mkt cap:** $3.42B | **YTD:** +26.2% | **3M:** -15.1%  
+**Rating:** SELL | **Conviction:** 3/5 | **Composite:** 4.79/10  
+**R1→R3:** Fund 5.9→5.9 · Quant 5.6→5.6 · Tech 2.6→2.6 · Macro 5.9→5.9 · Credit 4.1→4.1 · Sent 2.6→2.6 · MomP 5.2→5.2 · Group 5.6→5.6
+
+**Bull case:** The latest reported quarter produced $777M revenue, +47.7% year over year, $51M free cash flow and -0.10 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 5.6x EV/EBITDA and the stock moved -15.1% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-11-05; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $8.63 (-25%) | Base $13.24 (+15%) | Bull $15.54 (+35%). Targets are scenario markers, not consensus.
+
+### 29. RBLX — Roblox Corporation
+
+**Price:** $38.37 | **Mkt cap:** $27.41B | **YTD:** -52.9% | **3M:** -17.2%  
+**Rating:** SELL | **Conviction:** 3/5 | **Composite:** 4.62/10  
+**R1→R3:** Fund 5.6→5.6 · Quant 4.3→4.3 · Tech 1.8→1.8 · Macro 6.5→6.5 · Credit 6.1→6.1 · Sent 2.7→2.7 · MomP 1.7→1.0 · Group 6.7→6.7
+
+**Bull case:** The latest reported quarter produced $1.47B revenue, +35.9% year over year, $296M free cash flow and -0.26 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is n/ax EV/EBITDA and the stock moved -17.2% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-11-11; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $28.78 (-25%) | Base $44.13 (+15%) | Bull $51.80 (+35%). Targets are scenario markers, not consensus.
+
+### 30. PSKY — Paramount Skydance Corporation
+
+**Price:** $10.35 | **Mkt cap:** $11.61B | **YTD:** -22.8% | **3M:** +0.1%  
+**Rating:** SELL | **Conviction:** 3/5 | **Composite:** 4.47/10  
+**R1→R3:** Fund 5.2→5.2 · Quant 4.8→4.8 · Tech 4.8→4.8 · Macro 3.8→3.8 · Credit 4.0→4.0 · Sent 4.5→4.5 · MomP 4.0→4.0 · Group 4.2→4.2
+
+**Bull case:** The latest reported quarter produced $6.91B revenue, +0.9% year over year, $258M free cash flow and 0.04 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 7.5x EV/EBITDA and the stock moved +0.1% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-11-16; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $7.76 (-25%) | Base $11.90 (+15%) | Bull $13.97 (+35%). Targets are scenario markers, not consensus.
+
+### 31. BATRK — Atlanta Braves Holdings, Inc. - Series A
+
+**Price:** $56.67 | **Mkt cap:** $3.33B | **YTD:** +33.5% | **3M:** +5.9%  
+**Rating:** SELL | **Conviction:** 3/5 | **Composite:** 4.36/10  
+**R1→R3:** Fund 3.8→3.8 · Quant 4.6→4.6 · Tech 6.5→6.5 · Macro 2.8→2.8 · Credit 3.2→2.2 · Sent 7.2→7.2 · MomP 6.3→6.3 · Group 3.2→3.2
+
+**Bull case:** The latest reported quarter produced $305M revenue, -2.3% year over year, $-71M free cash flow and -0.19 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 98.4x EV/EBITDA and the stock moved +5.9% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-11-11; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $42.50 (-25%) | Base $65.17 (+15%) | Bull $76.50 (+35%). Targets are scenario markers, not consensus.
+
+### 32. TTWO — Take-Two Interactive Software, Inc.
+
+**Price:** $239.62 | **Mkt cap:** $44.80B | **YTD:** -7.0% | **3M:** -1.7%  
+**Rating:** SELL | **Conviction:** 3/5 | **Composite:** 3.83/10  
+**R1→R3:** Fund 3.5→3.5 · Quant 3.9→3.9 · Tech 3.7→3.7 · Macro 3.9→3.9 · Credit 4.2→4.2 · Sent 3.3→3.3 · MomP 4.6→4.6 · Group 3.9→3.9
+
+**Bull case:** The latest reported quarter produced $1.53B revenue, +2.0% year over year, $-194M free cash flow and -0.18 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 35.5x EV/EBITDA and the stock moved -1.7% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-11-05; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $179.72 (-25%) | Base $275.56 (+15%) | Bull $323.49 (+35%). Targets are scenario markers, not consensus.
+
+### 15. RDDT — Reddit, Inc.
+
+**Price:** $153.29 | **Mkt cap:** $29.49B | **YTD:** -34.0% | **3M:** +5.5%  
+**Rating:** HOLD | **Conviction:** 3/5 | **Composite:** 5.79/10  
+**R1→R3:** Fund 5.9→5.9 · Quant 5.1→5.1 · Tech 2.9→2.9 · Macro 8.3→8.3 · Credit 8.3→8.3 · Sent 2.8→2.8 · MomP 3.6→3.6 · Group 7.8→7.8
+
+**Bull case:** The latest reported quarter produced $805M revenue, +61.1% year over year, $261M free cash flow and 1.25 diluted EPS. Relative to Alphabet, Meta, Netflix, Spotify, Disney, Fox and connected-TV platforms, the investment case depends on retaining economics at the current growth rate rather than merely participating in the theme.  
+**Bear case:** Valuation is 33.3x EV/EBITDA and the stock moved +5.5% in three months; a demand pause or weaker cash conversion would transmit through both estimates and multiple.  
+**Key debate:** whether the latest revenue/earnings acceleration is durable enough to outrun expectations already embedded in price.
+
+**Catalysts:** next scheduled earnings 2026-11-04; the September 15-16 FOMC; the next company product/customer disclosure.  
+**Falsification:** two consecutive quarters of decelerating revenue growth plus negative estimate/price confirmation, or FCF conversion below the current quarterly base without a documented investment payoff.  
+**Risks:** execution against named peers; funding/input-cost pressure from a 4.74% 10-year yield; regulatory/export/technology-cycle transmission specific to the group.  
+**Price targets:** Bear $114.97 (-25%) | Base $176.28 (+15%) | Bull $206.94 (+35%). Targets are scenario markers, not consensus.
+
+---
+
+## HOLD ZONE SUMMARY
+
+| Ticker | Company | Mkt cap | Composite | Rating | What changes the view |
+|---|---|---:|---:|---|---|
+| CNK | Cinemark Holdings, Inc. | $4.24B | 6.46 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| ROKU | Roku, Inc. | $23.37B | 6.42 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| CMCSA | Comcast Corporation | $95.28B | 6.20 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| PINS | Pinterest, Inc. | $13.25B | 6.11 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| OMC | Omnicom Group Inc. | $24.02B | 6.01 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| MSGS | Madison Square Garden Sports Corp. | $9.78B | 6.00 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| VSNT | Versant Media Group, Inc. | $5.38B | 5.92 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| RDDT | Reddit, Inc. | $29.49B | 5.79 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| AMC | AMC Entertainment Holdings, Inc. | $2.28B | 5.74 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| LLYVK | Liberty Live Holdings, Inc. - Series C Liberty Live Group | $9.60B | 5.62 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| SIRI | SiriusXM Holdings Inc. | $9.67B | 5.52 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| SPHR | Sphere Entertainment Co. | $5.69B | 5.50 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| TKO | TKO Group Holdings, Inc. | $36.56B | 5.43 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| MSGE | Madison Square Garden Entertainment Corp. | $3.78B | 5.17 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| DJT | Trump Media & Technology Group Corp. | $2.53B | 5.10 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+| NFLX | Netflix, Inc. | $331.41B | 5.09 | HOLD | Earnings growth reaccelerates with positive FCF and price confirmation. |
+
+## BOTTOM 5: AVOID / SELL
+
+| Ticker | Rating | Composite | Broken mechanism | Flip condition |
+|---|---|---:|---|---|
+| TTWO | SELL | 3.83 | Revenue +2.0%, ROIC -5.2% and 3M -1.7% fail the relative hurdle. | Two quarters of growth/FCF improvement plus positive estimate and price confirmation. |
+| BATRK | SELL | 4.36 | Revenue -2.3%, ROIC -5.6% and 3M +5.9% fail the relative hurdle. | Two quarters of growth/FCF improvement plus positive estimate and price confirmation. |
+| PSKY | SELL | 4.47 | Revenue +0.9%, ROIC -2.1% and 3M +0.1% fail the relative hurdle. | Two quarters of growth/FCF improvement plus positive estimate and price confirmation. |
+| RBLX | SELL | 4.62 | Revenue +35.9%, ROIC -52.4% and 3M -17.2% fail the relative hurdle. | Two quarters of growth/FCF improvement plus positive estimate and price confirmation. |
+| LION | SELL | 4.79 | Revenue +47.7%, ROIC -12.5% and 3M -15.1% fail the relative hurdle. | Two quarters of growth/FCF improvement plus positive estimate and price confirmation. |
+
+---
+
+## APPENDIX A: FULL SCORING MATRIX
+
+| # | Ticker | Tier | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Group | Composite | Std dev | Flag |
+|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | GOOGL | 1 | 5.3 | 5.0 | 3.1 | 6.1 | 5.4 | 4.4 | 4.5 | 5.2 | 8.30 | 0.84 |  |
+| 2 | FOXA | 1 | 6.7 | 6.7 | 6.8 | 7.0 | 6.6 | 7.3 | 6.5 | 6.6 | 7.59 | 0.24 |  |
+| 3 | META | 1 | 5.6 | 4.7 | 2.3 | 6.8 | 6.8 | 4.1 | 2.8 | 5.9 | 7.38 | 1.60 | MOD |
+| 4 | SPOT | 1 | 5.5 | 5.5 | 6.5 | 6.8 | 8.2 | 5.9 | 5.4 | 6.4 | 7.30 | 0.88 |  |
+| 5 | DIS | 1 | 5.5 | 5.6 | 7.1 | 5.4 | 6.7 | 6.9 | 5.7 | 5.5 | 7.01 | 0.67 |  |
+| 6 | MTCH | 2 | 6.8 | 7.0 | 7.8 | 5.2 | 6.5 | 6.8 | 7.3 | 6.0 | 6.63 | 0.75 |  |
+| 7 | U | 2 | 4.6 | 5.9 | 8.2 | 6.5 | 7.0 | 6.5 | 8.5 | 7.0 | 6.55 | 1.16 |  |
+| 8 | CNK | 2 | 6.6 | 6.9 | 6.9 | 5.7 | 5.2 | 7.5 | 7.4 | 6.1 | 6.46 | 0.76 |  |
+| 9 | ROKU | 2 | 4.6 | 5.9 | 8.0 | 6.5 | 7.0 | 6.3 | 8.4 | 6.2 | 6.42 | 1.12 |  |
+| 10 | CMCSA | 2 | 7.2 | 6.6 | 6.1 | 4.8 | 6.0 | 7.8 | 5.4 | 5.3 | 6.20 | 0.95 |  |
+| 11 | PINS | 2 | 5.2 | 5.4 | 6.4 | 6.5 | 7.4 | 5.7 | 5.8 | 6.7 | 6.11 | 0.69 |  |
+| 12 | OMC | 2 | 5.6 | 6.0 | 8.0 | 6.0 | 3.2 | 8.0 | 6.9 | 5.2 | 6.01 | 1.47 |  |
+| 13 | MSGS | 2 | 4.0 | 5.2 | 7.6 | 6.7 | 5.6 | 6.2 | 7.8 | 6.6 | 6.00 | 1.18 |  |
+| 14 | VSNT | 2 | 7.4 | 6.5 | 5.4 | 4.7 | 6.8 | 5.1 | 4.8 | 5.4 | 5.92 | 0.94 |  |
+| 15 | RDDT | 1 | 5.9 | 5.1 | 2.9 | 8.3 | 8.3 | 2.8 | 3.6 | 7.8 | 5.79 | 2.20 | HIGH |
+| 16 | AMC | 2 | 5.0 | 5.8 | 7.8 | 4.6 | 4.3 | 7.5 | 7.4 | 5.0 | 5.74 | 1.34 |  |
+| 17 | LLYVK | 2 | 5.3 | 5.6 | 7.1 | 5.0 | 4.5 | 7.0 | 6.3 | 4.8 | 5.62 | 0.93 |  |
+| 18 | SIRI | 2 | 7.0 | 6.5 | 3.8 | 5.1 | 6.2 | 3.2 | 5.4 | 5.9 | 5.52 | 1.23 |  |
+| 19 | SPHR | 2 | 4.8 | 5.8 | 6.8 | 4.4 | 4.7 | 7.0 | 7.8 | 4.2 | 5.50 | 1.28 |  |
+| 20 | TKO | 2 | 5.6 | 5.2 | 4.3 | 6.1 | 6.1 | 4.7 | 4.5 | 6.4 | 5.43 | 0.75 |  |
+| 21 | MSGE | 2 | 5.2 | 5.8 | 6.4 | 5.2 | 3.1 | 4.6 | 6.9 | 4.6 | 5.17 | 1.11 |  |
+| 22 | DJT | 2 | 5.0 | 4.7 | 4.7 | 6.1 | 4.3 | 6.6 | 3.9 | 5.2 | 5.10 | 0.84 |  |
+| 23 | NFLX | 2 | 5.7 | 4.9 | 3.1 | 5.9 | 7.0 | 4.0 | 3.2 | 5.6 | 5.09 | 1.30 |  |
+| 24 | NXST | 2 | 6.5 | 5.3 | 2.8 | 6.4 | 4.1 | 3.4 | 3.0 | 6.2 | 4.94 | 1.47 |  |
+| 25 | LYV | 2 | 4.4 | 4.8 | 6.2 | 4.1 | 3.9 | 6.4 | 5.6 | 4.3 | 4.85 | 0.91 |  |
+| 26 | CHTR | 2 | 6.8 | 5.7 | 4.2 | 3.8 | 4.4 | 4.5 | 3.4 | 4.3 | 4.83 | 1.03 |  |
+| 27 | WBD | 2 | 4.3 | 4.8 | 6.2 | 3.5 | 5.1 | 5.5 | 5.9 | 4.1 | 4.81 | 0.87 |  |
+| 28 | LION | 1 | 5.9 | 5.6 | 2.6 | 5.9 | 4.1 | 2.6 | 5.2 | 5.6 | 4.79 | 1.32 |  |
+| 29 | RBLX | 1 | 5.6 | 4.3 | 1.8 | 6.5 | 6.1 | 2.7 | 1.7 | 6.7 | 4.62 | 1.97 | MOD |
+| 30 | PSKY | 1 | 5.2 | 4.8 | 4.8 | 3.8 | 4.0 | 4.5 | 4.0 | 4.2 | 4.47 | 0.46 |  |
+| 31 | BATRK | 1 | 3.8 | 4.6 | 6.5 | 2.8 | 3.2 | 7.2 | 6.3 | 3.2 | 4.36 | 1.62 | MOD |
+| 32 | TTWO | 1 | 3.5 | 3.9 | 3.7 | 3.9 | 4.2 | 3.3 | 4.6 | 3.9 | 3.83 | 0.38 |  |
+
+### Round 3 Revised Scores — debated names
+
+| Ticker | Fund | Quant | Tech | Macro | Credit | Sent | MomP | Group | Composite |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| GOOGL | 9.0 | 9.0 | 7.0 | 9.0 | 9.0 | 6.0 | 7.0 | 9.0 | 8.30 |
+| FOXA | 8.0 | 8.0 | 8.0 | 7.0 | 6.0 | 8.0 | 8.0 | 8.0 | 7.59 |
+| META | 9.0 | 8.0 | 5.0 | 8.0 | 8.0 | 5.0 | 5.0 | 9.0 | 7.38 |
+| SPOT | 8.0 | 7.0 | 6.0 | 7.0 | 10.0 | 6.0 | 5.0 | 8.0 | 7.30 |
+| DIS | 7.0 | 8.0 | 7.0 | 7.0 | 5.0 | 8.0 | 6.0 | 8.0 | 7.01 |
+| LION | 5.9 | 5.6 | 2.6 | 5.9 | 4.1 | 2.6 | 5.2 | 5.6 | 4.79 |
+| RBLX | 5.6 | 4.3 | 1.8 | 6.5 | 6.1 | 2.7 | 1.0 | 6.7 | 4.62 |
+| PSKY | 5.2 | 4.8 | 4.8 | 3.8 | 4.0 | 4.5 | 4.0 | 4.2 | 4.47 |
+| BATRK | 3.8 | 4.6 | 6.5 | 2.8 | 2.2 | 7.2 | 6.3 | 3.2 | 4.36 |
+| TTWO | 3.5 | 3.9 | 3.7 | 3.9 | 4.2 | 3.3 | 4.6 | 3.9 | 3.83 |
+| RDDT | 5.9 | 5.1 | 2.9 | 8.3 | 8.3 | 2.8 | 3.6 | 7.8 | 5.79 |
+
+---
+
+## APPENDIX B: MACRO DATA SNAPSHOT
+
+| Variable | Latest | Date | Group transmission |
+|---|---:|---|---|
+| Fed funds target | 3.50%-3.75% | 2026-07-29 | duration and funding hurdle |
+| 10Y Treasury | 4.74% | 2026-08-21 | discount rate and capex funding |
+| 2s10s | +50 bps | 2026-08-21 | nominal growth/inflation term premium |
+| CPI / core | 3.4% / 2.5% | 2026-07 | policy constraint |
+| Payroll change / unemployment | -23k / 4.1% | 2026-07 | enterprise/consumer demand |
+| Q2 real GDP | +1.5% SAAR | 2026-Q2 advance | growth base |
+| ISM manufacturing / services | 55.6 / 54.1 | 2026-07 | orders and IT/electronics demand |
+| S&P 500 YTD | +12.1% | 2026-08-21 | risk appetite and hurdle |
+
+---
+
+## APPENDIX C: CIO WEIGHTING RATIONALE
+
+Default weights were used because no compatible prior 48-call log could be evaluated. Fundamental remains largest; Macro and Quant follow; MomentumPulse is deliberately smallest until group-specific hit rates exist. Weights sum to 100% and were used in every composite.
+
+---
+
+## APPENDIX D: UNIVERSE DISCOVERY AUDIT
+
+Screened 2,400 NYSE/Nasdaq/AMEX common shares and ADRs using a public unauthenticated TradingView America scanner snapshot, required market capitalization at or above $2B, removed preferred/mandatory-convertible lines, consolidated share classes, mapped issuer industries to GICS 5020, and manually reviewed obvious boundary errors. Final universe: 32. OTC lines, funds, below-threshold issuers and unavailable/ambiguous classifications were excluded. Market cap is live/basic scanner data and can move through the threshold.
+
+---
+
+## APPENDIX E: SPECIALIST CALLS LOG — THIS SESSION
+
+### Top 3 BUY picks per specialist
+
+| Specialist | Rank | Ticker | Entry price | Conviction | Rationale |
+|---|---:|---|---:|---:|---|
+| Fundamental | 1 | GOOGL | $344.82 | 5 | Fund score 9.0; revenue growth +24.0%. |
+| Fundamental | 2 | META | $549.90 | 5 | Fund score 9.0; revenue growth +28.0%. |
+| Fundamental | 3 | FOXA | $68.54 | 4 | Fund score 8.0; revenue growth +28.1%. |
+| Quant/Factor | 1 | GOOGL | $344.82 | 5 | Quant score 9.0; revenue growth +24.0%. |
+| Quant/Factor | 2 | FOXA | $68.54 | 4 | Quant score 8.0; revenue growth +28.1%. |
+| Quant/Factor | 3 | META | $549.90 | 4 | Quant score 8.0; revenue growth +28.0%. |
+| Technical | 1 | U | $46.93 | 4 | Tech score 8.2; revenue growth +23.9%. |
+| Technical | 2 | FOXA | $68.54 | 4 | Tech score 8.0; revenue growth +28.1%. |
+| Technical | 3 | ROKU | $157.49 | 4 | Tech score 8.0; revenue growth +21.9%. |
+| Macro | 1 | GOOGL | $344.82 | 5 | Macro score 9.0; revenue growth +24.0%. |
+| Macro | 2 | RDDT | $153.29 | 4 | Macro score 8.3; revenue growth +61.1%. |
+| Macro | 3 | META | $549.90 | 4 | Macro score 8.0; revenue growth +28.0%. |
+| Credit/Risk | 1 | SPOT | $533.72 | 5 | Credit score 10.0; revenue growth +16.9%. |
+| Credit/Risk | 2 | GOOGL | $344.82 | 5 | Credit score 9.0; revenue growth +24.0%. |
+| Credit/Risk | 3 | RDDT | $153.29 | 4 | Credit score 8.3; revenue growth +61.1%. |
+| Sentiment | 1 | FOXA | $68.54 | 4 | Sent score 8.0; revenue growth +28.1%. |
+| Sentiment | 2 | DIS | $107.78 | 4 | Sent score 8.0; revenue growth +7.5%. |
+| Sentiment | 3 | OMC | $87.54 | 4 | Sent score 8.0; revenue growth +63.4%. |
+| MomentumPulse | 1 | U | $46.93 | 5 | MomP score 8.5; revenue growth +23.9%. |
+| MomentumPulse | 2 | ROKU | $157.49 | 4 | MomP score 8.4; revenue growth +21.9%. |
+| MomentumPulse | 3 | FOXA | $68.54 | 4 | MomP score 8.0; revenue growth +28.1%. |
+| Digital Ecosystem Analyst | 1 | GOOGL | $344.82 | 5 | Group score 9.0; revenue growth +24.0%. |
+| Digital Ecosystem Analyst | 2 | META | $549.90 | 5 | Group score 9.0; revenue growth +28.0%. |
+| Digital Ecosystem Analyst | 3 | FOXA | $68.54 | 4 | Group score 8.0; revenue growth +28.1%. |
+
+### Top 3 SELL/AVOID picks per specialist
+
+| Specialist | Rank | Ticker | Entry price | Rationale |
+|---|---:|---|---:|---|
+| Fundamental | 1 | TTWO | $239.62 | Fund score 3.5; 3M -1.7%. |
+| Fundamental | 2 | BATRK | $56.67 | Fund score 3.8; 3M +5.9%. |
+| Fundamental | 3 | MSGS | $406.16 | Fund score 4.0; 3M +14.5%. |
+| Quant/Factor | 1 | TTWO | $239.62 | Quant score 3.9; 3M -1.7%. |
+| Quant/Factor | 2 | RBLX | $38.37 | Quant score 4.3; 3M -17.2%. |
+| Quant/Factor | 3 | BATRK | $56.67 | Quant score 4.6; 3M +5.9%. |
+| Technical | 1 | RBLX | $38.37 | Tech score 1.8; 3M -17.2%. |
+| Technical | 2 | LION | $11.51 | Tech score 2.6; 3M -15.1%. |
+| Technical | 3 | NXST | $186.14 | Tech score 2.8; 3M -1.7%. |
+| Macro | 1 | BATRK | $56.67 | Macro score 2.8; 3M +5.9%. |
+| Macro | 2 | WBD | $28.55 | Macro score 3.5; 3M +5.2%. |
+| Macro | 3 | CHTR | $150.17 | Macro score 3.8; 3M +0.1%. |
+| Credit/Risk | 1 | BATRK | $56.67 | Credit score 2.2; 3M +5.9%. |
+| Credit/Risk | 2 | MSGE | $79.89 | Credit score 3.1; 3M +14.8%. |
+| Credit/Risk | 3 | OMC | $87.54 | Credit score 3.2; 3M +17.9%. |
+| Sentiment | 1 | LION | $11.51 | Sent score 2.6; 3M -15.1%. |
+| Sentiment | 2 | RBLX | $38.37 | Sent score 2.7; 3M -17.2%. |
+| Sentiment | 3 | RDDT | $153.29 | Sent score 2.8; 3M +5.5%. |
+| MomentumPulse | 1 | RBLX | $38.37 | MomP score 1.0; 3M -17.2%. |
+| MomentumPulse | 2 | NXST | $186.14 | MomP score 3.0; 3M -1.7%. |
+| MomentumPulse | 3 | NFLX | $79.59 | MomP score 3.2; 3M -10.7%. |
+| Digital Ecosystem Analyst | 1 | BATRK | $56.67 | Group score 3.2; 3M +5.9%. |
+| Digital Ecosystem Analyst | 2 | TTWO | $239.62 | Group score 3.9; 3M -1.7%. |
+| Digital Ecosystem Analyst | 3 | WBD | $28.55 | Group score 4.1; 3M +5.2%. |
+
+---
+
+## APPENDIX F: SPECIALIST LEADERBOARD
+
+First compatible session; all 48 calls are PENDING, so no win-rate or combined-score leaderboard is statistically available.
+
+---
+
+## APPENDIX G: SOURCES, PROVENANCE AND BLOCKED FIELDS
+- [Federal Reserve, 2026-07-29 FOMC statement](https://www.federalreserve.gov/newsevents/pressreleases/monetary20260729a.htm)
+- [BLS, July 2026 CPI](https://www.bls.gov/news.release/archives/cpi_08122026.htm)
+- [BLS, July 2026 Employment Situation](https://www.bls.gov/news.release/empsit.htm)
+- [BEA, Q2 2026 advance GDP](https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026)
+- [U.S. Treasury, daily yield curve](https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve)
+- [TradingView America scanner, unauthenticated snapshot](https://www.tradingview.com/markets/stocks-usa/market-movers-large-cap/)
+- [Alphabet Q2 2026 earnings exhibit](https://www.sec.gov/Archives/edgar/data/1652044/000165204426000066/googexhibit991q22026.htm)
+- [Meta Q2 2026 results](https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Second-Quarter-2026-Results/default.aspx)
+- [Netflix Q2 2026 earnings](https://ir.netflix.net/financials/quarterly-earnings/2026/default.aspx)
+- [Disney Q3 2026 earnings](https://investor.thewaltdisneycompany.com/events-and-presentations/event-details/2026/Disneys-Q3-FY26-Earnings-Results-Webcast-2026-PXZSBx9qZg/default.aspx)
+
+**Unavailable/blocked point-in-time inputs:** full sell-side consensus estimate history and revision breadth; complete named analyst upgrade/downgrade distribution; full-universe short interest/days-to-cover, options put/call and insider transaction normalization; exact full-universe Altman Z-scores and debt maturity ladders; reliable full-universe NRR/ARR or group-specific operating KPIs where issuers do not disclose them; compatible prior v3 48-call performance log; current live TIF Analytical Ledger contents, whose iCloud File Provider content reads returned `EINTR`. A cached scheduler snapshot was used only to preserve controlling ADBE and SNDK ledger states, not to claim a current ledger read or authorize a ledger write. These fields were left unavailable rather than fabricated.
+
+## QUALITY GATES
+
+- **Specificity:** PASS for all Tier 1 names: current price, latest earnings date/revenue/growth/EPS, competitor mechanism, dated catalyst, risks and falsification.
+- **Expert depth:** PASS with public-data limitations disclosed; group mechanics, ROIC/FCF/value, stage proxy, macro transmission and stress conditions are explicit.
+- **Debate quality:** PASS: adversarial Round 2, evidence-based Round 3 changes, committee-vs-consensus alpha call and probable-error statement.
+- **RL completeness:** PASS for current session: Section 0 executed, weights sum to 100%, and Appendix E contains 24 BUY plus 24 SELL/AVOID calls with entry prices. Prior evaluation is blocked by a missing compatible log.
+</pre>
+    </details>
+  </div>
+  
+
+</div>
+
+<footer>
+  <div>MorningSignal Research · Generated 2026-08-24 16:39 · Not financial advice.</div>
+</footer>
+</body>
+</html>
