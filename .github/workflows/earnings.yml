@@ -1,0 +1,76 @@
+name: Earnings briefs → Obsidian vault
+
+# Runs in the cloud (GitHub-hosted runner) so generation no longer depends on
+# any computer being awake. It generates the earnings deep dives and commits
+# them as Markdown notes under vault/Earnings/. Point your Obsidian vault at
+# that folder (e.g. via the Obsidian Git plugin) to pull them down.
+#
+# NOTE: scheduled workflows only run from the repository's DEFAULT branch, so
+# this must be merged to `main` before the cron fires. You can test it any time
+# from the Actions tab via "Run workflow" (workflow_dispatch).
+
+on:
+  schedule:
+    # Times are UTC; GitHub cron does not adjust for DST.
+    - cron: "30 12 * * 1-5"   # ~08:30 ET pre-market  → AM briefs
+    - cron: "30 22 * * 1-5"   # ~18:30 ET post-close  → PM briefs
+  workflow_dispatch:
+    inputs:
+      sessions:
+        description: "Sessions to generate (AM, PM, or AM,PM)"
+        required: false
+        default: ""
+      date:
+        description: "Date YYYY-MM-DD (defaults to today)"
+        required: false
+        default: ""
+
+concurrency:
+  group: earnings
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  earnings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate earnings notes
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -euo pipefail
+          SESSIONS="${{ github.event.inputs.sessions }}"
+          if [ -z "$SESSIONS" ]; then
+            # Pick the session from the scheduled UTC hour: morning run → AM, evening → PM.
+            HOUR=$(date -u +%H)
+            if [ "$HOUR" -lt 18 ]; then SESSIONS="AM"; else SESSIONS="PM"; fi
+          fi
+          DATE_ARG=""
+          if [ -n "${{ github.event.inputs.date }}" ]; then DATE_ARG="--date ${{ github.event.inputs.date }}"; fi
+          echo "Sessions: $SESSIONS  $DATE_ARG"
+          python run_earnings.py --sessions "$SESSIONS" $DATE_ARG
+
+      - name: Commit notes to the vault
+        run: |
+          set -euo pipefail
+          git config user.name "morningsignal-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add vault/
+          if git diff --cached --quiet; then
+            echo "No new or changed notes to commit."
+          else
+            git commit -m "Earnings notes $(date -u +%Y-%m-%d)"
+            git push
+          fi

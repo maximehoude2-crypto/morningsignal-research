@@ -126,7 +126,7 @@ def main():
         out_path = write_state_dir / f"market_brief_{today}.json"
         out_path.write_text(json.dumps(brief, indent=2, default=str))
         # Re-run the narrative now that we have richer context.
-        # If OpenAI is configured this regenerates a full LLM narrative; otherwise
+        # If Claude is configured this regenerates a full LLM narrative; otherwise
         # we rebuild the deterministic fallback so it now includes the industry
         # rotation / MA-event bullets.
         try:

@@ -1,6 +1,6 @@
 """
 Weekly Summary Generator — aggregates Mon-Fri daily briefs into a
-1-2 page institutional weekly report, synthesized via OpenAI.
+1-2 page institutional weekly report, synthesized via Claude.
 Runs every Friday as part of the daily pipeline.
 """
 
@@ -8,7 +8,7 @@ import json
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from scanner.openai_client import complete_text, extract_json, openai_enabled
+from scanner.claude_client import claude_enabled, complete_text, extract_json
 
 BASE_DIR = Path(__file__).parent.parent
 STATE_DIR = BASE_DIR / "state"
@@ -129,7 +129,7 @@ def _aggregate_week_data(briefs: list[dict]) -> dict:
 
 
 def _generate_weekly_narrative(agg: dict) -> dict:
-    """Call OpenAI to synthesize a weekly summary from aggregated data."""
+    """Call Claude to synthesize a weekly summary from aggregated data."""
 
     indices_str = "\n".join(
         f"  - {v['name']}: {v['weekly_change']:+.2f}% (close: ${v['last_price']})"
@@ -263,11 +263,11 @@ RULES:
 
 Return ONLY the JSON object."""
 
-    if not openai_enabled():
-        print("  OPENAI_API_KEY not set, skipping GPT-5.4 weekly summary generation")
+    if not claude_enabled():
+        print("  ANTHROPIC_API_KEY not set, skipping Claude weekly summary generation")
         return {
             "headline": f"Weekly Market Summary: {agg.get('week_start', '')} — {agg.get('week_end', '')}",
-            "executive_summary": "OpenAI is not configured yet, so the weekly commentary was skipped.",
+            "executive_summary": "Claude is not configured yet, so the weekly commentary was skipped.",
             "sector_review": [],
             "thematic_analysis": [],
             "key_themes": [],
@@ -278,7 +278,7 @@ Return ONLY the JSON object."""
             "signal_commentary": "",
         }
 
-    print("  Generating weekly summary via OpenAI GPT-5.4...")
+    print("  Generating weekly summary via Claude...")
     try:
         raw = complete_text(prompt, max_output_tokens=8000)
         narrative = extract_json(raw)

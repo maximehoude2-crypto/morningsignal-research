@@ -37,22 +37,22 @@ Pages generated:
 - Sector research generator: `/Users/max/sector-research/run_sector.py`
 - SEC EDGAR MCP server: `/Users/max/sec-edgar-mcp/server.py`
 
-## OpenAI Migration Status
+## LLM Provider Status
 
-Runtime LLM generation now uses `OPENAI_API_KEY` for:
+Runtime LLM generation in this repo uses Claude (`ANTHROPIC_API_KEY`) via the
+Anthropic Messages API (`scanner/claude_client.py`) for:
 
 - MorningSignal market narrative, weekly summary, and earnings briefs.
-- PodcastBrief v2 synthesis and two-host script generation.
-- Legacy morning-briefing summaries and scripts.
-- Sector-research deep-dive analysis.
 
-Historical generated files may still contain text about Claude or Anthropic as market/news content. `scanner/news_intelligence.py` also intentionally retains Claude/Anthropic as news keywords so AI-sector articles are not missed. Those are content references, not provider dependencies.
+`scanner/news_intelligence.py` intentionally retains `openai`/`anthropic`/`claude`
+as news keywords so AI-sector articles are not missed — those are content
+references, not provider dependencies.
 
 ## External Access Still Required
 
 These cannot be recreated locally without credentials or network/service access:
 
-- `OPENAI_API_KEY`: required for LLM-generated narratives, earnings, podcast synthesis/scripts, and sector deep dives.
+- `ANTHROPIC_API_KEY`: required for Claude-generated market narratives, weekly summaries, and earnings briefs.
 - `TADDY_API_KEY` / `TADDY_USER_ID`: optional podcast discovery/transcript enhancement in `/Users/max/podcastbrief-v2`.
 - `GITHUB_REPO` / Git auth: required for deployment push from `deploy/push_to_github.py`.
 - Cloudflare Pages/tunnel config: required for hosted `research.morningsignal.xyz` and `podcast.morningsignal.xyz`.
@@ -79,7 +79,7 @@ Verified on 2026-05-05:
 
 - `morningsignal-research/run_daily.py --date 2026-05-05 --dry-run` completes every step locally.
 - `podcastbrief-v2/run_pipeline.py --dry-run` completes without API calls.
-- `podcastbrief-v2/run_pipeline.py --date 2026-05-03 --step 4 --dry-run` confirms script generation now routes through OpenAI.
+- `podcastbrief-v2/run_pipeline.py --date 2026-05-03 --step 4 --dry-run` confirms script generation runs in dry-run.
 
 Earnings calendar coverage:
 

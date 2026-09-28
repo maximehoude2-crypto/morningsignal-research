@@ -429,7 +429,7 @@ def _generate_podcast_pages(docs_dir: Path, generated_at: str):
 <div class="hero-strip">
   <div class="page-wrapper">
     <div class="hero-title">Morning Signal Podcast</div>
-    <div class="hero-subtitle">Daily OpenAI-generated audio briefing · Subscribe: <a href="https://podcast.morningsignal.xyz/feed" style="color:var(--blue)">RSS Feed</a></div>
+    <div class="hero-subtitle">Daily Claude-generated audio briefing · Subscribe: <a href="https://podcast.morningsignal.xyz/feed" style="color:var(--blue)">RSS Feed</a></div>
   </div>
 </div>
 <div class="page-wrapper" style="max-width:900px">
